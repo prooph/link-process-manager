@@ -1,0 +1,40 @@
+{
+    "name": "prooph/link-process-manager",
+    "description": "Process configurator for prooph LINK",
+    "type": "library",
+    "license": "BSD-3-Clause",
+    "homepage": "https://github.com/prooph/link-process-manager",
+    "authors": [
+        {
+            "name": "Alexander Miertsch",
+            "email": "contact@prooph.de",
+            "homepage": "http://www.prooph.de/"
+        }
+    ],
+    "keywords": [
+        "prooph",
+        "prooph LINK",
+        "module",
+        "ZF2",
+        "process"
+    ],
+    "require": {
+        "php": ">=5.5",
+        "prooph/link-app-core" : "dev-master",
+        "prooph/link-monitor" : "dev-master",
+        "prooph/link-processor-proxy" : "dev-master"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "3.7.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Prooph\\Link\\ProcessManager\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ProophTest\\Link\\ProcessManager\\": "tests/ProcessManager"
+        }
+    }
+}
