@@ -27,7 +27,7 @@ use ZF\ApiProblem\ApiProblemResponse;
  * Class Process
  *
  * @package ProcessConfig\Api
- * @author Alexander Miertsch <alexander.miertsch.extern@sixt.com>
+ * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
 final class Process extends AbstractRestController implements ActionController, NeedsSystemConfig
 {
