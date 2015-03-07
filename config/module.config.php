@@ -72,7 +72,6 @@ return array(
             'controller' => 'Prooph\Link\ProcessManager\Controller\DashboardWidget',
             'order' => 100 //100 - 200 config order range
         ]
-
     ],
     'view_manager' => array(
         'template_map' => [

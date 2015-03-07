@@ -35,10 +35,11 @@ class DashboardWidgetController extends AbstractWidgetController
         if (count($this->systemConfig->getConnectors()) === 0) return false;
 
         return DashboardWidget::initialize(
-            'prooph.link.process-manager/dashboard/widget',
-            'Process Manager',
-            4,
-            ['processingConfig' => $this->systemConfig]
+            $this->widgetConfig->get('template', 'prooph.link.process-manager/dashboard/widget'),
+            $this->widgetConfig->get('title', 'Process Manager'),
+            $this->widgetConfig->get('cols', 4),
+            ['processingConfig' => $this->systemConfig],
+            $this->widgetConfig->get('group_title')
         );
     }
 }
