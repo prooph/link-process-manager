@@ -20,9 +20,9 @@
     ],
     "require": {
         "php": ">=5.5",
-        "prooph/link-app-core" : "dev-master",
-        "prooph/link-monitor" : "dev-master",
-        "prooph/link-processor-proxy" : "dev-master"
+        "prooph/link-app-core" : "v0.1.*",
+        "prooph/link-monitor" : "v0.1.*",
+        "prooph/link-processor-proxy" : "v0.1.*"
     },
     "require-dev": {
         "phpunit/phpunit": "3.7.*"
