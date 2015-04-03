@@ -1,0 +1,24 @@
+#whiteboard {height: 500px; background-color: #f5f5f5; position: relative; background: url("../img/paper_white.jpg") repeat scroll 0 0 rgba(0, 0, 0, 0);}
+
+#whiteboard.drop-whiteboard {background-color: #708090; color: #4bb1cf; background: url("../img/paper_blue.jpg") repeat scroll 0 0 rgba(0, 0, 0, 0); }
+
+#whiteboard .element {color: #000000; position: absolute; cursor: pointer; font-size: 30px; text-align: center; padding: 10px;}
+
+#whiteboard .element .element-label {font-size: 12px; background-color: #f0f0f0; padding: 3px;}
+
+#whiteboard .start-point {top: 60px; left: 40px; width: 30px; height: 30px; position: absolute; cursor: pointer}
+#whiteboard .start-point svg circle {stroke: black; stroke-width: 3; fill: black; fill-opacity: 0.0;}
+
+#whiteboard .source-point {cursor: pointer}
+#whiteboard .source-point svg * {fill : #fff; fill-opacity: 0.0; stroke: #008800; stroke-width: 1}
+#whiteboard .source-point-hover svg * {fill: #008800; fill-opacity: 1.0}
+
+#whiteboard .target-point svg * {fill : #808080}
+
+#whiteboard ._jsPlumb_endpoint_drop_allowed svg * {fill: #008800}
+
+#whiteboard ._jsPlumb_endpoint_connected svg * {fill: #008800; fill-opacity: 1.0}
+
+#whiteboard ._jsPlumb_connector path {stroke: #008800; stroke-width: 3}
+
+

@@ -1,0 +1,68 @@
+<div class="row">
+    <div class="col-md-11 col-lg-offset-1">
+        <ul class="nav nav-tabs">
+            <li class="active"><a href="#" class="process-tab" onclick="{ toggleActive }"><?php echo $this->translate('Process') ?></a></li>
+            <li ><a href="#" class="elements-tab" onclick="{ toggleActive }"><?php echo $this->translate('Elements') ?></a></li>
+        </ul>
+        <div if="{ isProcessTabActive() }">
+            <h3>Process tab</h3>
+        </div>
+        <div if="{ isElementsTabActive() }">
+            <p></p>
+            <div class="accordion" id="process-elements-accordion">
+                <div class="accordion-group">
+                    <div class="accordion-heading">
+                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#process-elements-accordion" href="#process-elements-collapse-connectors">
+                            <h4><?php echo $this->translate('Connectors')?></h4>
+                        </a>
+                    </div>
+                    <div id="process-elements-collapse-connectors" class="accordion-body collapse">
+                        <div class="accordion-inner">
+                            <ul class="nav nav-pills nav-stacked preconfigured-connectors-list">
+                                <li each="{ connector in context.app.connectors }"
+                                    data-id="{ connector.id }"
+                                    data-element-type="connector"
+                                    data-ui-metadata-riot-tag="{ connector.ui_metadata_riot_tag }"
+                                    data-icon="{ connector.icon }"
+                                    data-icon-type="glyphicon"><a href="">{ connector.name }</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    function (context) {
+
+        this.context = context;
+
+        this.isProcessTabActive = function () {
+            return $(this.root).find(".process-tab").parent().hasClass("active");
+        }
+
+        this.isElementsTabActive = function () {
+            return $(this.root).find(".elements-tab").parent().hasClass("active");
+        }
+
+        this.toggleActive = function (e) {
+            $(this.root).find(".process-tab").parent().toggleClass("active");
+            $(this.root).find(".elements-tab").parent().toggleClass("active");
+        }
+
+        this.init = function () {
+            $(this.root).find('.preconfigured-connectors-list li').draggable({
+                appendTo : "body",
+                helper : "clone"
+            }).click(function(e) {
+                e.preventDefault();
+            });
+        }
+
+        this.on("mount", function () {
+            this.init();
+            this.update();
+        })
+    }
+</script>

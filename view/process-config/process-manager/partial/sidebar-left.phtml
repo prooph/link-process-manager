@@ -1,16 +1,2 @@
 <?php
-$this->layout()->sidebar_left = <<<SIDEBAR
-
-<ul class="sidebar-nav">
-    <li>
-        <a href="{$this->url('home')}">{$this->translate('Dashboard')}</a>
-    </li>
-    <li>
-        <a href="#/">{$this->translate('Overview')}</a>
-    </li>
-    <li>
-        <a href="#/create">{$this->translate('Add New Process')}</a>
-    </li>
-</ul>
-
-SIDEBAR;
+$this->layout()->sidebar_left = "<process-sidebar></process-sidebar>";

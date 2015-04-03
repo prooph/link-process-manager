@@ -5,7 +5,9 @@
     </div>
 </div>
 <?php
-
+$this->headLink()->appendStylesheet($this->basePath() . '/css/link_pm_flowchart.css');
+$this->inlineScript()->appendFile($this->basePath() . '/js/jquery-ui.min.js');
+$this->inlineScript()->appendFile($this->basePath() . '/js/jquery.jsPlumb.min.js');
 $this->partial('prooph.link.process-manager/process-manager/partial/sidebar-left');
 
 //Bootstrap ember app
@@ -38,6 +40,7 @@ window.PM = Prooph.Link.App.create(
 );
 
 $(function () {
+    PM.bootstrap("process-sidebar");
     PM.bootstrap("process-manager").ready();
 });
 JS;

@@ -1,0 +1,121 @@
+<div class="row">
+    <div id="whiteboard" class="col-md-12">
+        <div id="whiteboard-start-point" class="start-point">
+            <svg height="60" width="60">
+                <circle cx="15" cy="15" r="12"/>
+            </svg>
+        </div>
+    </div>
+</div>
+<img src="<?php echo $this->basePath() ?>/img/paper_blue.jpg" class="hidden">
+<script type="text/javascript">
+    function (context) {
+        var self = this;
+
+        this.whiteboard = null;
+
+        var _createElement = function (name, id, uiMetadata, icon, iconType) {
+            $elem = $("<div></div>").addClass("element").data("id", id);
+
+            if (iconType === "glyphicon") {
+                $elem.append($("<span></span>").addClass("element-icon, glyphicon").addClass(icon));
+            }
+
+            $elem.append($("<p></p>").addClass("element-label").html(name));
+
+            return $elem;
+        }
+
+        this.initWhiteboard = function () {
+            jsPlumb.ready(function () {
+                self.whiteboard = jsPlumb.getInstance({
+                    Container : "whiteboard",
+                    Connector : "Bezier",
+                    ConnectionOverlays  : [
+                        [ "PlainArrow", { width:10, length:10, location:1} ]
+                    ]
+                });
+
+                self.whiteboard.makeSource("whiteboard-start-point", {
+                    maxConnections: 1,
+                    endpoint:["Dot", { radius : 5, cssClass : "source-point", hoverClass : "source-point-hover"}],
+                    anchor : "Right"
+                });
+
+                self.whiteboard.bind("connection", _.bind(self.applyConnection, self));
+
+                self.trigger("whiteboardIsReady")
+            });
+
+            $("#whiteboard").droppable({
+                accept: ":not(.connector)",
+                hoverClass : "drop-whiteboard",
+                drop : function (event, ui) {
+                    var offset = $(this).offset(),
+                        x = event.pageX - offset.left -30,
+                        y = event.pageY - offset.top - 30,
+                        elem = ui.draggable;
+
+                    switch (elem.data("element-type")) {
+                        case "connector":
+                            self.addConnector(x, y, elem.text(), elem.data("id"),
+                                elem.data("ui-metadata-riot-tag"), elem.data("icon"), elem.data("icon-type"));
+                            break;
+                        default:
+                            throw "Unknown element type dropped. Got " + elem.data("element-type");
+                    }
+
+                }
+            });
+        }
+
+        this.addConnector = function (xPos, yPos, name, id, uiMetadata, icon, iconType) {
+
+            $con = _createElement(name, id, uiMetadata, icon, iconType);
+
+            $con.addClass("connector").css('left', xPos).css('top', yPos);
+
+            $("#whiteboard").append($con);
+
+            this.whiteboard.draggable($con, {
+                containment:"parent"
+            });
+
+            this.whiteboard.addEndpoint($con.attr("id"), {
+                isSource:true,
+                endpoint:["Dot", { radius : 5, cssClass : "source-point", hoverClass : "source-point-hover"}],
+                anchor : "Bottom",
+                maxConnections: 150
+            });
+
+            this.whiteboard.addEndpoint($con.attr("id"), {
+                isSource:true,
+                endpoint:["Dot", { radius : 5, cssClass : "source-point", hoverClass : "source-point-hover"}],
+                anchor : "Right",
+                maxConnections: 150
+            });
+
+            this.whiteboard.addEndpoint($con.attr("id"), {
+                isTarget:true,
+                endpoint:["Dot", { radius : 5, cssClass : "target-point", hoverClass : "target-point-hover"}],
+                anchor : "Top",
+                maxConnections : 1
+            });
+
+            this.whiteboard.addEndpoint($con.attr("id"), {
+                isTarget:true,
+                endpoint:["Dot", { radius : 5, cssClass : "target-point", hoverClass : "target-point-hover"}],
+                anchor : "Left",
+                maxConnections : 1
+            });
+        }
+
+        this.applyConnection = function(jsPlumbInfo) {
+            console.log("apply connection ", jsPlumbInfo);
+        }
+
+        this.on("mount", function () {
+            this.initWhiteboard();
+        });
+    }
+</script>
