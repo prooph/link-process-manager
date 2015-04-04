@@ -47,6 +47,18 @@ return array(
                                 ],
                                 'may_terminate' => true,
                                 'child_routes' => [
+                                    'workflow' => [
+                                        'type' => 'Segment',
+                                        'options' => [
+                                            'route' => '/workflows[/:id]',
+                                            'constraints' => array(
+                                                'id' => '.+',
+                                            ),
+                                            'defaults' => [
+                                                'controller' => 'Prooph\Link\ProcessManager\Api\Workflow',
+                                            ]
+                                        ]
+                                    ],
                                     'process' => [
                                         'type' => 'Segment',
                                         'options' => [
@@ -125,22 +137,47 @@ return array(
             ),
         ),
     ),
+    'service_manager' => [
+        'factories' => [
+            \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithNameHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\CreateWorkflowWithNameHandlerFactory::class,
+            'prooph.link.pm.workflow_collection' => \Prooph\Link\ProcessManager\Infrastructure\Factory\WorkflowCollectionFactory::class,
+        ],
+        'invokables' => [
+            \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class => \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class,
+        ]
+    ],
     'controllers' => array(
+        'invokables' => [
+            'Prooph\Link\ProcessManager\Api\Workflow' => \Prooph\Link\ProcessManager\Api\Workflow::class,
+        ],
         'factories' => array(
             'Prooph\Link\ProcessManager\Controller\DashboardWidget' => \Prooph\Link\ProcessManager\Controller\Factory\DashboardWidgetControllerFactory::class,
             'Prooph\Link\ProcessManager\Controller\ProcessManager' => \Prooph\Link\ProcessManager\Controller\Factory\ProcessManagerControllerFactory::class,
             'Prooph\Link\ProcessManager\Api\Process' => \Prooph\Link\ProcessManager\Api\Factory\ProcessFactory::class,
         ),
     ),
+    'prooph.psb' => [
+        'command_router_map' => [
+            \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithName::class => \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithNameHandler::class,
+        ],
+        'event_router_map' => [
+            \Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasCreated::class => [
+                \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class,
+            ],
+        ],
+    ],
     'zf-content-negotiation' => [
         'controllers' => [
             'Prooph\Link\ProcessManager\Api\Process' => 'Json',
+            'Prooph\Link\ProcessManager\Api\Workflow' => 'Json',
         ],
         'accept_whitelist' => [
             'Prooph\Link\ProcessManager\Api\Process' => ['application/json'],
+            'Prooph\Link\ProcessManager\Api\Workflow' => ['application/json'],
         ],
         'content_type_whitelist' => [
             'Prooph\Link\ProcessManager\Api\Process' => ['application/json'],
+            'Prooph\Link\ProcessManager\Api\Workflow' => ['application/json'],
         ],
     ],
 );

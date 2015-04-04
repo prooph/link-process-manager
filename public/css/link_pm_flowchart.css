@@ -1,6 +1,37 @@
-#whiteboard {height: 500px; background-color: #f5f5f5; position: relative; background: url("../img/paper_white.jpg") repeat scroll 0 0 rgba(0, 0, 0, 0);}
+#whiteboard {margin-top: 30px; height: 500px; background-color: #f5f5f5; position: relative; background: url("../img/paper_white.jpg") repeat scroll 0 0 rgba(0, 0, 0, 0);}
 
-#whiteboard.drop-whiteboard {background-color: #708090; color: #4bb1cf; background: url("../img/paper_blue.jpg") repeat scroll 0 0 rgba(0, 0, 0, 0); }
+/* ZickZack
+#whiteboard::before {
+content: '';
+position: absolute;
+top: -12px;
+left: 0;
+right: 0;
+height: 12px;
+background-size: 24px 48px;
+background-repeat: repeat-x;
+background-image: -webkit-linear-gradient(45deg, transparent 34%, #E8ECEB 34%, #EFF4F0 66%, transparent 66%), -webkit-linear-gradient(315deg, transparent 34%, #EFF4F0 34%, #E8ECEB 66%, transparent 66%);
+background-image: -moz-linear-gradient(45deg, transparent 34%, #E8ECEB 34%, #EFF4F0 66%, transparent 66%), -moz-linear-gradient(315deg, transparent 34%, #EFF4F0 34%, #E8ECEB 66%, transparent 66%);
+background-image: linear-gradient(45deg, transparent 34%, #E8ECEB 34%, #EFF4F0 66%, transparent 66%), linear-gradient(315deg, transparent 34%, #EFF4F0 34%, #E8ECEB 66%, transparent 66%);
+}*/
+
+#whiteboard::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background-size: 24px 24px;
+    background-repeat: repeat-x;
+    background-image: -webkit-radial-gradient(circle closest-side at center center , #000000 40%, transparent 60%);
+    background-image: -moz-radial-gradient(circle closest-side at center center , #000000 40%, transparent 60%);
+    background-image: radial-gradient(circle closest-side at center center , #000000 40%, transparent 60%);
+}
+
+
+
+/* #whiteboard.drop-whiteboard {background-color: #708090; color: #4bb1cf; background: url("../img/paper_blue.jpg") repeat scroll 0 0 rgba(0, 0, 0, 0); } */
 
 #whiteboard .element {color: #000000; position: absolute; cursor: pointer; font-size: 30px; text-align: center; padding: 10px;}
 
@@ -20,5 +51,6 @@
 #whiteboard ._jsPlumb_endpoint_connected svg * {fill: #008800; fill-opacity: 1.0}
 
 #whiteboard ._jsPlumb_connector path {stroke: #008800; stroke-width: 3}
+
 
 
