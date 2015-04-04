@@ -10,6 +10,8 @@
  */
 namespace Prooph\Link\ProcessManager\Model\Workflow;
 
+use Prooph\Link\ProcessManager\Model\Workflow;
+
 /**
  * WorkflowCollection
  *

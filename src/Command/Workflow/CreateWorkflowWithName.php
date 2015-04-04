@@ -8,10 +8,11 @@
  * 
  * Date: 4/4/15 - 12:51 AM
  */
-namespace Prooph\Link\ProcessManager\Model\Workflow;
+namespace Prooph\Link\ProcessManager\Command\Workflow;
 
 use Assert\Assertion;
 use Prooph\Link\Application\Service\TransactionCommand;
+use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
 use Prooph\ServiceBus\Message\MessageNameProvider;
 
 /**

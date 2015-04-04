@@ -10,6 +10,9 @@
  */
 namespace Prooph\Link\ProcessManager\Model\Workflow;
 
+use Prooph\Link\ProcessManager\Command\Workflow\CreateWorkflowWithName;
+use Prooph\Link\ProcessManager\Model\Workflow;
+
 /**
  * CreateWorkflowWithNameHandler
  *

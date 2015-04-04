@@ -15,9 +15,9 @@ use Prooph\EventStore\Aggregate\AggregateRepository;
 use Prooph\EventStore\Aggregate\AggregateType;
 use Prooph\EventStore\EventStore;
 use Prooph\EventStore\Stream\SingleStreamStrategy;
-use Prooph\Link\ProcessManager\Model\Workflow\Workflow;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowCollection;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
+use Prooph\Link\ProcessManager\Model\Workflow;
 
 /**
  * Class PESWorkflowCollection
@@ -38,7 +38,7 @@ final class PESWorkflowCollection extends AggregateRepository implements Workflo
             $eventStore,
             new AggregateTranslator(),
             new SingleStreamStrategy($eventStore, 'link_process_manager_stream'),
-            AggregateType::fromAggregateRootClass('Prooph\Link\ProcessManager\Model\Workflow\Workflow')
+            AggregateType::fromAggregateRootClass('Prooph\Link\ProcessManager\Model\Workflow')
         );
     }
 

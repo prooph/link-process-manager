@@ -12,7 +12,7 @@ namespace Prooph\Link\ProcessManager\Api;
 
 use Prooph\Link\Application\Service\AbstractRestController;
 use Prooph\Link\Application\Service\ActionController;
-use Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithName;
+use Prooph\Link\ProcessManager\Command\Workflow\CreateWorkflowWithName;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
 use Prooph\ServiceBus\CommandBus;
 

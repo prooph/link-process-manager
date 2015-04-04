@@ -158,7 +158,7 @@ return array(
     ),
     'prooph.psb' => [
         'command_router_map' => [
-            \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithName::class => \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithNameHandler::class,
+            \Prooph\Link\ProcessManager\Command\Workflow\CreateWorkflowWithName::class => \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithNameHandler::class,
         ],
         'event_router_map' => [
             \Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasCreated::class => [

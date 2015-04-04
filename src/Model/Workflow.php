@@ -8,9 +8,11 @@
  * 
  * Date: 4/3/15 - 11:44 PM
  */
-namespace Prooph\Link\ProcessManager\Model\Workflow;
+namespace Prooph\Link\ProcessManager\Model;
 
 use Prooph\EventSourcing\AggregateRoot;
+use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
+use Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasCreated;
 
 /**
  * Workflow Aggregate

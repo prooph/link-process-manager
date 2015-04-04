@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased][unreleased]
 ### Added
 - Flowchart UI for easier process management
+- New API and a process management Model
+
+### Changed
+- Process is added to the processing config when it is published
 
 ## [0.1.1] - 2015-03-20
 ### Changed
