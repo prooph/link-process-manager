@@ -144,6 +144,7 @@ return array(
         ],
         'invokables' => [
             \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class => \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class,
+            \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder::class => \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder::class,
         ]
     ],
     'controllers' => array(
