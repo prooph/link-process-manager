@@ -12,6 +12,7 @@ namespace ProophTest\Link\ProcessManager\Model;
 
 use Prooph\Link\ProcessManager\Model\ProcessingNode;
 use Prooph\Link\ProcessManager\Model\ProcessingNodeName;
+use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
 use Prooph\Processing\Processor\NodeName;
 use ProophTest\Link\ProcessManager\TestCase;
 
@@ -25,6 +26,21 @@ final class ProcessingNodeTest extends TestCase
         $processingNode = ProcessingNode::initializeAs(NodeName::fromString('localhost'));
 
         $this->assertTrue(NodeName::fromString('localhost')->equals($processingNode->nodeName()));
+    }
+
+    /**
+     * @test
+     */
+    function it_set_up_a_new_workflow()
+    {
+        $node = ProcessingNode::initializeAs(NodeName::defaultName());
+        $workflowId = WorkflowId::generate();
+
+        $workflow = $node->setUpNewWorkflow($workflowId, 'Article Export');
+
+        $this->assertTrue(NodeName::defaultName()->equals($workflow->processingNodeName()));
+        $this->assertTrue($workflowId->equals($workflow->workflowId()));
+        $this->assertEquals('Article Export', $workflow->name());
     }
 
     /**
