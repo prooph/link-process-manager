@@ -12,6 +12,8 @@ namespace Prooph\Link\ProcessManager\Model;
 
 use Assert\Assertion;
 use Prooph\EventSourcing\AggregateRoot;
+use Prooph\Link\ProcessManager\Model\Workflow\Message;
+use Prooph\Link\ProcessManager\Model\Workflow\Process;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasCreated;
 use Prooph\Processing\Processor\NodeName;
@@ -42,6 +44,20 @@ final class Workflow extends AggregateRoot
     private $name;
 
     /**
+     * @var Message
+     */
+    private $startMessage;
+
+    /**
+     * Internal list of processes which are required to fulfill the workflow.
+     * Each process keeps a task list of tasks which are performed by the process and belong to the workflow.
+     * The process list is indexed by ProcessId.
+     *
+     * @var Process[]
+     */
+    private $processList = [];
+
+    /**
      * @param NodeName $nodeName
      * @param WorkflowId $workflowId
      * @param string $workflowName
@@ -58,6 +74,8 @@ final class Workflow extends AggregateRoot
 
         return $instance;
     }
+
+
 
     /**
      * @return NodeName
