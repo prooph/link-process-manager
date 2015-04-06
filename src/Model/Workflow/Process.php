@@ -9,6 +9,7 @@
  * Date: 4/6/15 - 3:37 PM
  */
 namespace Prooph\Link\ProcessManager\Model\Workflow;
+
 use Prooph\Link\ProcessManager\Model\Task\TaskId;
 
 /**
