@@ -39,7 +39,8 @@ final class WorkflowProjector implements ApplicationDbAware
     {
         $this->connection->insert($this->workflowTable, [
             'uuid' => $event->workflowId()->toString(),
-            'name' => $event->workflowName()
+            'name' => $event->workflowName(),
+            'node_name' => $event->processingNodeName()->toString()
         ]);
     }
 
