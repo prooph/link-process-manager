@@ -95,7 +95,7 @@ final class MessageHandler extends AggregateRoot
     /**
      * Contains the processing metadata for the processing message handler implementation
      *
-     * @var array
+     * @var ProcessingMetadata
      */
     private $processingMetadata;
 

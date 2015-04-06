@@ -10,6 +10,11 @@
  */
 namespace Prooph\Link\ProcessManager\Model;
 
+use Prooph\EventSourcing\AggregateRoot;
+use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerId;
+use Prooph\Link\ProcessManager\Model\Task\TaskId;
+use Prooph\Link\ProcessManager\Model\Task\TaskType;
+
 /**
  * Class Task
  *
@@ -20,7 +25,33 @@ namespace Prooph\Link\ProcessManager\Model;
  * @package Prooph\Link\ProcessManager\Model
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class Task 
+final class Task extends AggregateRoot
 {
+    /**
+     * @var TaskId
+     */
+    private $id;
 
-} 
+    /**
+     * @var TaskType
+     */
+    private $taskType;
+
+    /**
+     * @var MessageHandlerId
+     */
+    private $messageHandlerId;
+
+    /**
+     * @var ProcessingMetadata
+     */
+    private $processingMetadata;
+
+    /**
+     * @return string representation of the unique identifier of the aggregate root
+     */
+    protected function aggregateId()
+    {
+        return $this->id->toString();
+    }
+}
