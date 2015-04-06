@@ -50,6 +50,15 @@ final class DataDirection
     }
 
     /**
+     * @param string $dataDirection
+     * @return DataDirection
+     */
+    public static function fromString($dataDirection)
+    {
+        return new self($dataDirection);
+    }
+
+    /**
      * @param $direction
      */
     private function __construct($direction)

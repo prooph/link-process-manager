@@ -75,7 +75,23 @@ final class Workflow extends AggregateRoot
         return $instance;
     }
 
+    public function determineFirstTask(Message $startMessage, MessageHandler $firstMessageHandler, ProcessingMetadata $taskMetadata = null)
+    {
+        if ($this->hasStartMessage()) {
+            throw new \RuntimeException(
+                sprintf(
+                    'Workflow with id %s already has a start message',
+                    $this->aggregateId()
+                )
+            );
+        }
 
+        if (is_null($taskMetadata)) {
+            $taskMetadata = ProcessingMetadata::noData();
+        }
+
+
+    }
 
     /**
      * @return NodeName
@@ -99,6 +115,14 @@ final class Workflow extends AggregateRoot
     public function name()
     {
         return $this->name;
+    }
+
+    /**
+     * @return bool
+     */
+    private function hasStartMessage()
+    {
+        return ! is_null($this->startMessage);
     }
 
     /**

@@ -10,6 +10,7 @@
  */
 namespace Prooph\Link\ProcessManager\Model;
 
+use Codeliner\ArrayReader\ArrayReader;
 use Zend\Stdlib\ArrayUtils;
 
 /**
@@ -27,7 +28,7 @@ use Zend\Stdlib\ArrayUtils;
 final class ProcessingMetadata 
 {
     /**
-     * @var array
+     * @var ArrayReader
      */
     private $metadata;
 
@@ -38,6 +39,14 @@ final class ProcessingMetadata
     public static function fromArray(array $metadata)
     {
         return new self($metadata);
+    }
+
+    /**
+     * @return ProcessingMetadata
+     */
+    public static function noData()
+    {
+        return new self([]);
     }
 
     /**
@@ -56,7 +65,7 @@ final class ProcessingMetadata
      */
     public function merge(array $metadata)
     {
-        return new self(ArrayUtils::merge($this->metadata, $metadata));
+        return new self(ArrayUtils::merge($this->metadata->toArray(), $metadata));
     }
 
     /**
@@ -64,7 +73,7 @@ final class ProcessingMetadata
      */
     public function toArray()
     {
-        return $this->metadata;
+        return $this->metadata->toArray();
     }
 
     /**
@@ -78,7 +87,7 @@ final class ProcessingMetadata
             $this->assertArrayOrScalar($partial, $key);
         }
 
-        $this->metadata = $metadata;
+        $this->metadata = new ArrayReader($metadata);
     }
 
     /**

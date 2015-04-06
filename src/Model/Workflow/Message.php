@@ -10,6 +10,7 @@
  */
 namespace Prooph\Link\ProcessManager\Model\Workflow;
 
+use Prooph\Link\ProcessManager\Model\ProcessingMetadata;
 use Prooph\Processing\Type\Prototype;
 
 /**
@@ -35,17 +36,17 @@ final class Message
     /**
      * Processing metadata that will be sent along with the message
      *
-     * @var array
+     * @var ProcessingMetadata
      */
     private $processingMetadata;
 
     /**
      * @param MessageType $messageType
      * @param Prototype $prototype
-     * @param array $metadata
+     * @param ProcessingMetadata $metadata
      * @return Message
      */
-    public static function emulateProcessingWorkflowMessage(MessageType $messageType, Prototype $prototype, array $metadata)
+    public static function emulateProcessingWorkflowMessage(MessageType $messageType, Prototype $prototype, ProcessingMetadata $metadata)
     {
         return new self($messageType, $prototype, $metadata);
     }
@@ -53,9 +54,9 @@ final class Message
     /**
      * @param MessageType $messageType
      * @param Prototype $prototype
-     * @param array $metadata
+     * @param ProcessingMetadata $metadata
      */
-    private function __construct(MessageType $messageType, Prototype $prototype, array $metadata)
+    private function __construct(MessageType $messageType, Prototype $prototype, ProcessingMetadata $metadata)
     {
         $this->messageType = $messageType;
         $this->processingType = $prototype;
@@ -79,7 +80,7 @@ final class Message
     }
 
     /**
-     * @return array
+     * @return ProcessingMetadata
      */
     public function processingMetadata()
     {
@@ -94,6 +95,6 @@ final class Message
     {
         return $this->messageType()->equals($other->messageType())
             && $this->processingType()->of() === $other->processingType()->of()
-            && $this->processingMetadata() === $other->processingMetadata();
+            && $this->processingMetadata()->toArray() === $other->processingMetadata()->toArray();
     }
 } 

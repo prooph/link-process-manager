@@ -22,7 +22,8 @@
         "php": ">=5.5",
         "prooph/link-app-core" : "0.1.*",
         "prooph/link-monitor" : "0.1.*",
-        "prooph/link-processor-proxy" : "0.1.*"
+        "prooph/link-processor-proxy" : "0.1.*",
+        "codeliner/array-reader" : "~1.1"
     },
     "require-dev": {
         "phpunit/phpunit": "3.7.*"

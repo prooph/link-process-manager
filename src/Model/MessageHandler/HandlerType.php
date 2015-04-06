@@ -59,6 +59,15 @@ final class HandlerType
 
     /**
      * @param string $handlerType
+     * @return HandlerType
+     */
+    public static function fromString($handlerType)
+    {
+        return new self($handlerType);
+    }
+
+    /**
+     * @param string $handlerType
      */
     private function __construct($handlerType)
     {

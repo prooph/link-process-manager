@@ -10,6 +10,7 @@
  */
 namespace ProophTest\Link\ProcessManager\Model\Workflow;
 
+use Prooph\Link\ProcessManager\Model\ProcessingMetadata;
 use Prooph\Link\ProcessManager\Model\Workflow\Message;
 use Prooph\Link\ProcessManager\Model\Workflow\MessageType;
 use Prooph\Processing\Type\String;
@@ -22,11 +23,11 @@ final class MessageTest extends TestCase
      */
     function it_emulates_a_processing_workflow_message()
     {
-        $message = Message::emulateProcessingWorkflowMessage(MessageType::collectData(), String::prototype(), ['meta' => 'data']);
+        $message = Message::emulateProcessingWorkflowMessage(MessageType::collectData(), String::prototype(), ProcessingMetadata::fromArray(['meta' => 'data']));
 
         $this->assertTrue(MessageType::collectData()->equals($message->messageType()));
         $this->assertEquals(String::prototype()->of(), $message->processingType()->of());
-        $this->assertEquals(['meta' => 'data'], $message->processingMetadata());
+        $this->assertEquals(['meta' => 'data'], $message->processingMetadata()->toArray());
     }
 
     /**
@@ -34,8 +35,8 @@ final class MessageTest extends TestCase
      */
     function it_is_equal_to_a_similar_message()
     {
-        $message1 = Message::emulateProcessingWorkflowMessage(MessageType::collectData(), String::prototype(), ['meta' => 'data']);
-        $message2 = Message::emulateProcessingWorkflowMessage(MessageType::collectData(), String::prototype(), ['meta' => 'data']);
+        $message1 = Message::emulateProcessingWorkflowMessage(MessageType::collectData(), String::prototype(), ProcessingMetadata::fromArray(['meta' => 'data']));
+        $message2 = Message::emulateProcessingWorkflowMessage(MessageType::collectData(), String::prototype(), ProcessingMetadata::fromArray(['meta' => 'data']));
 
         $this->assertTrue($message1->equals($message2));
     }
