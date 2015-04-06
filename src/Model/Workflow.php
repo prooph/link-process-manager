@@ -10,20 +10,27 @@
  */
 namespace Prooph\Link\ProcessManager\Model;
 
+use Assert\Assertion;
 use Prooph\EventSourcing\AggregateRoot;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasCreated;
+use Prooph\Processing\Processor\NodeName;
 
 /**
  * Workflow Aggregate
  *
- * The Workflow Aggregate is responsible for creating tasks and assigning workflow message handlers to them.
+ * The Workflow aggregate is responsible for creating tasks and assigning workflow message handlers to them.
  *
  * @package Prooph\Link\ProcessManager\Model\Workflow
  * @author Alexander Miertsch <alexander.miertsch.extern@sixt.com>
  */
 final class Workflow extends AggregateRoot
 {
+    /**
+     * @var NodeName
+     */
+    private $processingNodeName;
+
     /**
      * @var WorkflowId
      */
@@ -35,17 +42,29 @@ final class Workflow extends AggregateRoot
     private $name;
 
     /**
+     * @param NodeName $nodeName
      * @param WorkflowId $workflowId
-     * @param string $name
+     * @param string $workflowName
      * @return Workflow
      */
-    public static function createWithName(WorkflowId $workflowId, $name)
+    public static function locatedOn(NodeName $nodeName, WorkflowId $workflowId, $workflowName)
     {
+        Assertion::string($workflowName);
+        Assertion::notEmpty($workflowName);
+
         $instance = new self();
 
-        $instance->recordThat(WorkflowWasCreated::occur($workflowId->toString(), ['name' => $name]));
+        $instance->recordThat(WorkflowWasCreated::on($nodeName, $workflowId, $workflowName));
 
         return $instance;
+    }
+
+    /**
+     * @return NodeName
+     */
+    public function processingNodeName()
+    {
+        return $this->processingNodeName;
     }
 
     /**
@@ -77,6 +96,7 @@ final class Workflow extends AggregateRoot
      */
     protected function whenWorkflowWasCreated(WorkflowWasCreated $event)
     {
+        $this->processingNodeName = $event->processingNodeName();
         $this->workflowId = $event->workflowId();
         $this->name = $event->workflowName();
     }

@@ -1,0 +1,16 @@
+<?php
+return array(
+    'modules' => array(
+        'Prooph\Link\ProcessManager',
+        'Prooph\Link\Application',
+    ),
+    'module_listener_options' => array(
+        'config_glob_paths'    => array(
+            __DIR__ . '/../../../config/autoload/global.php',
+        ),
+        'module_paths' => array(
+            'module',
+            'vendor',
+        ),
+    ),
+);

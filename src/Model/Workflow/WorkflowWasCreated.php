@@ -11,6 +11,7 @@
 namespace Prooph\Link\ProcessManager\Model\Workflow;
 
 use Prooph\EventSourcing\AggregateChanged;
+use Prooph\Processing\Processor\NodeName;
 
 /**
  * Event WorkflowWasCreated
@@ -21,6 +22,20 @@ use Prooph\EventSourcing\AggregateChanged;
 final class WorkflowWasCreated extends AggregateChanged
 {
     /**
+     * @param NodeName $nodeName
+     * @param WorkflowId $workflowId
+     * @param $workflowName
+     * @return WorkflowWasCreated
+     */
+    public static function on(NodeName $nodeName, WorkflowId $workflowId, $workflowName)
+    {
+        return self::occur($workflowId->toString(), [
+            'processing_node_name' => $nodeName->toString(),
+            'workflow_name' => $workflowName,
+        ]);
+    }
+
+    /**
      * @return WorkflowId
      */
     public function workflowId()
@@ -28,11 +43,16 @@ final class WorkflowWasCreated extends AggregateChanged
         return WorkflowId::fromString($this->aggregateId());
     }
 
+    public function processingNodeName()
+    {
+        return NodeName::fromString($this->payload['processing_node_name']);
+    }
+
     /**
      * @return string
      */
     public function workflowName()
     {
-        return $this->payload['name'];
+        return $this->payload['workflow_name'];
     }
 } 

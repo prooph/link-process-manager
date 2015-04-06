@@ -141,6 +141,7 @@ return array(
         'factories' => [
             \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithNameHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\CreateWorkflowWithNameHandlerFactory::class,
             'prooph.link.pm.workflow_collection' => \Prooph\Link\ProcessManager\Infrastructure\Factory\WorkflowCollectionFactory::class,
+            'prooph.link.pm.local_processing_node' => \Prooph\Link\ProcessManager\Infrastructure\Factory\LocalProcessingNodeFactory::class,
         ],
         'invokables' => [
             \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class => \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class,
