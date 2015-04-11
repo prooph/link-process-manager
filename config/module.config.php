@@ -55,7 +55,19 @@ return array(
                                                 'id' => '.+',
                                             ),
                                             'defaults' => [
-                                                'controller' => 'Prooph\Link\ProcessManager\Api\Workflow',
+                                                'controller' => \Prooph\Link\ProcessManager\Api\Workflow::class,
+                                            ]
+                                        ]
+                                    ],
+                                    'message-handler' => [
+                                        'type' => 'Segment',
+                                        'options' => [
+                                            'route' => '/message-handlers[/:id]',
+                                            'constraints' => array(
+                                                'id' => '.+',
+                                            ),
+                                            'defaults' => [
+                                                'controller' => \Prooph\Link\ProcessManager\Api\MessageHandler::class,
                                             ]
                                         ]
                                     ],
@@ -149,11 +161,13 @@ return array(
             'prooph.link.pm.processing_node_list' => \Prooph\Link\ProcessManager\Model\ProcessingNodeList::class,
             \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class => \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class,
             \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder::class => \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder::class,
+            \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerProjector::class => \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerProjector::class,
         ]
     ],
     'controllers' => array(
         'invokables' => [
-            'Prooph\Link\ProcessManager\Api\Workflow' => \Prooph\Link\ProcessManager\Api\Workflow::class,
+            \Prooph\Link\ProcessManager\Api\Workflow::class => \Prooph\Link\ProcessManager\Api\Workflow::class,
+            \Prooph\Link\ProcessManager\Api\MessageHandler::class => \Prooph\Link\ProcessManager\Api\MessageHandler::class,
         ],
         'factories' => array(
             'Prooph\Link\ProcessManager\Controller\DashboardWidget' => \Prooph\Link\ProcessManager\Controller\Factory\DashboardWidgetControllerFactory::class,
@@ -170,20 +184,26 @@ return array(
             \Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasCreated::class => [
                 \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class,
             ],
+            \Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerWasInstalled::class => [
+                \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerProjector::class
+            ]
         ],
     ],
     'zf-content-negotiation' => [
         'controllers' => [
             'Prooph\Link\ProcessManager\Api\Process' => 'Json',
-            'Prooph\Link\ProcessManager\Api\Workflow' => 'Json',
+            \Prooph\Link\ProcessManager\Api\Workflow::class => 'Json',
+            \Prooph\Link\ProcessManager\Api\MessageHandler::class => 'Json',
         ],
         'accept_whitelist' => [
             'Prooph\Link\ProcessManager\Api\Process' => ['application/json'],
-            'Prooph\Link\ProcessManager\Api\Workflow' => ['application/json'],
+            \Prooph\Link\ProcessManager\Api\Workflow::class => ['application/json'],
+            \Prooph\Link\ProcessManager\Api\MessageHandler::class => ['application/json'],
         ],
         'content_type_whitelist' => [
             'Prooph\Link\ProcessManager\Api\Process' => ['application/json'],
-            'Prooph\Link\ProcessManager\Api\Workflow' => ['application/json'],
+            \Prooph\Link\ProcessManager\Api\Workflow::class => ['application/json'],
+            \Prooph\Link\ProcessManager\Api\MessageHandler::class => ['application/json'],
         ],
     ],
 );
