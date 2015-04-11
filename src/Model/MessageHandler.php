@@ -15,7 +15,7 @@ use Prooph\EventSourcing\AggregateRoot;
 use Prooph\Link\ProcessManager\Model\MessageHandler\DataDirection;
 use Prooph\Link\ProcessManager\Model\MessageHandler\HandlerType;
 use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerId;
-use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerWasCreated;
+use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerWasInstalled;
 use Prooph\Link\ProcessManager\Model\MessageHandler\ProcessingId;
 use Prooph\Link\ProcessManager\Model\MessageHandler\ProcessingTypes;
 use Prooph\Link\ProcessManager\Model\Task\TaskId;
@@ -140,7 +140,7 @@ final class MessageHandler extends AggregateRoot
 
         $instance = new self();
 
-        $instance->recordThat(MessageHandlerWasCreated::record(
+        $instance->recordThat(MessageHandlerWasInstalled::record(
             $id,
             $name,
             $nodeName,
@@ -250,9 +250,9 @@ final class MessageHandler extends AggregateRoot
     }
 
     /**
-     * @param MessageHandlerWasCreated $event
+     * @param MessageHandlerWasInstalled $event
      */
-    protected function whenMessageHandlerWasCreated(MessageHandlerWasCreated $event)
+    protected function whenMessageHandlerWasInstalled(MessageHandlerWasInstalled $event)
     {
         $this->messageHandlerId = $event->messageHandlerId();
         $this->name = $event->messageHandlerName();

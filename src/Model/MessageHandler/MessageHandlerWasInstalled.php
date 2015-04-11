@@ -16,12 +16,12 @@ use Prooph\Processing\Processor\NodeName;
 use Prooph\Processing\Type\Prototype;
 
 /**
- * Event MessageHandlerWasCreated
+ * Event MessageHandlerWasInstalled
  *
  * @package Prooph\Link\ProcessManager\Model\MessageHandler
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class MessageHandlerWasCreated extends AggregateChanged
+final class MessageHandlerWasInstalled extends AggregateChanged
 {
     private $messageHandlerId;
 
@@ -49,7 +49,7 @@ final class MessageHandlerWasCreated extends AggregateChanged
      * @param ProcessingMetadata $processingMetadata
      * @param Prototype $preferredProcessingType
      * @param ProcessingId $processingId
-     * @return MessageHandlerWasCreated
+     * @return MessageHandlerWasInstalled
      */
     public static function record(
         MessageHandlerId $messageHandlerId,
