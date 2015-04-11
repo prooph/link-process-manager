@@ -10,10 +10,17 @@
  */
 namespace ProophTest\Link\ProcessManager\Model;
 
+use Prooph\Link\ProcessManager\Model\MessageHandler\DataDirection;
+use Prooph\Link\ProcessManager\Model\MessageHandler\HandlerType;
+use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerId;
+use Prooph\Link\ProcessManager\Model\MessageHandler\ProcessingId;
+use Prooph\Link\ProcessManager\Model\MessageHandler\ProcessingTypes;
+use Prooph\Link\ProcessManager\Model\MessageHandler;
+use Prooph\Link\ProcessManager\Model\ProcessingMetadata;
 use Prooph\Link\ProcessManager\Model\ProcessingNode;
-use Prooph\Link\ProcessManager\Model\ProcessingNodeName;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
 use Prooph\Processing\Processor\NodeName;
+use ProophTest\Link\ProcessManager\Mock\ProcessingType\ArticleCollection;
 use ProophTest\Link\ProcessManager\TestCase;
 
 final class ProcessingNodeTest extends TestCase
@@ -41,6 +48,25 @@ final class ProcessingNodeTest extends TestCase
         $this->assertTrue(NodeName::defaultName()->equals($workflow->processingNodeName()));
         $this->assertTrue($workflowId->equals($workflow->workflowId()));
         $this->assertEquals('Article Export', $workflow->name());
+    }
+
+    /**
+     * @test
+     */
+    function it_installs_a_message_handler()
+    {
+        $messageHandler = ProcessingNode::initializeAs(NodeName::defaultName())->installMessageHandler(
+            MessageHandlerId::generate(),
+            'Article Exporter',
+            HandlerType::connector(),
+            DataDirection::source(),
+            ProcessingTypes::support([ArticleCollection::prototype()]),
+            ProcessingMetadata::noData(),
+            ArticleCollection::prototype(),
+            ProcessingId::fromString('sqlconnector:::example')
+        );
+
+        $this->assertInstanceOf(MessageHandler::class, $messageHandler);
     }
 
     /**

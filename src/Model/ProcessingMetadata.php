@@ -15,7 +15,7 @@ use Prooph\Link\Application\SharedKernel\MessageMetadata;
 use Zend\Stdlib\ArrayUtils;
 
 /**
- * Class ProcessingMetadata
+ * Value Object ProcessingMetadata
  *
  * In the processing system communication happens with the help of workflow messages. The system itself and
  * also workflow message handlers can use metadata to add or read additional information to or from

@@ -25,7 +25,7 @@ use Prooph\Processing\Processor\NodeName;
 use Prooph\Processing\Type\Prototype;
 
 /**
- * Class MessageHandler
+ * Aggregate MessageHandler
  *
  * The aggregate represents a processing workflow message handler in the process manager model.
  * It is not the real message handler implementation but contains information and provides methods to deal with a

@@ -26,6 +26,8 @@ use Prooph\Processing\Type\Type;
  */
 final class ProcessingTypes 
 {
+    const SUPPORT_ALL = "all";
+
     /**
      * @var Prototype[]
      */

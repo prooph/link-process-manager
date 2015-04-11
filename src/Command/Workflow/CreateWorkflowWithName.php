@@ -44,11 +44,15 @@ final class CreateWorkflowWithName implements TransactionCommand, MessageNamePro
     }
 
     /**
-     * @param WorkflowId $workflowId
+     * @param WorkflowId|string $workflowId
      * @param string $workflowName
      */
-    public function __construct(WorkflowId $workflowId, $workflowName)
+    public function __construct($workflowId, $workflowName)
     {
+        if (! $workflowId instanceof WorkflowId) {
+            $workflowId = WorkflowId::fromString($workflowId);
+        }
+
         Assertion::string($workflowName);
         Assertion::notEmpty($workflowName);
 

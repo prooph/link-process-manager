@@ -43,6 +43,19 @@ final class DataDirectionTest extends TestCase
     /**
      * @test
      */
+    function it_can_be_a_source_and_a_target()
+    {
+        $both = DataDirection::both();
+
+        $this->assertTrue($both->isSource());
+        $this->assertTrue($both->isTarget());
+
+        $this->assertEquals(DataDirection::DIRECTION_SOURCE_AND_TARGET, $both->toString());
+    }
+
+    /**
+     * @test
+     */
     function it_is_equal_to_another_source()
     {
         $direction1 = DataDirection::source();

@@ -22,6 +22,7 @@ final class DataDirection
 {
     const DIRECTION_SOURCE = "source";
     const DIRECTION_TARGET = "target";
+    const DIRECTION_SOURCE_AND_TARGET = "source_target";
 
     /**
      * @var string
@@ -31,7 +32,7 @@ final class DataDirection
     /**
      * @var array
      */
-    private $allowedDirections = [self::DIRECTION_SOURCE, self::DIRECTION_TARGET];
+    private $allowedDirections = [self::DIRECTION_SOURCE, self::DIRECTION_TARGET, self::DIRECTION_SOURCE_AND_TARGET];
 
     /**
      * @return DataDirection
@@ -47,6 +48,14 @@ final class DataDirection
     public static function target()
     {
         return new self(self::DIRECTION_TARGET);
+    }
+
+    /**
+     * @return DataDirection
+     */
+    public static function both()
+    {
+        return new self(self::DIRECTION_SOURCE_AND_TARGET);
     }
 
     /**
@@ -72,7 +81,7 @@ final class DataDirection
      */
     public function isSource()
     {
-        return $this->direction === self::DIRECTION_SOURCE;
+        return $this->direction === self::DIRECTION_SOURCE || $this->direction === self::DIRECTION_SOURCE_AND_TARGET;
     }
 
     /**
@@ -80,7 +89,7 @@ final class DataDirection
      */
     public function isTarget()
     {
-        return $this->direction === self::DIRECTION_TARGET;
+        return $this->direction === self::DIRECTION_TARGET || $this->direction === self::DIRECTION_SOURCE_AND_TARGET;
     }
 
     /**
