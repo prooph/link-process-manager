@@ -23,12 +23,80 @@ use Prooph\Processing\Type\Prototype;
  */
 final class MessageHandlerWasCreated extends AggregateChanged
 {
+    private $messageHandlerId;
+
+    private $processingNodeName;
+
+    private $handlerType;
+
+    private $dataDirection;
+
+    private $supportedProcessingTypes;
+
+    private $processingMetadata;
+
+    private $preferredProcessingType;
+
+    private $processingId;
+
+    /**
+     * @param MessageHandlerId $messageHandlerId
+     * @param string $handlerName
+     * @param NodeName $processingNodeName
+     * @param HandlerType $handlerType
+     * @param DataDirection $dataDirection
+     * @param ProcessingTypes $processingTypes
+     * @param ProcessingMetadata $processingMetadata
+     * @param Prototype $preferredProcessingType
+     * @param ProcessingId $processingId
+     * @return MessageHandlerWasCreated
+     */
+    public static function record(
+        MessageHandlerId $messageHandlerId,
+        $handlerName,
+        NodeName $processingNodeName,
+        HandlerType $handlerType,
+        DataDirection $dataDirection,
+        ProcessingTypes $processingTypes,
+        ProcessingMetadata $processingMetadata,
+        Prototype $preferredProcessingType = null,
+        ProcessingId $processingId = null
+    ) {
+        $event = self::occur(
+            $messageHandlerId->toString(),
+            [
+                'name' => $handlerName,
+                'processing_node_name' => $processingNodeName->toString(),
+                'handler_type' => $handlerType->toString(),
+                'data_direction' => $dataDirection->toString(),
+                'supported_processing_types' => $processingTypes->toArray(),
+                'processing_metadata' => $processingMetadata->toArray(),
+                'preferred_processing_type' => ($preferredProcessingType)? $preferredProcessingType->of() : null,
+                'processing_id' => ($processingId)? $processingId->toString() : null,
+            ]
+        );
+
+        $event->messageHandlerId = $messageHandlerId;
+        $event->processingNodeName = $processingNodeName;
+        $event->handlerType = $handlerType;
+        $event->dataDirection = $dataDirection;
+        $event->supportedProcessingTypes = $processingTypes;
+        $event->processingMetadata = $processingMetadata;
+        $event->preferredProcessingType = $preferredProcessingType;
+        $event->processingId = $processingId;
+
+        return $event;
+    }
+
     /**
      * @return MessageHandlerId
      */
     public function messageHandlerId()
     {
-        return MessageHandlerId::fromString($this->aggregateId());
+        if (is_null($this->messageHandlerId)) {
+            $this->messageHandlerId = MessageHandlerId::fromString($this->aggregateId());
+        }
+        return $this->messageHandlerId;
     }
 
     /**
@@ -44,7 +112,10 @@ final class MessageHandlerWasCreated extends AggregateChanged
      */
     public function processingNodeName()
     {
-        return NodeName::fromString($this->payload['processing_node_name']);
+        if (is_null($this->processingNodeName)) {
+            $this->processingNodeName = NodeName::fromString($this->payload['processing_node_name']);
+        }
+        return $this->processingNodeName;
     }
 
     /**
@@ -52,7 +123,10 @@ final class MessageHandlerWasCreated extends AggregateChanged
      */
     public function handlerType()
     {
-        return HandlerType::fromString($this->payload['handler_type']);
+        if (is_null($this->handlerType)) {
+            $this->handlerType = HandlerType::fromString($this->payload['handler_type']);
+        }
+        return $this->handlerType;
     }
 
     /**
@@ -60,7 +134,10 @@ final class MessageHandlerWasCreated extends AggregateChanged
      */
     public function dataDirection()
     {
-        return DataDirection::fromString($this->payload['data_direction']);
+        if (is_null($this->dataDirection)) {
+            $this->dataDirection = DataDirection::fromString($this->payload['data_direction']);
+        }
+        return $this->dataDirection;
     }
 
     /**
@@ -68,7 +145,10 @@ final class MessageHandlerWasCreated extends AggregateChanged
      */
     public function supportedProcessingTypes()
     {
-        return ProcessingTypes::fromArray($this->payload['supported_processing_types']);
+        if (is_null($this->supportedProcessingTypes)) {
+            $this->supportedProcessingTypes = ProcessingTypes::fromArray($this->payload['supported_processing_types']);
+        }
+        return $this->supportedProcessingTypes;
     }
 
     /**
@@ -76,7 +156,10 @@ final class MessageHandlerWasCreated extends AggregateChanged
      */
     public function processingMetadata()
     {
-        return ProcessingMetadata::fromArray($this->payload['processing_metadata']);
+        if (is_null($this->processingMetadata)) {
+            $this->processingMetadata = ProcessingMetadata::fromArray($this->payload['processing_metadata']);
+        }
+        return $this->processingMetadata;
     }
 
     /**

@@ -81,6 +81,15 @@ final class ProcessType
 
     /**
      * @param string $processType
+     * @return ProcessType
+     */
+    public static function fromString($processType)
+    {
+        return new self($processType);
+    }
+
+    /**
+     * @param string $processType
      */
     private function __construct($processType)
     {

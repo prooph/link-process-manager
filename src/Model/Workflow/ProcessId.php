@@ -26,7 +26,7 @@ final class ProcessId
     private $uuid;
 
     /**
-     * @return WorkflowId
+     * @return ProcessId
      */
     public static function generate()
     {
@@ -35,7 +35,7 @@ final class ProcessId
 
     /**
      * @param string $workflowId
-     * @return WorkflowId
+     * @return ProcessId
      */
     public static function fromString($workflowId)
     {

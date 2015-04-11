@@ -70,6 +70,15 @@ final class MessageType
 
     /**
      * @param string $messageType
+     * @return MessageType
+     */
+    public static function fromString($messageType)
+    {
+        return new self($messageType);
+    }
+
+    /**
+     * @param string $messageType
      */
     private function __construct($messageType)
     {
@@ -108,6 +117,22 @@ final class MessageType
     public function isDataProcessedMessage()
     {
         return $this->messageType === self::TYPE_DATA_PROCESSED;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isEvent()
+    {
+        return $this->isDataCollectedMessage() || $this->isDataProcessedMessage();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCommand()
+    {
+        return $this->isCollectDataMessage() || $this->isProcessDataMessage();
     }
 
     /**

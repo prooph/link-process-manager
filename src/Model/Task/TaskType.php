@@ -69,6 +69,15 @@ final class TaskType
     }
 
     /**
+     * @param string $taskType
+     * @return TaskType
+     */
+    public static function fromString($taskType)
+    {
+        return new self($taskType);
+    }
+
+    /**
      * @param string $type
      */
     private function __construct($type)

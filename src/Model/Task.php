@@ -14,6 +14,7 @@ use Prooph\EventSourcing\AggregateRoot;
 use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerId;
 use Prooph\Link\ProcessManager\Model\Task\TaskId;
 use Prooph\Link\ProcessManager\Model\Task\TaskType;
+use Prooph\Link\ProcessManager\Model\Task\TaskWasSetUp;
 
 /**
  * Class Task
@@ -48,10 +49,68 @@ final class Task extends AggregateRoot
     private $processingMetadata;
 
     /**
+     * @param MessageHandler $messageHandler
+     * @param TaskType $taskType
+     * @param ProcessingMetadata $metadata
+     * @return Task
+     */
+    public static function setUp(MessageHandler $messageHandler, TaskType $taskType, ProcessingMetadata $metadata)
+    {
+        $instance = new self();
+
+        $instance->recordThat(TaskWasSetUp::with(TaskId::generate(), $taskType, $messageHandler, $metadata));
+
+        return $instance;
+    }
+
+    /**
+     * @return TaskId
+     */
+    public function id()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @return TaskType
+     */
+    public function type()
+    {
+        return $this->taskType;
+    }
+
+    /**
+     * @return MessageHandlerId
+     */
+    public function messageHandlerId()
+    {
+        return $this->messageHandlerId;
+    }
+
+    /**
+     * @return ProcessingMetadata
+     */
+    public function metadata()
+    {
+        return $this->processingMetadata;
+    }
+
+    /**
      * @return string representation of the unique identifier of the aggregate root
      */
     protected function aggregateId()
     {
         return $this->id->toString();
+    }
+
+    /**
+     * @param TaskWasSetUp $event
+     */
+    protected function whenTaskWasSetUp(TaskWasSetUp $event)
+    {
+        $this->id = $event->taskId();
+        $this->taskType = $event->taskType();
+        $this->messageHandlerId = $event->messageHandlerId();
+        $this->processingMetadata = $event->taskMetadata();
     }
 }

@@ -11,6 +11,7 @@
 namespace Prooph\Link\ProcessManager\Model;
 
 use Codeliner\ArrayReader\ArrayReader;
+use Prooph\Link\Application\SharedKernel\MessageMetadata;
 use Zend\Stdlib\ArrayUtils;
 
 /**
@@ -60,12 +61,12 @@ final class ProcessingMetadata
     /**
      * Merges given metadata recursive into existing metadata and returns a new ProcessingMetadata object
      *
-     * @param array $metadata
+     * @param ProcessingMetadata $metadata
      * @return ProcessingMetadata
      */
-    public function merge(array $metadata)
+    public function merge(ProcessingMetadata $metadata)
     {
-        return new self(ArrayUtils::merge($this->metadata->toArray(), $metadata));
+        return new self(ArrayUtils::merge($this->metadata->toArray(), $metadata->toArray()));
     }
 
     /**
@@ -74,6 +75,28 @@ final class ProcessingMetadata
     public function toArray()
     {
         return $this->metadata->toArray();
+    }
+
+    /**
+     * Metadata of a message handler should contain the "chunk_support" flag
+     * if the handler can collect and/or process chunks.
+     *
+     * @return bool
+     */
+    public function canHandleChunks()
+    {
+        return $this->metadata->booleanValue('chunk_support');
+    }
+
+    /**
+     * If a limit is present in a task metadata and this limit is greater than zero then the client wants the system
+     * to process a source collection in chunks.
+     *
+     * @return bool
+     */
+    public function shouldCollectionBeSplitIntoChunks()
+    {
+        return $this->metadata->integerValue(MessageMetadata::LIMIT) > 0;
     }
 
     /**

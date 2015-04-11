@@ -88,6 +88,14 @@ final class Message
     }
 
     /**
+     * @return Message
+     */
+    public function toProcessDataMessage()
+    {
+        return self::emulateProcessingWorkflowMessage(MessageType::processData(), $this->processingType(), $this->processingMetadata());
+    }
+
+    /**
      * @param Message $other
      * @return bool
      */

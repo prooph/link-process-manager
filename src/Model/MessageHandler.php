@@ -103,6 +103,16 @@ final class MessageHandler extends AggregateRoot
     private $processingMetadata;
 
     /**
+     * Stores the reason in case the message handler can't handle a message.
+     *
+     * This property is reset each time the {@method canHandleMessage} is called.
+     * If the check fails the {@method lastValidationError} can be used to get the reason of the failing validation.
+     *
+     * @var string
+     */
+    private $lastValidationError;
+
+    /**
      * @param MessageHandlerId $id
      * @param string $name
      * @param NodeName $nodeName
@@ -130,18 +140,16 @@ final class MessageHandler extends AggregateRoot
 
         $instance = new self();
 
-        $instance->recordThat(MessageHandlerWasCreated::occur(
-            $id->toString(),
-            [
-                'name' => $name,
-                'processing_node_name' => $nodeName->toString(),
-                'handler_type' => $handlerType->toString(),
-                'data_direction' => $dataDirection->toString(),
-                'supported_processing_types' => $supportedProcessingTypes->toArray(),
-                'processing_metadata' => $metadata->toArray(),
-                'preferred_processing_type' => ($preferredProcessingType)? $preferredProcessingType->of() : null,
-                'processing_id' => ($processingId)? $processingId->toString() : null,
-            ]
+        $instance->recordThat(MessageHandlerWasCreated::record(
+            $id,
+            $name,
+            $nodeName,
+            $handlerType,
+            $dataDirection,
+            $supportedProcessingTypes,
+            $metadata,
+            $preferredProcessingType,
+            $processingId
         ));
 
         return $instance;
@@ -164,16 +172,54 @@ final class MessageHandler extends AggregateRoot
     }
 
     /**
+     * @return NodeName
+     */
+    public function processingNodeName()
+    {
+        return $this->processingNodeName;
+    }
+
+    /**
      * @param Message $message
      * @return bool
      */
     public function canHandleMessage(Message $message)
     {
+        $this->lastValidationError = null;
+
         if (! $this->canHandleMessageType($message->messageType())) {
+            $this->lastValidationError = sprintf(
+                "Message type %s is not supported.",
+                $message->messageType()
+            );
             return false;
         }
 
-        return $this->supportedProcessingTypes->isSupported($message->processingType());
+        if ($message->processingMetadata()->shouldCollectionBeSplitIntoChunks()) {
+            if (! $this->processingMetadata->canHandleChunks()) {
+                $this->lastValidationError = "Unable to handle chunks.";
+                return false;
+            }
+        }
+
+        if (! $this->supportedProcessingTypes->isSupported($message->processingType())) {
+            $this->lastValidationError = sprintf(
+                "Processing type %s is not supported. Supported types are: %s",
+                $message->processingType()->of(),
+                implode(", ", $this->supportedProcessingTypes->toArray()['processing_types'])
+            );
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function lastValidationError()
+    {
+        return $this->lastValidationError;
     }
 
     /**
@@ -191,7 +237,7 @@ final class MessageHandler extends AggregateRoot
                 return true;
             }
         } elseif ($this->handlerType->isScript()) {
-            if (! $messageType->isProcessDataMessage()) {
+            if ($messageType->isProcessDataMessage()) {
                 return true;
             }
         } else {

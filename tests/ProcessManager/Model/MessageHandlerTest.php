@@ -11,13 +11,13 @@
 namespace ProophTest\Link\ProcessManager\Model;
 
 use Prooph\Link\Application\DataType\SqlConnector\Ifair\ArticlesCollection;
+use Prooph\Link\Application\SharedKernel\MessageMetadata;
 use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerId;
 use Prooph\Link\ProcessManager\Model\MessageHandler;
 use Prooph\Link\ProcessManager\Model\ProcessingMetadata;
 use Prooph\Link\ProcessManager\Model\Workflow\Message;
 use Prooph\Link\ProcessManager\Model\Workflow\MessageType;
 use Prooph\Processing\Processor\NodeName;
-use Prooph\Processing\Type\String;
 use ProophTest\Link\ProcessManager\Mock\ProcessingType\Article;
 use ProophTest\Link\ProcessManager\TestCase;
 
@@ -74,7 +74,7 @@ final class MessageHandlerTest extends TestCase
     /**
      * @test
      */
-    function it_can_not_hanlde_a_process_data_message_as_source()
+    function it_can_not_handle_a_process_data_message_as_source()
     {
         $handler = $this->getMessageHandler(MessageHandler\DataDirection::DIRECTION_SOURCE);
 
@@ -88,19 +88,146 @@ final class MessageHandlerTest extends TestCase
     }
 
     /**
+     * @test
+     */
+    function it_can_handle_a_process_data_message_as_script()
+    {
+        $handler = $this->getMessageHandler(MessageHandler\DataDirection::DIRECTION_TARGET, MessageHandler\HandlerType::TYPE_SCRIPT);
+
+        $message = Message::emulateProcessingWorkflowMessage(
+            MessageType::processData(),
+            ArticlesCollection::prototype(),
+            ProcessingMetadata::noData()
+        );
+
+        $this->assertTrue($handler->canHandleMessage($message));
+    }
+
+    /**
+     * @test
+     */
+    function it_can_not_handle_a_collect_data_message_as_script()
+    {
+        $handler = $this->getMessageHandler(MessageHandler\DataDirection::DIRECTION_TARGET, MessageHandler\HandlerType::TYPE_SCRIPT);
+
+        $message = Message::emulateProcessingWorkflowMessage(
+            MessageType::collectData(),
+            ArticlesCollection::prototype(),
+            ProcessingMetadata::noData()
+        );
+
+        $this->assertFalse($handler->canHandleMessage($message));
+    }
+
+    /**
+     * @test
+     */
+    function it_can_not_handle_a_message_with_a_limit_definition_without_chunk_support()
+    {
+        $handler = $this->getMessageHandler(MessageHandler\DataDirection::DIRECTION_TARGET);
+
+        $message = Message::emulateProcessingWorkflowMessage(
+            MessageType::processData(),
+            ArticlesCollection::prototype(),
+            ProcessingMetadata::fromArray([MessageMetadata::LIMIT => 100])
+        );
+
+        $this->assertFalse($handler->canHandleMessage($message));
+    }
+
+    /**
+     * @test
+     */
+    function it_can_handle_a_message_with_a_limit_definition_because_it_has_chunk_support()
+    {
+        $handler = $this->getMessageHandler(
+            MessageHandler\DataDirection::DIRECTION_TARGET,
+            MessageHandler\HandlerType::TYPE_CONNECTOR,
+            ['chunk_support' => true]
+        );
+
+        $message = Message::emulateProcessingWorkflowMessage(
+            MessageType::processData(),
+            ArticlesCollection::prototype(),
+            ProcessingMetadata::fromArray([MessageMetadata::LIMIT => 100])
+        );
+
+        $this->assertTrue($handler->canHandleMessage($message));
+    }
+
+    /**
+     * @test
+     * @dataProvider provideMessages
+     */
+    function it_can_handle_all_message_types_as_a_callback(Message $message)
+    {
+        $handler = $this->getMessageHandler(MessageHandler\DataDirection::DIRECTION_TARGET, MessageHandler\HandlerType::TYPE_CALLBACK);
+
+        $this->assertTrue($handler->canHandleMessage($message));
+    }
+
+    function provideMessages()
+    {
+        return [
+            [
+                Message::emulateProcessingWorkflowMessage(
+                    MessageType::collectData(),
+                    ArticlesCollection::prototype(),
+                    ProcessingMetadata::noData()
+                )
+            ],
+            [
+                Message::emulateProcessingWorkflowMessage(
+                    MessageType::dataCollected(),
+                    ArticlesCollection::prototype(),
+                    ProcessingMetadata::noData()
+                )
+            ],
+            [
+                Message::emulateProcessingWorkflowMessage(
+                    MessageType::processData(),
+                    ArticlesCollection::prototype(),
+                    ProcessingMetadata::noData()
+                )
+            ],
+            [
+                Message::emulateProcessingWorkflowMessage(
+                    MessageType::dataProcessed(),
+                    ArticlesCollection::prototype(),
+                    ProcessingMetadata::noData()
+                )
+            ],
+        ];
+    }
+
+    /**
      * @param $dataDirection
+     * @param null|string $handlerType
+     * @param null|array $metadata
      * @return MessageHandler
      */
-    private function getMessageHandler($dataDirection)
+    private function getMessageHandler($dataDirection, $handlerType = null, array $metadata = null)
     {
+        if (! is_null($handlerType)) {
+            $handlerType = MessageHandler\HandlerType::fromString($handlerType);
+        } else {
+            $handlerType = MessageHandler\HandlerType::connector();
+        }
+
+        if (! is_null($metadata)) {
+            $metadata = ProcessingMetadata::fromArray($metadata);;
+        } else {
+            $metadata = ProcessingMetadata::noData();
+        }
+
         return MessageHandler::fromDefinition(
             MessageHandlerId::generate(),
             'Article Export',
             NodeName::defaultName(),
-            MessageHandler\HandlerType::connector(),
+            $handlerType,
             MessageHandler\DataDirection::fromString($dataDirection),
             MessageHandler\ProcessingTypes::support([ArticlesCollection::prototype(), Article::prototype()]),
-            ProcessingMetadata::fromArray(['limit' => 100]),
+            $metadata,
             Article::prototype(),
             MessageHandler\ProcessingId::fromString('sqlconnector:::example')
         );

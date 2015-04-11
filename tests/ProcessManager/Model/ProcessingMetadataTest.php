@@ -36,7 +36,7 @@ final class ProcessingMetadataTest extends TestCase
 
         $orgMetadata = clone $metadata;
 
-        $mergedMetadata = $metadata->merge(['merged' => ['meta' => 'data']]);
+        $mergedMetadata = $metadata->merge(ProcessingMetadata::fromArray(['merged' => ['meta' => 'data']]));
 
         $this->assertEquals(['meta' => 'data', 'merged' => ['meta' => 'data']], $mergedMetadata->toArray());
         $this->assertEquals($orgMetadata->toArray(), $metadata->toArray());

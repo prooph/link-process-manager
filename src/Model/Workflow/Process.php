@@ -10,6 +10,7 @@
  */
 namespace Prooph\Link\ProcessManager\Model\Workflow;
 
+use Assert\Assertion;
 use Prooph\Link\ProcessManager\Model\Task\TaskId;
 
 /**
@@ -48,13 +49,28 @@ final class Process
     }
 
     /**
+     * @param TaskId[] $taskList
      * @param ProcessId $processId
      * @param ProcessType $processType
+     * @return Process
      */
-    private function __construct(ProcessId $processId, ProcessType $processType)
+    public static function withTaskList(array $taskList, ProcessId $processId, ProcessType $processType)
+    {
+        Assertion::allIsInstanceOf($taskList, TaskId::class);
+
+        return new self($processId, $processType, $taskList);
+    }
+
+    /**
+     * @param ProcessId $processId
+     * @param ProcessType $processType
+     * @param TaskId[] $taskList
+     */
+    private function __construct(ProcessId $processId, ProcessType $processType, array $taskList = [])
     {
         $this->processType = $processType;
         $this->processId   = $processId;
+        $this->taskList    = $taskList;
     }
 
     /**
@@ -71,6 +87,22 @@ final class Process
     public function type()
     {
         return $this->processType;
+    }
+
+    /**
+     * @return TaskId[]
+     */
+    public function tasks()
+    {
+        return $this->taskList;
+    }
+
+    /**
+     * @param TaskId $taskId
+     */
+    public function addTask(TaskId $taskId)
+    {
+        $this->taskList[] = $taskId;
     }
 
     /**
