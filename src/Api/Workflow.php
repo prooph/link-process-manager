@@ -14,6 +14,7 @@ use Prooph\Link\Application\Service\AbstractRestController;
 use Prooph\Link\Application\Service\ActionController;
 use Prooph\Link\ProcessManager\Command\Workflow\CreateWorkflowWithName;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
+use Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder;
 use Prooph\ServiceBus\CommandBus;
 
 /**
@@ -28,6 +29,11 @@ final class Workflow extends AbstractRestController implements ActionController
      * @var CommandBus
      */
     private $commandBus;
+
+    /**
+     * @var WorkflowFinder
+     */
+    private $workflowFinder;
 
     /**
      * @param mixed $data
@@ -54,6 +60,20 @@ final class Workflow extends AbstractRestController implements ActionController
         );
     }
 
+    public function getList()
+    {
+        $workflows = $this->workflowFinder->findAll();
+
+        array_walk($workflows, function(&$workflow) {
+            $workflow['id'] = $workflow['uuid'];
+            unset($workflow['uuid']);
+        });
+
+        return [
+            'workflow_collection' => $workflows
+        ];
+    }
+
     /**
      * @param CommandBus $commandBus
      * @return void
@@ -61,5 +81,13 @@ final class Workflow extends AbstractRestController implements ActionController
     public function setCommandBus(CommandBus $commandBus)
     {
         $this->commandBus = $commandBus;
+    }
+
+    /**
+     * @param WorkflowFinder $workflowFinder
+     */
+    public function setWorkflowFinder(WorkflowFinder $workflowFinder)
+    {
+        $this->workflowFinder = $workflowFinder;
     }
 }

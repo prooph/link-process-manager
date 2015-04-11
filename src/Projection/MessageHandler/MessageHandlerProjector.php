@@ -10,7 +10,6 @@
  */
 namespace Prooph\Link\ProcessManager\Projection\MessageHandler;
 
-
 use Doctrine\DBAL\Connection;
 use Prooph\Link\Application\Service\ApplicationDbAware;
 use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerWasInstalled;
