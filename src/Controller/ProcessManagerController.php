@@ -17,6 +17,7 @@ use Prooph\Link\Application\SharedKernel\ProcessingTypeClass;
 use Prooph\Link\Application\SharedKernel\LocationTranslator;
 use Prooph\Link\Application\SharedKernel\ProcessToClientTranslator;
 use Prooph\Link\Application\SharedKernel\ScriptLocation;
+use Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder;
 use Prooph\Processing\Functional\Func;
 use Prooph\Processing\Message\MessageNameUtils;
 use Prooph\Processing\Processor\Definition;
@@ -39,6 +40,11 @@ use ZF\ContentNegotiation\ViewModel;
 final class ProcessManagerController extends AbstractQueryController implements TranslatorAwareController
 {
     /**
+     * @var WorkflowFinder
+     */
+    private $workflowFinder;
+
+    /**
      * @var ScriptLocation
      */
     private $scriptLocation;
@@ -60,7 +66,15 @@ final class ProcessManagerController extends AbstractQueryController implements 
 
     public function startAppAction()
     {
+        $workflows = $this->workflowFinder->findAll();
+
+        array_walk($workflows, function(&$workflow) {
+            $workflow['id'] = $workflow['uuid'];
+            unset($workflow['uuid']);
+        });
+
         $viewModel = new ViewModel([
+            'workflows' => $workflows,
             'processes' => array_values(Func::map(
                 $this->systemConfig->getProcessDefinitions(),
                 function($definition, $message) {
@@ -123,24 +137,7 @@ final class ProcessManagerController extends AbstractQueryController implements 
         return $viewModel;
     }
 
-    /**
-     * @return ViewModel
-     */
-    public function startTestAppAction()
-    {
-        //@TODO check development mode
-        $this->layout('prooph.link.process-manager/process-manager/app-test');
 
-        $fixtures = include(__DIR__ . '/../../tests/data/process-manager-data-fixtures.php');
-
-        $fixtures['view_addons'] = $this->viewAddons;
-
-        $viewModel = new ViewModel($fixtures);
-
-        $viewModel->setTemplate('prooph.link.process-manager/process-manager/app');
-
-        return $viewModel;
-    }
 
     /**
      * @param string $startMessage
@@ -176,6 +173,14 @@ final class ProcessManagerController extends AbstractQueryController implements 
     public function setTranslator(Translator $translator)
     {
         $this->i18nTranslator = $translator;
+    }
+
+    /**
+     * @param WorkflowFinder $workflowFinder
+     */
+    public function setWorkflowFinder(WorkflowFinder $workflowFinder)
+    {
+        $this->workflowFinder = $workflowFinder;
     }
 }
  

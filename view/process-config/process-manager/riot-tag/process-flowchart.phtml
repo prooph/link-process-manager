@@ -1,12 +1,12 @@
 <div class="row">
     <div class="col-md-8 col-lg-offset-2">
-        <p class="text-center text-btn-align" if="{ ! isEditingProcessName }"><strong>{ process_name.value }</strong></p>
-        <input name="process_name" if="{ isEditingProcessName }" type="text" class="form-control" placeholder="<?php echo $this->translate('Enter Process Name')?>" onchange="{ onPrcessNameChanged }" >
+        <p class="text-center text-btn-align" if="{ ! isEditingWorkflowName }"><strong>{ workflow_name.value }</strong></p>
+        <input name="workflow_name" if="{ isEditingWorkflowName }" type="text" class="form-control" placeholder="<?php echo $this->translate('Enter Workflow Name')?>" onchange="{ onWorkflowNameChanged }" >
         <p></p>
     </div>
     <div class="col-md-2">
-        <button class="btn btn-default" onclick="{ editProcessName }" if="{ ! isEditingProcessName }"><?php echo $this->translate('change')?></button>
-        <button class="btn btn-default" onclick="{ saveProcessName }" if="{ isEditingProcessName }"><?php echo $this->translate('save')?></button>
+        <button class="btn btn-default" onclick="{ editWorkflowName }" if="{ ! isEditingWorkflowName }"><?php echo $this->translate('change')?></button>
+        <button class="btn btn-default" onclick="{ saveWorkflowName }" if="{ isEditingWorkflowName }"><?php echo $this->translate('save')?></button>
     </div>
 </div>
 <div class="row">
@@ -22,9 +22,10 @@
 <script type="text/javascript">
     function (context) {
         var self = this,
-            isEditingProcessName = false;
+            isEditingWorkflowName = false;
 
         this.whiteboard = null;
+        this.workflow = {};
 
         var _createElement = function (name, id, uiMetadata, icon, iconType) {
             $elem = $("<div></div>").addClass("element").data("id", id);
@@ -38,9 +39,24 @@
             return $elem;
         }
 
-        this.initProcess = function () {
+        this.initWorkflow = function () {
             if (context.isNew) {
-                this.isEditingProcessName = true;
+                this.isEditingWorkflowName = true;
+
+                $.postJSON('<?php echo $this->url('prooph.link/process_config/api/workflow')  ?>', {
+                    "workflow" : {"name" : "Undefined"}
+                }).then(
+                    function(data, textStatus, request) {
+                        self.workflow['location'] = request.getResponseHeader('location');
+                        console.log(self.workflow);
+                        self.reloadWorkflow();
+                    },
+                    $.failNotify
+                );
+            } else {
+                this.workflow = _.findWhere(context.app.workflows, {id : context.workflowId});
+                this.workflow['location'] = '<?php echo $this->url('prooph.link/process_config/api/workflow')  ?>/' + context.workflowId;
+                this.workflow_name.value = this.workflow.name;
             }
         }
 
@@ -87,21 +103,40 @@
             });
         }
 
-        this.editProcessName = function () {
-            this.isEditingProcessName = true;
+        this.reloadWorkflow = function () {
+            $.getJSON(this.workflow.location).then(
+                function(data) {
+                    var workflowData = data.workflow;
+                    workflowData['location'] = self.workflow.location;
+                    self.workflow = workflowData;
+                    self.trigger("workflowWasReloaded");
+                },
+                $.failNotify
+            );
         }
 
-        this.saveProcessName = function () {
-            if (_.isEmpty(this.process_name.value)) return;
-
-            this.isEditingProcessName = false;
+        this.editWorkflowName = function () {
+            this.isEditingWorkflowName = true;
         }
 
-        this.onPrcessNameChanged = function () {
-            if (_.isEmpty(this.process_name.value)) {
-                this.isEditingProcessName = true;
+        this.saveWorkflowName = function () {
+            if (_.isEmpty(this.workflow_name.value)) return;
+
+            this.isEditingWorkflowName = false;
+
+            $.putJSON(this.workflow.location, {workflow : {name : this.workflow_name.value}}).then(
+                function () {
+                    self.workflow['name'] = self.workflow_name.value;
+                },
+                $.failNotify
+            );
+        }
+
+        this.onWorkflowNameChanged = function () {
+            if (_.isEmpty(this.workflow_name.value)) {
+                this.isEditingWorkflowName = true;
             } else {
-                this.isEditingProcessName = false;
+                this.saveWorkflowName();
             }
         }
 
@@ -151,7 +186,7 @@
         }
 
         this.on("mount", function () {
-            this.initProcess();
+            this.initWorkflow();
             this.initWhiteboard();
             this.update();
         });

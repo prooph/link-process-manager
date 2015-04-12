@@ -39,6 +39,8 @@ final class ProcessManagerControllerFactory implements FactoryInterface
 
         $con->setLocationTranslator($serviceLocator->getServiceLocator()->get('prooph.link.app.location_translator'));
 
+        $con->setWorkflowFinder($serviceLocator->getServiceLocator()->get(\Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder::class));
+
         return $con;
     }
 }

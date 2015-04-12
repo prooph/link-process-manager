@@ -13,6 +13,7 @@ $this->partial('prooph.link.process-manager/process-manager/partial/sidebar-left
 //Bootstrap ember app
 $this->inlineScript()->captureStart();
 
+$workflows    = json_encode($this->workflows);
 $processes    = json_encode($this->processes);
 $processTypes = json_encode($this->available_process_types);
 $messages     = json_encode($this->available_messages);
@@ -25,6 +26,7 @@ $manipulationScripts = json_encode($this->available_manipulation_scripts);
 echo <<<JS
 window.PM = Prooph.Link.App.create(
     {
+        workflows    : {$workflows},
         processes    : {$processes},
         processTypes : {$processTypes},
         messages     : {$messages},

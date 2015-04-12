@@ -23,6 +23,7 @@ use Prooph\Link\ProcessManager\Model\Workflow\ProcessWasAddedToWorkflow;
 use Prooph\Link\ProcessManager\Model\Workflow\StartMessageWasAssignedToWorkflow;
 use Prooph\Link\ProcessManager\Model\Workflow\TaskWasAddedToProcess;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
+use Prooph\Link\ProcessManager\Model\Workflow\WorkflowNameWasChanged;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasCreated;
 use Prooph\Processing\Processor\NodeName;
 use Prooph\Processing\Type\Description\NativeType;
@@ -91,6 +92,19 @@ final class Workflow extends AggregateRoot
         $instance->recordThat(WorkflowWasCreated::on($nodeName, $workflowId, $workflowName));
 
         return $instance;
+    }
+
+    /**
+     * @param $name
+     */
+    public function changeName($name)
+    {
+        Assertion::string($name);
+        Assertion::notEmpty($name);
+
+        $oldName = $this->name();
+
+        $this->recordThat(WorkflowNameWasChanged::record($this->workflowId(), $oldName, $name));
     }
 
     /**
@@ -329,5 +343,13 @@ final class Workflow extends AggregateRoot
                 return;
             }
         }
+    }
+
+    /**
+     * @param WorkflowNameWasChanged $event
+     */
+    protected function whenWorkflowNameWasChanged(WorkflowNameWasChanged $event)
+    {
+        $this->name = $event->newName();
     }
 }

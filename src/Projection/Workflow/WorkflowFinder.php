@@ -37,6 +37,15 @@ final class WorkflowFinder implements ApplicationDbAware
     }
 
     /**
+     * @param string $id
+     * @return array
+     */
+    public function find($id)
+    {
+        return $this->connection->fetchAssoc('SELECT * FROM link_pm_read_workflow WHERE uuid = :uuid', ['uuid' => $id]);
+    }
+
+    /**
      * @param Connection $connection
      * @return mixed
      */

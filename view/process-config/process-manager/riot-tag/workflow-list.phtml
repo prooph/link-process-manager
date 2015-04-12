@@ -1,0 +1,9 @@
+<div class="list-group text-center">
+    <a each="{ workflows }" class="list-group-item" href="#workflows/{ id }/show">{ name }</a>
+    <a href="#workflows/create" class="list-group-item list-group-item-success text-uppercase"><strong><?php echo $this->translate('configure new process')?></strong></a>
+</div>
+<script type="text/javascript">
+    function (context) {
+        this.workflows = context.app.workflows;
+    }
+</script>

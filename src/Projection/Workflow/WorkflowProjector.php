@@ -12,6 +12,7 @@ namespace Prooph\Link\ProcessManager\Projection\Workflow;
 
 use Doctrine\DBAL\Connection;
 use Prooph\Link\Application\Service\ApplicationDbAware;
+use Prooph\Link\ProcessManager\Model\Workflow\WorkflowNameWasChanged;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasCreated;
 
 /**
@@ -42,6 +43,14 @@ final class WorkflowProjector implements ApplicationDbAware
             'name' => $event->workflowName(),
             'node_name' => $event->processingNodeName()->toString()
         ]);
+    }
+
+    /**
+     * @param WorkflowNameWasChanged $event
+     */
+    public function onWorkflowNameWasChanged(WorkflowNameWasChanged $event)
+    {
+        $this->connection->update($this->workflowTable, ['name' => $event->newName()], ['uuid' => $event->workflowId()->toString()]);
     }
 
     /**

@@ -110,7 +110,7 @@ return array(
             'prooph.link.process-manager/process-manager/riot-tag/process-common-sidebar'     => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-common-sidebar.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-flowchart-sidebar'  => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-flowchart-sidebar.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-flowchart'  => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-flowchart.phtml',
-            'prooph.link.process-manager/process-manager/riot-tag/process-list'       => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-list.phtml',
+            'prooph.link.process-manager/process-manager/riot-tag/workflow-list'      => __DIR__ . '/../view/process-config/process-manager/riot-tag/workflow-list.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-create'     => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-create.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-tasklist'   => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-tasklist.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/task-edit'          => __DIR__ . '/../view/process-config/process-manager/riot-tag/task-edit.phtml',
@@ -135,7 +135,7 @@ return array(
                     'prooph.link.process-manager/process-manager/riot-tag/process-common-sidebar',
                     'prooph.link.process-manager/process-manager/riot-tag/process-flowchart-sidebar',
                     'prooph.link.process-manager/process-manager/riot-tag/process-flowchart',
-                    'prooph.link.process-manager/process-manager/riot-tag/process-list',
+                    'prooph.link.process-manager/process-manager/riot-tag/workflow-list',
                     'prooph.link.process-manager/process-manager/riot-tag/process-create',
                     'prooph.link.process-manager/process-manager/riot-tag/process-tasklist',
                     'prooph.link.process-manager/process-manager/riot-tag/task-edit',
@@ -152,6 +152,7 @@ return array(
     'service_manager' => [
         'factories' => [
             \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithNameHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\CreateWorkflowWithNameHandlerFactory::class,
+            \Prooph\Link\ProcessManager\Model\Workflow\ChangeWorkflowNameHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\ChangeWorkflowNameHandlerFactory::class,
             \Prooph\Link\ProcessManager\Model\MessageHandler\InstallMessageHandlerHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\InstallMessageHandlerHandlerFactory::class,
             'prooph.link.pm.workflow_collection' => \Prooph\Link\ProcessManager\Infrastructure\Factory\WorkflowCollectionFactory::class,
             'prooph.link.pm.message_handler_collection' => \Prooph\Link\ProcessManager\Infrastructure\Factory\MessageHandlerCollectionFactory::class,
@@ -178,15 +179,19 @@ return array(
     'prooph.psb' => [
         'command_router_map' => [
             \Prooph\Link\ProcessManager\Command\Workflow\CreateWorkflowWithName::class => \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithNameHandler::class,
+            \Prooph\Link\ProcessManager\Command\Workflow\ChangeWorkflowName::class => \Prooph\Link\ProcessManager\Model\Workflow\ChangeWorkflowNameHandler::class,
             \Prooph\Link\ProcessManager\Command\MessageHandler\InstallMessageHandler::class => \Prooph\Link\ProcessManager\Model\MessageHandler\InstallMessageHandlerHandler::class,
         ],
         'event_router_map' => [
             \Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasCreated::class => [
                 \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class,
             ],
+            \Prooph\Link\ProcessManager\Model\Workflow\WorkflowNameWasChanged::class => [
+                \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class
+            ],
             \Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerWasInstalled::class => [
                 \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerProjector::class
-            ]
+            ],
         ],
     ],
     'zf-content-negotiation' => [
