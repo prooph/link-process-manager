@@ -68,11 +68,6 @@ final class ProcessManagerController extends AbstractQueryController implements 
     {
         $workflows = $this->workflowFinder->findAll();
 
-        array_walk($workflows, function(&$workflow) {
-            $workflow['id'] = $workflow['uuid'];
-            unset($workflow['uuid']);
-        });
-
         $viewModel = new ViewModel([
             'workflows' => $workflows,
             'processes' => array_values(Func::map(

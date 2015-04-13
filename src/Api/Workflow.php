@@ -67,11 +67,6 @@ final class Workflow extends AbstractRestController implements ActionController
     {
         $workflows = $this->workflowFinder->findAll();
 
-        array_walk($workflows, function(&$workflow) {
-            $workflow['id'] = $workflow['uuid'];
-            unset($workflow['uuid']);
-        });
-
         return [
             'workflow_collection' => $workflows
         ];
@@ -84,9 +79,6 @@ final class Workflow extends AbstractRestController implements ActionController
         if (is_null($workflow)) {
             return $this->apiProblem(404, "Workflow not found");
         }
-
-        $workflow['id'] = $workflow['uuid'];
-        unset($workflow['uuid']);
 
         return ['workflow' => $workflow];
     }

@@ -12,6 +12,7 @@ namespace Prooph\Link\ProcessManager\Projection\Workflow;
 
 use Doctrine\DBAL\Connection;
 use Prooph\Link\Application\Service\ApplicationDbAware;
+use Prooph\Link\ProcessManager\Projection\Tables;
 
 /**
  * Class WorkflowFinder
@@ -33,7 +34,7 @@ final class WorkflowFinder implements ApplicationDbAware
      */
     public function findAll()
     {
-        return $this->connection->fetchAll('SELECT * FROM link_pm_read_workflow');
+        return $this->connection->fetchAll('SELECT * FROM ' . Tables::WORKFLOW);
     }
 
     /**
@@ -42,7 +43,7 @@ final class WorkflowFinder implements ApplicationDbAware
      */
     public function find($id)
     {
-        return $this->connection->fetchAssoc('SELECT * FROM link_pm_read_workflow WHERE uuid = :uuid', ['uuid' => $id]);
+        return $this->connection->fetchAssoc('SELECT * FROM '.Tables::WORKFLOW.' WHERE id = :id', ['id' => $id]);
     }
 
     /**

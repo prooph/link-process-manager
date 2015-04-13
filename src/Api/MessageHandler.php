@@ -16,6 +16,7 @@ use Prooph\Link\ProcessManager\Command\MessageHandler\InstallMessageHandler;
 use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerId;
 use Prooph\Link\ProcessManager\Model\MessageHandler\ProcessingTypes;
 use Prooph\Link\ProcessManager\Model\ProcessingMetadata;
+use Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerFinder;
 use Prooph\ServiceBus\CommandBus;
 
 final class MessageHandler extends AbstractRestController implements ActionController
@@ -24,6 +25,11 @@ final class MessageHandler extends AbstractRestController implements ActionContr
      * @var CommandBus
      */
     private $commandBus;
+
+    /**
+     * @var MessageHandlerFinder
+     */
+    private $messageHandlerFinder;
 
     public function create($data)
     {
@@ -71,6 +77,30 @@ final class MessageHandler extends AbstractRestController implements ActionContr
         );
     }
 
+    public function get($id)
+    {
+        $handler = $this->messageHandlerFinder->find($id);
+
+        if (! $handler) {
+            return $this->apiProblem(404, "Message handler not found");
+        }
+
+        return ["message_handler" => $handler];
+    }
+
+    public function getList()
+    {
+        $processingId = $this->getRequest()->getQuery('processing_id', null);
+
+        if ($processingId) {
+            $handlers = $this->messageHandlerFinder->findByProcessingId($processingId);
+        } else {
+            $handlers = $this->messageHandlerFinder->findAll();
+        }
+
+        return ["message_handler_collection" => $handlers];
+    }
+
     /**
      * @param CommandBus $commandBus
      * @return void
@@ -78,5 +108,13 @@ final class MessageHandler extends AbstractRestController implements ActionContr
     public function setCommandBus(CommandBus $commandBus)
     {
         $this->commandBus = $commandBus;
+    }
+
+    /**
+     * @param MessageHandlerFinder $messageHandlerFinder
+     */
+    public function setFinder(MessageHandlerFinder $messageHandlerFinder)
+    {
+        $this->messageHandlerFinder = $messageHandlerFinder;
     }
 }

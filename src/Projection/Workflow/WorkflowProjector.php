@@ -14,6 +14,7 @@ use Doctrine\DBAL\Connection;
 use Prooph\Link\Application\Service\ApplicationDbAware;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowNameWasChanged;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasCreated;
+use Prooph\Link\ProcessManager\Projection\Tables;
 
 /**
  * Class WorkflowProjector
@@ -29,17 +30,12 @@ final class WorkflowProjector implements ApplicationDbAware
     private $connection;
 
     /**
-     * @var string
-     */
-    private $workflowTable = "link_pm_read_workflow";
-
-    /**
      * @param WorkflowWasCreated $event
      */
     public function onWorkflowWasCreated(WorkflowWasCreated $event)
     {
-        $this->connection->insert($this->workflowTable, [
-            'uuid' => $event->workflowId()->toString(),
+        $this->connection->insert(Tables::WORKFLOW, [
+            'id' => $event->workflowId()->toString(),
             'name' => $event->workflowName(),
             'node_name' => $event->processingNodeName()->toString()
         ]);
@@ -50,7 +46,7 @@ final class WorkflowProjector implements ApplicationDbAware
      */
     public function onWorkflowNameWasChanged(WorkflowNameWasChanged $event)
     {
-        $this->connection->update($this->workflowTable, ['name' => $event->newName()], ['uuid' => $event->workflowId()->toString()]);
+        $this->connection->update(Tables::WORKFLOW, ['name' => $event->newName()], ['id' => $event->workflowId()->toString()]);
     }
 
     /**

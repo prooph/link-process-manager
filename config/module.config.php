@@ -176,18 +176,17 @@ return array(
             \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class => \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class,
             \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder::class => \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder::class,
             \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerProjector::class => \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerProjector::class,
+            \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerFinder::class => \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerFinder::class,
         ]
     ],
     'controllers' => array(
-        'invokables' => [
-            \Prooph\Link\ProcessManager\Api\MessageHandler::class => \Prooph\Link\ProcessManager\Api\MessageHandler::class,
-        ],
         'factories' => array(
             'Prooph\Link\ProcessManager\Controller\DashboardWidget' => \Prooph\Link\ProcessManager\Controller\Factory\DashboardWidgetControllerFactory::class,
             'Prooph\Link\ProcessManager\Controller\ProcessManager' => \Prooph\Link\ProcessManager\Controller\Factory\ProcessManagerControllerFactory::class,
             'Prooph\Link\ProcessManager\Api\Process' => \Prooph\Link\ProcessManager\Api\Factory\ProcessFactory::class,
             \Prooph\Link\ProcessManager\Api\Workflow::class => \Prooph\Link\ProcessManager\Api\Factory\WorkflowFactory::class,
             \Prooph\Link\ProcessManager\Api\Flowchart::class => \Prooph\Link\ProcessManager\Api\Factory\FlowchartFactory::class,
+            \Prooph\Link\ProcessManager\Api\MessageHandler::class => \Prooph\Link\ProcessManager\Api\Factory\MessageHandlerFactory::class,
         ),
     ),
     'prooph.psb' => [

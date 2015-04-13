@@ -14,6 +14,7 @@ use Doctrine\DBAL\Connection;
 use Prooph\Link\Application\Service\ApplicationDbAware;
 use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerWasInstalled;
 use Prooph\Link\ProcessManager\Model\MessageHandler\ProcessingTypes;
+use Prooph\Link\ProcessManager\Projection\Tables;
 
 final class MessageHandlerProjector implements ApplicationDbAware
 {
@@ -23,19 +24,14 @@ final class MessageHandlerProjector implements ApplicationDbAware
     private $connection;
 
     /**
-     * @var string
-     */
-    private $messageHandlerTable = "link_pm_read_message_handler";
-
-    /**
      * @param MessageHandlerWasInstalled $event
      */
     public function onMessageHandlerWasInstalled(MessageHandlerWasInstalled $event)
     {
         $processingTypes = $event->supportedProcessingTypes()->toArray();
 
-        $this->connection->insert($this->messageHandlerTable, [
-            'uuid' => $event->messageHandlerId()->toString(),
+        $this->connection->insert(Tables::MESSAGE_HANDLER, [
+            'id' => $event->messageHandlerId()->toString(),
             'name' => $event->messageHandlerName(),
             'node_name' => $event->processingNodeName()->toString(),
             'type' => $event->handlerType()->toString(),
