@@ -22,13 +22,30 @@
 <script type="text/javascript">
     function (context) {
         var self = this,
-            isEditingWorkflowName = false;
+            isEditingWorkflowName = false,
+            whiteboardReady = false,
+            whiteboardReadyCBs = [],
+            jsPlumbEndpoint = "Dot",
+            jsPlumbSourcePointStyle = { radius : 5, cssClass : "source-point", hoverClass : "source-point-hover"},
+            jsPlumbTargetPointStyle = { radius : 5, cssClass : "target-point", hoverClass : "target-point-hover"};
 
         this.whiteboard = null;
+        this.flowchartConfig = null;
+        this.flowchartIsLoaded = false;
         this.workflow = {};
+        this.elements = [];
 
-        var _createElement = function (name, id, uiMetadata, icon, iconType) {
-            $elem = $("<div></div>").addClass("element").data("id", id);
+        //Private methods
+
+        /**
+         * Create html element representing an item on the whiteboard
+         *
+         * @internal
+         */
+        var _createElement = function (elementType, name, id, uiMetadataRiotTag, icon, iconType) {
+            var eleId = "whiteboard_ele_" + self.elements.length;
+
+            $elem = $("<div></div>").addClass("element").data("id", id).attr('id', eleId);
 
             if (iconType === "glyphicon") {
                 $elem.append($("<span></span>").addClass("element-icon, glyphicon").addClass(icon));
@@ -36,20 +53,48 @@
 
             $elem.append($("<p></p>").addClass("element-label").html(name));
 
-            return $elem;
-        }
+            self.elements.push({
+                'id' : id,
+                'name' : name,
+                'element_id' : eleId,
+                'element_type' : elementType,
+                'ui_metadata_riot_tag' : uiMetadataRiotTag,
+                'icon' : icon,
+                'icon_type' : iconType
+            });
 
+            return $elem;
+        },
+        _whiteboardReady = function(cb) {
+            if (whiteboardReady) {
+                cb();
+            } else {
+                whiteboardReadyCBs.push(cb);
+            }
+        };
+
+        //Initializers
+
+        /**
+         * Initialize workflow entity on riot tag mount
+         */
         this.initWorkflow = function () {
             if (context.isNew) {
                 this.isEditingWorkflowName = true;
+
+                $( window ).unload(function() {
+                    if (window.location.hash == "#workflows/create") {
+                        window.location.hash = "workflows/" + self.workflow.id + "/show";
+                    }
+                });
 
                 $.postJSON('<?php echo $this->url('prooph.link/process_config/api/workflow')  ?>', {
                     "workflow" : {"name" : "Undefined"}
                 }).then(
                     function(data, textStatus, request) {
                         self.workflow['location'] = request.getResponseHeader('location');
-                        console.log(self.workflow);
                         self.reloadWorkflow();
+                        self.one("workflowWasReloaded", self.createFlowchartConfig);
                     },
                     $.failNotify
                 );
@@ -57,9 +102,16 @@
                 this.workflow = _.findWhere(context.app.workflows, {id : context.workflowId});
                 this.workflow['location'] = '<?php echo $this->url('prooph.link/process_config/api/workflow')  ?>/' + context.workflowId;
                 this.workflow_name.value = this.workflow.name;
+
+                this.loadFlowchart();
             }
         }
 
+        /**
+         * Initialize drawing area on riot tag mount
+         *
+         * @triggers whiteboardIsReady
+         */
         this.initWhiteboard = function () {
             jsPlumb.ready(function () {
                 self.whiteboard = jsPlumb.getInstance({
@@ -72,13 +124,15 @@
 
                 self.whiteboard.makeSource("whiteboard-start-point", {
                     maxConnections: 1,
-                    endpoint:["Dot", { radius : 5, cssClass : "source-point", hoverClass : "source-point-hover"}],
+                    endpoint:[jsPlumbEndpoint, jsPlumbSourcePointStyle],
                     anchor : "Right"
                 });
 
                 self.whiteboard.bind("connection", _.bind(self.applyConnection, self));
+                self.whiteboard.bind("connectionDetached", _.bind(self.removeConnection, self));
 
-                self.trigger("whiteboardIsReady")
+                self.trigger("whiteboardIsReady");
+                whiteboardReady = true;
             });
 
             $("#whiteboard").droppable({
@@ -92,17 +146,31 @@
 
                     switch (elem.data("element-type")) {
                         case "connector":
-                            self.addConnector(x, y, elem.text(), elem.data("id"),
+                            self.addConnector(x, y, elem.text(), elem.data("processingid"),
                                 elem.data("ui-metadata-riot-tag"), elem.data("icon"), elem.data("icon-type"));
                             break;
                         default:
                             throw "Unknown element type dropped. Got " + elem.data("element-type");
                     }
 
+                    self.updateFlowchartConfig();
                 }
             });
         }
 
+        this.one("whiteboardIsReady", function () {
+            _.each(whiteboardReadyCBs, function (cb) {
+                cb();
+            });
+        });
+
+        //Workflow operations
+
+        /**
+         * Load workflow from server and replace workflow entity with fetched data
+         *
+         * @triggers workflowWasReloaded
+         */
         this.reloadWorkflow = function () {
             $.getJSON(this.workflow.location).then(
                 function(data) {
@@ -115,10 +183,16 @@
             );
         }
 
+        /**
+         * Enable workflow editing mode
+         */
         this.editWorkflowName = function () {
             this.isEditingWorkflowName = true;
         }
 
+        /**
+         * Save workflow name to server and apply it to workflow entity on success
+         */
         this.saveWorkflowName = function () {
             if (_.isEmpty(this.workflow_name.value)) return;
 
@@ -132,6 +206,9 @@
             );
         }
 
+        /**
+         * Event handler for workflow_name changed event
+         */
         this.onWorkflowNameChanged = function () {
             if (_.isEmpty(this.workflow_name.value)) {
                 this.isEditingWorkflowName = true;
@@ -140,9 +217,146 @@
             }
         }
 
-        this.addConnector = function (xPos, yPos, name, id, uiMetadata, icon, iconType) {
+        //Flowchart operations
 
-            $con = _createElement(name, id, uiMetadata, icon, iconType);
+        /**
+         * This method creates a flowchart configuration for a new workflow on the server
+         * It is triggered once after a new workflow was created on the server and the workflow
+         * was successfully reloaded.
+         *
+         * @triggers flowchartConfigWasCreated
+         */
+        this.createFlowchartConfig = function () {
+            $.postJSON(
+                '<?php echo $this->url('prooph.link/process_config/api/flowchart')  ?>',
+                {flowchart :
+                    {
+                        workflow_id : this.workflow.id,
+                        config : { connections : [], elements : []}
+                    }
+                }
+            ).then(
+                function (data, textStatus, request) {
+                    $.getJSON(request.getResponseHeader('location')).then(
+                        function (data) {
+                            self.flowchart = data.flowchart;
+                            self.trigger("flowchartConfigWasCreated");
+                        },
+                        $.failNotify
+                    );
+                },
+                $.failNotify
+            );
+        }
+
+        /**
+         * Collect current elements and connections on the whiteboard
+         * and store it all together in a flowchart config on the server
+         */
+        this.updateFlowchartConfig = function () {
+
+            var elements = [];
+            var connections = [];
+
+            _.each(this.elements, function (element) {
+                var eleData = _.clone(element);
+                var $ele = $("#" + element.element_id);
+                eleData.x_pos = $ele.position().left;
+                eleData.y_pos = $ele.position().top;
+
+                elements.push(eleData);
+            });
+
+            _.each(this.whiteboard.getConnections(), function (connection) {
+                connections.push({
+                    'source' : connection.sourceId,
+                    'target' : connection.targetId
+                });
+            });
+
+
+            $.putJSON('<?php echo $this->url('prooph.link/process_config/api/flowchart') ?>/' + self.workflow.id, {
+                'flowchart' : {
+                    'workflow_id' : self.workflow.id,
+                    'config' : {
+                        'elements' : elements,
+                        'connections' : connections
+                    }
+                }
+            });
+        }
+
+        /**
+         * Load flowchart config from server and add elements and connections to whiteboard
+         */
+        this.loadFlowchart = function () {
+            $.getJSON('<?php echo $this->url('prooph.link/process_config/api/flowchart') ?>/' + this.workflow.id).then(
+                function (data) {
+                    _whiteboardReady(function () {
+                        self.whiteboard.setSuspendDrawing(true);
+
+                        _.each(data.flowchart.config.elements, function (element) {
+                            switch (element.element_type) {
+                                case "connector":
+                                    self.addConnector(
+                                        element.x_pos,
+                                        element.y_pos,
+                                        element.name,
+                                        element.id,
+                                        element.ui_metadata_riot_tag,
+                                        element.icon,
+                                        element.icon_type
+                                    );
+                                    break;
+                                default:
+                                    $.appErrorNotify("Can not draw element " + element.name + ". Unknown element type: " + element.element_type);
+                            }
+                        });
+
+                        _.each(data.flowchart.config.connections, function (conn) {
+                            var epS = self.whiteboard.selectEndpoints({source: conn.source}).get(0),
+                                epT = self.whiteboard.selectEndpoints({target: conn.target}).get(0);
+
+                            if (epS) {
+                                self.whiteboard.connect({uuids: [epS.getUuid(), epT.getUuid()]});
+                            } else {
+                                //Handle special case of start point which has no endpoint
+                                var epSUuid = "ep_s_"+conn.source;
+                                self.whiteboard.addEndpoint(conn.source, {
+                                    isSource:true,
+                                    endpoint:[jsPlumbEndpoint, jsPlumbSourcePointStyle],
+                                    anchor : "Right",
+                                    maxConnections: 150,
+                                    uuid: epSUuid
+                                });
+                                self.whiteboard.connect({uuids: [epSUuid, epT.getUuid()]});
+                            }
+                        });
+
+                        self.whiteboard.setSuspendDrawing(false, true);
+                        self.flowchartIsLoaded = true;
+                    });
+                },
+                $.failNotify
+            );
+        }
+
+        //Connector operations
+
+        /**
+         * Add connector to whiteboard
+         *
+         * @param xPos int
+         * @param yPos int
+         * @param name string
+         * @param processingId string
+         * @param uiMetadataRiotTag string
+         * @param icon string
+         * @param iconType string
+         */
+        this.addConnector = function (xPos, yPos, name, processingId, uiMetadataRiotTag, icon, iconType) {
+
+            $con = _createElement('connector', name, processingId, uiMetadataRiotTag, icon, iconType);
 
             $con.addClass("connector").css('left', xPos).css('top', yPos);
 
@@ -154,36 +368,34 @@
 
             this.whiteboard.addEndpoint($con.attr("id"), {
                 isSource:true,
-                endpoint:["Dot", { radius : 5, cssClass : "source-point", hoverClass : "source-point-hover"}],
-                anchor : "Bottom",
-                maxConnections: 150
-            });
-
-            this.whiteboard.addEndpoint($con.attr("id"), {
-                isSource:true,
-                endpoint:["Dot", { radius : 5, cssClass : "source-point", hoverClass : "source-point-hover"}],
+                endpoint:[jsPlumbEndpoint, jsPlumbSourcePointStyle],
                 anchor : "Right",
-                maxConnections: 150
+                maxConnections: 150,
+                uuid: "ep_s_"+$con.attr("id")
             });
 
             this.whiteboard.addEndpoint($con.attr("id"), {
                 isTarget:true,
-                endpoint:["Dot", { radius : 5, cssClass : "target-point", hoverClass : "target-point-hover"}],
-                anchor : "Top",
-                maxConnections : 1
-            });
-
-            this.whiteboard.addEndpoint($con.attr("id"), {
-                isTarget:true,
-                endpoint:["Dot", { radius : 5, cssClass : "target-point", hoverClass : "target-point-hover"}],
+                endpoint:[jsPlumbEndpoint, jsPlumbTargetPointStyle],
                 anchor : "Left",
-                maxConnections : 1
+                maxConnections : 1,
+                uuid: "ep_t_"+$con.attr("id")
             });
         }
 
         this.applyConnection = function(jsPlumbInfo) {
-            console.log("apply connection ", jsPlumbInfo);
+            if (this.flowchartIsLoaded) {
+                console.log("apply connection ", jsPlumbInfo);
+                this.updateFlowchartConfig();
+            }
         }
+
+        this.removeConnection = function(jsPlumbInfo) {
+            console.log("remove connection: ", jsPlumbInfo);
+            this.updateFlowchartConfig();
+        }
+
+        //RiotJs events
 
         this.on("mount", function () {
             this.initWorkflow();

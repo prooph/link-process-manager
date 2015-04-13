@@ -71,6 +71,18 @@ return array(
                                             ]
                                         ]
                                     ],
+                                    'flowchart' => [
+                                        'type' => 'Segment',
+                                        'options' => [
+                                            'route' => '/flowcharts[/:id]',
+                                            'constraints' => array(
+                                                'id' => '.+',
+                                            ),
+                                            'defaults' => [
+                                                'controller' => \Prooph\Link\ProcessManager\Api\Flowchart::class,
+                                            ]
+                                        ]
+                                    ],
                                     'process' => [
                                         'type' => 'Segment',
                                         'options' => [
@@ -160,6 +172,7 @@ return array(
         ],
         'invokables' => [
             'prooph.link.pm.processing_node_list' => \Prooph\Link\ProcessManager\Model\ProcessingNodeList::class,
+            'prooph.link.pm.flowchart_store' => \Prooph\Link\ProcessManager\Infrastructure\FlowchartStore::class,
             \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class => \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class,
             \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder::class => \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder::class,
             \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerProjector::class => \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerProjector::class,
@@ -174,6 +187,7 @@ return array(
             'Prooph\Link\ProcessManager\Controller\ProcessManager' => \Prooph\Link\ProcessManager\Controller\Factory\ProcessManagerControllerFactory::class,
             'Prooph\Link\ProcessManager\Api\Process' => \Prooph\Link\ProcessManager\Api\Factory\ProcessFactory::class,
             \Prooph\Link\ProcessManager\Api\Workflow::class => \Prooph\Link\ProcessManager\Api\Factory\WorkflowFactory::class,
+            \Prooph\Link\ProcessManager\Api\Flowchart::class => \Prooph\Link\ProcessManager\Api\Factory\FlowchartFactory::class,
         ),
     ),
     'prooph.psb' => [
@@ -199,16 +213,19 @@ return array(
             'Prooph\Link\ProcessManager\Api\Process' => 'Json',
             \Prooph\Link\ProcessManager\Api\Workflow::class => 'Json',
             \Prooph\Link\ProcessManager\Api\MessageHandler::class => 'Json',
+            \Prooph\Link\ProcessManager\Api\Flowchart::class => 'Json',
         ],
         'accept_whitelist' => [
             'Prooph\Link\ProcessManager\Api\Process' => ['application/json'],
             \Prooph\Link\ProcessManager\Api\Workflow::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\MessageHandler::class => ['application/json'],
+            \Prooph\Link\ProcessManager\Api\Flowchart::class => ['application/json'],
         ],
         'content_type_whitelist' => [
             'Prooph\Link\ProcessManager\Api\Process' => ['application/json'],
             \Prooph\Link\ProcessManager\Api\Workflow::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\MessageHandler::class => ['application/json'],
+            \Prooph\Link\ProcessManager\Api\Flowchart::class => ['application/json'],
         ],
     ],
 );
