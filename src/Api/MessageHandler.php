@@ -41,6 +41,9 @@ final class MessageHandler extends AbstractRestController implements ActionContr
         if (! array_key_exists('node_name', $data)) return $this->apiProblem(422, "No node_name given for the message handler");
         if (! array_key_exists('type', $data)) return $this->apiProblem(422, "No type given for the message handler");
         if (! array_key_exists('data_direction', $data)) return $this->apiProblem(422, "No data_direction given for the message handler");
+        if (! array_key_exists('metadata_riot_tag', $data)) return $this->apiProblem(422, "No metadata_riot_tag given for the message handler");
+        if (! array_key_exists('icon', $data)) return $this->apiProblem(422, "No icon given for the message handler");
+        if (! array_key_exists('icon_type', $data)) return $this->apiProblem(422, "No icon_type given for the message handler");
 
         if (!isset($data['processing_types'])) {
             $data['processing_types'] = ProcessingTypes::SUPPORT_ALL;
@@ -68,12 +71,15 @@ final class MessageHandler extends AbstractRestController implements ActionContr
             $data['data_direction'],
             $data['processing_types'],
             $data['processing_metadata'],
+            $data['metadata_riot_tag'],
+            $data['icon'],
+            $data['icon_type'],
             $data['preferred_type'],
             $data['processing_id']
         ));
 
         return $this->location(
-            $this->url()->fromRoute('prooph.link/process_config/api/message-handler', ['id' => $messageHandlerId->toString()])
+            $this->url()->fromRoute('prooph.link/process_config/api/message_handler', ['id' => $messageHandlerId->toString()])
         );
     }
 

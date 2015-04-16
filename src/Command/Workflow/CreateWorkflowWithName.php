@@ -12,6 +12,7 @@ namespace Prooph\Link\ProcessManager\Command\Workflow;
 
 use Assert\Assertion;
 use Prooph\Link\Application\Service\TransactionCommand;
+use Prooph\Link\Application\Service\TransactionIdGenerator;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
 use Prooph\ServiceBus\Message\MessageNameProvider;
 
@@ -25,6 +26,8 @@ use Prooph\ServiceBus\Message\MessageNameProvider;
  */
 final class CreateWorkflowWithName implements TransactionCommand, MessageNameProvider
 {
+    use TransactionIdGenerator;
+
     /**
      * @var WorkflowId
      */

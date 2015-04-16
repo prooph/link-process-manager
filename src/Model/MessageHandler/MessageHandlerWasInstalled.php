@@ -11,6 +11,8 @@
 namespace Prooph\Link\ProcessManager\Model\MessageHandler;
 
 use Prooph\EventSourcing\AggregateChanged;
+use Prooph\Link\Application\Service\TransactionEvent;
+use Prooph\Link\Application\Service\TransactionIdAware;
 use Prooph\Link\ProcessManager\Model\ProcessingMetadata;
 use Prooph\Processing\Processor\NodeName;
 use Prooph\Processing\Type\Prototype;
@@ -21,8 +23,10 @@ use Prooph\Processing\Type\Prototype;
  * @package Prooph\Link\ProcessManager\Model\MessageHandler
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class MessageHandlerWasInstalled extends AggregateChanged
+final class MessageHandlerWasInstalled extends AggregateChanged implements TransactionEvent
 {
+    use TransactionIdAware;
+
     private $messageHandlerId;
 
     private $processingNodeName;
@@ -47,6 +51,9 @@ final class MessageHandlerWasInstalled extends AggregateChanged
      * @param DataDirection $dataDirection
      * @param ProcessingTypes $processingTypes
      * @param ProcessingMetadata $processingMetadata
+     * @param string $metadataRiotTag
+     * @param string $icon
+     * @param string $iconType
      * @param Prototype $preferredProcessingType
      * @param ProcessingId $processingId
      * @return MessageHandlerWasInstalled
@@ -59,6 +66,9 @@ final class MessageHandlerWasInstalled extends AggregateChanged
         DataDirection $dataDirection,
         ProcessingTypes $processingTypes,
         ProcessingMetadata $processingMetadata,
+        $metadataRiotTag,
+        $icon,
+        $iconType,
         Prototype $preferredProcessingType = null,
         ProcessingId $processingId = null
     ) {
@@ -71,6 +81,9 @@ final class MessageHandlerWasInstalled extends AggregateChanged
                 'data_direction' => $dataDirection->toString(),
                 'supported_processing_types' => $processingTypes->toArray(),
                 'processing_metadata' => $processingMetadata->toArray(),
+                'metadata_riot_tag' => $metadataRiotTag,
+                'icon' => $icon,
+                'icon_type' => $iconType,
                 'preferred_processing_type' => ($preferredProcessingType)? $preferredProcessingType->of() : null,
                 'processing_id' => ($processingId)? $processingId->toString() : null,
             ]
@@ -160,6 +173,30 @@ final class MessageHandlerWasInstalled extends AggregateChanged
             $this->processingMetadata = ProcessingMetadata::fromArray($this->payload['processing_metadata']);
         }
         return $this->processingMetadata;
+    }
+
+    /**
+     * @return string
+     */
+    public function metadataRiotTag()
+    {
+        return $this->payload['metadata_riot_tag'];
+    }
+
+    /**
+     * @return string
+     */
+    public function icon()
+    {
+        return $this->payload['icon'];
+    }
+
+    /**
+     * @return string
+     */
+    public function iconType()
+    {
+        return $this->payload['icon_type'];
     }
 
     /**

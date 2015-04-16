@@ -11,6 +11,8 @@
 namespace Prooph\Link\ProcessManager\Model\Workflow;
 
 use Prooph\EventSourcing\AggregateChanged;
+use Prooph\Link\Application\Service\TransactionEvent;
+use Prooph\Link\Application\Service\TransactionIdAware;
 use Prooph\Processing\Processor\NodeName;
 
 /**
@@ -19,8 +21,10 @@ use Prooph\Processing\Processor\NodeName;
  * @package Prooph\Link\ProcessManager\Model\Workflow
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class WorkflowWasCreated extends AggregateChanged
+final class WorkflowWasCreated extends AggregateChanged implements TransactionEvent
 {
+    use TransactionIdAware;
+
     /**
      * @param NodeName $nodeName
      * @param WorkflowId $workflowId

@@ -6,7 +6,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  * 
- * Date: 4/11/15 - 11:12 PM
+ * Date: 4/16/15 - 6:39 PM
  */
 namespace Prooph\Link\ProcessManager\Infrastructure;
 
@@ -15,17 +15,16 @@ use Prooph\EventStore\Aggregate\AggregateRepository;
 use Prooph\EventStore\Aggregate\AggregateType;
 use Prooph\EventStore\EventStore;
 use Prooph\EventStore\Stream\SingleStreamStrategy;
-use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerCollection;
-use Prooph\Link\ProcessManager\Model\MessageHandler;
-use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerId;
+use Prooph\Link\ProcessManager\Model\Task;
+use Prooph\Link\ProcessManager\Model\Task\TaskId;
 
 /**
- * Class PESMessageHandlerCollection
+ * Class PESTaskCollection
  *
  * @package Prooph\Link\ProcessManager\Infrastructure
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class PESMessageHandlerCollection extends AggregateRepository implements MessageHandlerCollection
+final class PESTaskCollection extends AggregateRepository implements Task\TaskCollection
 {
     /**
      * @param EventStore $eventStore
@@ -38,25 +37,25 @@ final class PESMessageHandlerCollection extends AggregateRepository implements M
             $eventStore,
             new AggregateTranslator(),
             new SingleStreamStrategy($eventStore, 'link_process_manager_stream'),
-            AggregateType::fromAggregateRootClass('Prooph\Link\ProcessManager\Model\MessageHandler')
+            AggregateType::fromAggregateRootClass(Task::class)
         );
     }
 
     /**
-     * @param MessageHandler $messageHandler
-     * @return void
+     * @param TaskId $taskId
+     * @return Task
      */
-    public function add(MessageHandler $messageHandler)
+    public function get(TaskId $taskId)
     {
-        $this->addAggregateRoot($messageHandler);
+        return $this->getAggregateRoot($taskId->toString());
     }
 
     /**
-     * @param MessageHandlerId $handlerId
-     * @return MessageHandler
+     * @param Task $task
+     * @return void
      */
-    public function get(MessageHandlerId $handlerId)
+    public function add(Task $task)
     {
-        return $this->getAggregateRoot($handlerId->toString());
+       $this->addAggregateRoot($task);
     }
 }

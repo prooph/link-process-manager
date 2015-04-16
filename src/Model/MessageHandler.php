@@ -103,6 +103,21 @@ final class MessageHandler extends AggregateRoot
     private $processingMetadata;
 
     /**
+     * @var string
+     */
+    private $metadataRiotTag;
+
+    /**
+     * @var string
+     */
+    private $icon;
+
+    /**
+     * @var string
+     */
+    private $iconType;
+
+    /**
      * Stores the reason in case the message handler can't handle a message.
      *
      * This property is reset each time the {@method canHandleMessage} is called.
@@ -120,6 +135,9 @@ final class MessageHandler extends AggregateRoot
      * @param MessageHandler\DataDirection $dataDirection
      * @param MessageHandler\ProcessingTypes $supportedProcessingTypes
      * @param ProcessingMetadata $metadata
+     * @param string $metadataRiotTag
+     * @param string $icon
+     * @param string $iconType
      * @param null|Prototype $preferredProcessingType
      * @param null|MessageHandler\ProcessingId $processingId
      * @return MessageHandler
@@ -132,11 +150,23 @@ final class MessageHandler extends AggregateRoot
         DataDirection $dataDirection,
         ProcessingTypes $supportedProcessingTypes,
         ProcessingMetadata $metadata,
+        $metadataRiotTag,
+        $icon,
+        $iconType,
         Prototype $preferredProcessingType = null,
         ProcessingId $processingId = null
     ) {
         Assertion::string($name);
         Assertion::notEmpty($name);
+
+        Assertion::string($metadataRiotTag);
+        Assertion::notEmpty($metadataRiotTag);
+
+        Assertion::string($icon);
+        Assertion::notEmpty($icon);
+
+        Assertion::string($iconType);
+        Assertion::notEmpty($iconType);
 
         $instance = new self();
 
@@ -148,6 +178,9 @@ final class MessageHandler extends AggregateRoot
             $dataDirection,
             $supportedProcessingTypes,
             $metadata,
+            $metadataRiotTag,
+            $icon,
+            $iconType,
             $preferredProcessingType,
             $processingId
         ));
@@ -262,6 +295,9 @@ final class MessageHandler extends AggregateRoot
         $this->supportedProcessingTypes = $event->supportedProcessingTypes();
         $this->preferredProcessingType = $event->preferredProcessingType();
         $this->processingMetadata = $event->processingMetadata();
+        $this->metadataRiotTag = $event->metadataRiotTag();
+        $this->icon = $event->icon();
+        $this->iconType = $event->iconType();
         $this->processingId = $event->processingId();
     }
 

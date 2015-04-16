@@ -18,6 +18,22 @@
         </div>
     </div>
 </div>
+<div id="metadata-modal" class="modal fade">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 id="metadata-modal-title" class="modal-title">Metadata</h4>
+            </div>
+            <div id="metadata-modal-body" class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 <img src="<?php echo $this->basePath() ?>/img/paper_blue.jpg" class="hidden">
 <script type="text/javascript">
     function (context) {
@@ -42,26 +58,20 @@
          *
          * @internal
          */
-        var _createElement = function (elementType, name, id, uiMetadataRiotTag, icon, iconType) {
+        var _createElement = function (elementType, elementData) {
             var eleId = "whiteboard_ele_" + self.elements.length;
 
-            $elem = $("<div></div>").addClass("element").data("id", id).attr('id', eleId);
+            $elem = $("<div></div>").addClass("element").data("handler-id", elementData.id).attr('id', eleId);
 
-            if (iconType === "glyphicon") {
-                $elem.append($("<span></span>").addClass("element-icon, glyphicon").addClass(icon));
+            if (elementData.icon_type === "glyphicon") {
+                $elem.append($("<span></span>").addClass("element-icon, glyphicon").addClass(elementData.icon));
             }
 
-            $elem.append($("<p></p>").addClass("element-label").html(name));
+            $elem.append($("<p></p>").addClass("element-label").html(elementData.name));
 
-            self.elements.push({
-                'id' : id,
-                'name' : name,
-                'element_id' : eleId,
-                'element_type' : elementType,
-                'ui_metadata_riot_tag' : uiMetadataRiotTag,
-                'icon' : icon,
-                'icon_type' : iconType
-            });
+            elementData.element_id = eleId;
+
+            self.elements.push(elementData);
 
             return $elem;
         },
@@ -105,7 +115,7 @@
 
                 this.loadFlowchart();
             }
-        }
+        };
 
         /**
          * Initialize drawing area on riot tag mount
@@ -146,17 +156,56 @@
 
                     switch (elem.data("element-type")) {
                         case "connector":
-                            self.addConnector(x, y, elem.text(), elem.data("processingid"),
-                                elem.data("ui-metadata-riot-tag"), elem.data("icon"), elem.data("icon-type"));
+                            self.whiteboardPause();
+
+                            /**
+                             * We use the promise lib Q to build a function chain which includes ajax calls.
+                             * The chain starts by trying to create a message handler for given processingId.
+                             * If we can't find a corresponding processing connector,
+                             * we ask the message handler module (via a dedicated riot tag)
+                             * to provide required configuration to create a new message handler on the server.
+                             * In the last step we hopefully have valid message handler information to create a connector
+                             * element on the whiteboard based on the handler data.
+                             * If we can't create a connector, the element drop is rejected and the user gets notified about it.
+                             */
+                            Q.fcall(function () {
+                                    //Maybe we already have a processing message handler
+                                    //that can be converted to a process manager message handler
+                                    var processingHandler = _.findWhere(context.app.connectors, {id : elem.data("processingid")});
+
+                                    if (processingHandler) {
+                                        return self.translateProcessingHandlerToProcessManagerHandler(processingHandler, elem.data("element-type"));
+                                    }
+
+                                    //Ok, we definitely need to ask the handler module to provide us with valid handler data
+                                    return self.requestHandlerDataFromModule(
+                                        elem.data("ui-metadata-riot-tag"),
+                                        elem.text(),
+                                        elem.data("processingid")
+                                    );
+                                })
+                                .then(function (handlerData) {
+                                    console.log(handlerData);
+                                    return self.createMessageHandler(handlerData);
+                                })
+                                .then(function (handlerData) {
+                                    self.addConnector(x, y, handlerData);
+                                    self.updateFlowchartConfig();
+                                })
+                                .catch(function (reason) {
+                                    $.appErrorNotify(reason);
+                                })
+                                .finally(function () {
+                                    self.whiteboardContinue();
+                                })
+                                .done();
                             break;
                         default:
                             throw "Unknown element type dropped. Got " + elem.data("element-type");
                     }
-
-                    self.updateFlowchartConfig();
                 }
             });
-        }
+        };
 
         this.one("whiteboardIsReady", function () {
             _.each(whiteboardReadyCBs, function (cb) {
@@ -298,16 +347,12 @@
                         self.whiteboard.setSuspendDrawing(true);
 
                         _.each(data.flowchart.config.elements, function (element) {
-                            switch (element.element_type) {
+                            switch (element.type) {
                                 case "connector":
                                     self.addConnector(
                                         element.x_pos,
                                         element.y_pos,
-                                        element.name,
-                                        element.id,
-                                        element.ui_metadata_riot_tag,
-                                        element.icon,
-                                        element.icon_type
+                                        element
                                     );
                                     break;
                                 default:
@@ -343,22 +388,116 @@
             );
         }
 
-        //Connector operations
+        //Message handler operations
+
+        /**
+         * Send given handlerData to the server to create a new message handler and return promise which resolves to
+         * the handler data stored on the server.
+         */
+        this.createMessageHandler = function (handlerData) {
+            return Q($.postJSON(
+                '<?php echo $this->url('prooph.link/process_config/api/message_handler') ?>',
+                {message_handler: handlerData}
+            ).then(
+                function (data, textStatus, request) {
+                    return $.getJSON(request.getResponseHeader("location")).then(function(data) {
+                        return data.message_handler;
+                    }, function (request) {
+                        $.failNotify(request);
+                        return new Error("Failed to load message handler");
+                    });
+                },
+                function(request) {
+                    $.failNotify(request);
+                    return new Error("Failed to create message handler on server");
+                }
+            ));
+        }
+
+        /**
+         * @var processingId string
+         *
+         * @return Q.promise
+         */
+        this.loadMessageHandlersByProcessingId = function (processingId) {
+            if (processingId) {
+                return Q($.getJSON('<?php echo $this->url('prooph.link/process_config/api/message_handler') ?>?processing_id='+encodeURIComponent(processingId)));
+            } else {
+                return Q.fcall(function () {
+                    return {
+                        "message_handler_collection" : []
+                    }
+                });
+            }
+        };
+
+        /**
+         * This method interacts with the given riot tag to request message handler data from it.
+         * The riot tag is loaded into a modal and when the user has entered all data, the riot tag should
+         * pass the data back via a promise so that the method can use the data to create new message handler on the server.
+         */
+        this.requestHandlerDataFromModule = function(uiMetadataRiotTag, handlerName, processingId) {
+
+            var handlerDeferred = Q.defer();
+            $("#metadata-modal-title").html(handlerName + " <?php echo $this->translate('Settings')  ?>");
+            context.app.renderInto(self, '#metadata-modal-body', uiMetadataRiotTag, {
+                handlerData: {isNew : true, processingId : processingId},
+                handlerDeferred: handlerDeferred,
+                $modal: $("#metadata-modal")
+            });
+
+            $("#metadata-modal").modal();
+
+            return handlerDeferred.promise;
+        }
+
+        /**
+         * The method takes a processing handler and translate it to data that can be handled by the process manager backend.
+         */
+        this.translateProcessingHandlerToProcessManagerHandler = function (processingHandler, type) {
+            var handlerData = {type : type};
+
+            handlerData.name = processingHandler.name;
+            handlerData.node_name = processingHandler.node_name;
+            handlerData.processing_types = processingHandler.allowed_types;
+            handlerData.processing_id = processingHandler.id;
+            handlerData.metadata_riot_tag = processingHandler.ui_metadata_riot_tag;
+            handlerData.icon = processingHandler.icon;
+            handlerData.icon_type = processingHandler.icon_type;
+
+            if (!_.isEmpty(processingHandler.metadata)) {
+                handlerData.processing_metadata = processingHandler.metadata;
+            }
+
+            if(!_.isEmpty(processingHandler.preferred_type)) {
+                handlerData.preferred_type = processingHandler.preferred_type;
+            }
+
+            if (processingHandler.allowed_messages.length == 2) {
+                handlerData.data_direction = '<?php echo \Prooph\Link\ProcessManager\Model\MessageHandler\DataDirection::DIRECTION_SOURCE_AND_TARGET  ?>';
+            }else if(processingHandler.allowed_messages[0] == '<?php echo \Prooph\Link\ProcessManager\Model\Workflow\MessageType::TYPE_COLLECT_DATA  ?>') {
+                handlerData.data_direction = '<?php echo \Prooph\Link\ProcessManager\Model\MessageHandler\DataDirection::DIRECTION_SOURCE  ?>';
+            }else if(processingHandler.allowed_messages[0] == '<?php echo \Prooph\Link\ProcessManager\Model\Workflow\MessageType::TYPE_PROCESS_DATA  ?>') {
+                handlerData.data_direction = '<?php echo \Prooph\Link\ProcessManager\Model\MessageHandler\DataDirection::DIRECTION_TARGET  ?>';
+            } else {
+                return new Error("Unknown message type: " + processingHandler.allowed_messages[0]);
+            }
+
+            console.log(handlerData);
+
+            return handlerData;
+        }
 
         /**
          * Add connector to whiteboard
          *
          * @param xPos int
          * @param yPos int
-         * @param name string
-         * @param processingId string
-         * @param uiMetadataRiotTag string
-         * @param icon string
-         * @param iconType string
+         * @param handlerData object
          */
-        this.addConnector = function (xPos, yPos, name, processingId, uiMetadataRiotTag, icon, iconType) {
+        this.addConnector = function (xPos, yPos, handlerData) {
 
-            $con = _createElement('connector', name, processingId, uiMetadataRiotTag, icon, iconType);
+            $con = _createElement('connector', handlerData);
 
             $con.addClass("connector").css('left', xPos).css('top', yPos);
 
@@ -385,9 +524,44 @@
             });
         }
 
+
+
         this.applyConnection = function(jsPlumbInfo) {
             if (this.flowchartIsLoaded) {
-                console.log("apply connection ", jsPlumbInfo);
+                Q.fcall(function () {
+                    if (jsPlumbInfo.sourceId == "whiteboard-start-point") {
+
+                        var handlerId = $(jsPlumbInfo.target).data("handler-id"),
+                            handlerData = _.findWhere(self.elements, {id : handlerId}),
+                            processingType = null;
+
+                        if (! _.isEmpty(handlerData.preferred_type)) {
+                            processingType = handlerData.preferred_type;
+                        } else if (!_.isEmpty(handlerData.processing_types)) {
+                            processingType = handlerData.processing_types[0];
+                        } else {
+                            throw new Error("Failed to detect the processing type to collect.");
+                        }
+
+                        return $.postJSON('<?php echo $this->url('prooph.link/process_config/api/connection')  ?>', {
+                            'connection' : {
+                                'type' : 'start_connection',
+                                'workflow_id' : self.workflow.id,
+                                'start_message' : {
+                                    'message_type' : '<?php echo \Prooph\Link\ProcessManager\Model\Workflow\MessageType::TYPE_COLLECT_DATA  ?>',
+                                    'processing_type' : processingType
+                                },
+                                'message_handler' : handlerId
+                            }
+                        }).fail(function (jqXhr) {
+                            $.failNotify(jqXhr);
+                            throw new Error("Failed to create connection");
+                        })
+                    } else {
+                        throw new Error("Unable to handle connected source");
+                    }
+                }).done();
+
                 this.updateFlowchartConfig();
             }
         }
@@ -396,6 +570,27 @@
             console.log("remove connection: ", jsPlumbInfo);
             this.updateFlowchartConfig();
         }
+
+
+        //UI Manipulation
+
+        this.whiteboardPause = function () {
+            var $whitboard = $("#whiteboard"),
+                offset = $whitboard.offset(),
+                $overlay = $("<div />").attr("id", "whiteboard_overlay").css({
+                    top: offset.top,
+                    left: offset.left,
+                    width: $whitboard.outerWidth(),
+                    height: $whitboard.outerHeight()
+                });
+
+            $("body").append($overlay);
+        };
+
+        this.whiteboardContinue = function () {
+            $("#whiteboard_overlay").remove();
+        };
+
 
         //RiotJs events
 

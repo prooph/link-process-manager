@@ -55,6 +55,9 @@ final class InstallMessageHandlerHandler
             $command->dataDirection(),
             $command->supportedProcessingTypes(),
             $command->processingMetadata(),
+            $command->metadataRiotTag(),
+            $command->icon(),
+            $command->iconType(),
             $command->preferredProcessingType(),
             $command->handlerProcessingId()
         );

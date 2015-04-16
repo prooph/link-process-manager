@@ -12,6 +12,7 @@ namespace Prooph\Link\ProcessManager\Command\MessageHandler;
 
 use Assert\Assertion;
 use Prooph\Link\Application\Service\TransactionCommand;
+use Prooph\Link\Application\Service\TransactionIdGenerator;
 use Prooph\Link\ProcessManager\Model\MessageHandler\DataDirection;
 use Prooph\Link\ProcessManager\Model\MessageHandler\HandlerType;
 use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerId;
@@ -31,6 +32,8 @@ use Prooph\ServiceBus\Message\MessageNameProvider;
  */
 final class InstallMessageHandler implements TransactionCommand, MessageNameProvider
 {
+    use TransactionIdGenerator;
+
     /**
      * @var MessageHandlerId
      */
@@ -67,6 +70,21 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
     private $processingMetadata;
 
     /**
+     * @var string
+     */
+    private $metadataRiotTag;
+
+    /**
+     * @var string
+     */
+    private $icon;
+
+    /**
+     * @var string
+     */
+    private $iconType;
+
+    /**
      * @var Prototype
      */
     private $preferredProcessingType;
@@ -84,6 +102,9 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
      * @param DataDirection|string $dataDirection
      * @param ProcessingTypes|array|string $supportedProcessingTypes
      * @param ProcessingMetadata|array $processingMetadata
+     * @param string $metadataRiotTag
+     * @param string $icon
+     * @param string $iconType
      * @param null|string|Prototype $preferredProcessingType
      * @param null|string|ProcessingId $handlerProcessingId
      */
@@ -95,6 +116,9 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
         $dataDirection,
         $supportedProcessingTypes,
         $processingMetadata,
+        $metadataRiotTag,
+        $icon,
+        $iconType,
         $preferredProcessingType = null,
         $handlerProcessingId = null
     ) {
@@ -140,6 +164,15 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
             $handlerProcessingId = ProcessingId::fromString($handlerProcessingId);
         }
 
+        Assertion::string($metadataRiotTag);
+        Assertion::notEmpty($metadataRiotTag);
+
+        Assertion::string($icon);
+        Assertion::notEmpty($icon);
+
+        Assertion::string($iconType);
+        Assertion::notEmpty($iconType);
+
         $this->messageHandlerId = $messageHandlerId;
         $this->name = $name;
         $this->nodeName = $nodeName;
@@ -147,6 +180,9 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
         $this->dataDirection = $dataDirection;
         $this->processingTypes = $supportedProcessingTypes;
         $this->processingMetadata = $processingMetadata;
+        $this->metadataRiotTag = $metadataRiotTag;
+        $this->icon = $icon;
+        $this->iconType = $iconType;
         $this->preferredProcessingType = $preferredProcessingType;
         $this->handlerProcessingId = $handlerProcessingId;
     }
@@ -205,6 +241,30 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
     public function processingMetadata()
     {
         return $this->processingMetadata;
+    }
+
+    /**
+     * @return string
+     */
+    public function metadataRiotTag()
+    {
+        return $this->metadataRiotTag;
+    }
+
+    /**
+     * @return string
+     */
+    public function icon()
+    {
+        return $this->icon;
+    }
+
+    /**
+     * @return string
+     */
+    public function iconType()
+    {
+        return $this->iconType;
     }
 
     /**

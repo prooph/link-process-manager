@@ -59,7 +59,7 @@ return array(
                                             ]
                                         ]
                                     ],
-                                    'message-handler' => [
+                                    'message_handler' => [
                                         'type' => 'Segment',
                                         'options' => [
                                             'route' => '/message-handlers[/:id]',
@@ -68,6 +68,15 @@ return array(
                                             ),
                                             'defaults' => [
                                                 'controller' => \Prooph\Link\ProcessManager\Api\MessageHandler::class,
+                                            ]
+                                        ]
+                                    ],
+                                    'connection' => [
+                                        'type' => 'Literal',
+                                        'options' => [
+                                            'route' => '/connections',
+                                            'defaults' => [
+                                                'controller' => \Prooph\Link\ProcessManager\Api\Connection::class,
                                             ]
                                         ]
                                     ],
@@ -165,9 +174,11 @@ return array(
         'factories' => [
             \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithNameHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\CreateWorkflowWithNameHandlerFactory::class,
             \Prooph\Link\ProcessManager\Model\Workflow\ChangeWorkflowNameHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\ChangeWorkflowNameHandlerFactory::class,
+            \Prooph\Link\ProcessManager\Model\Workflow\DetermineFirstTasksForWorkflowHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\DetermineFirstTasksForWorkflowHandlerFactory::class,
             \Prooph\Link\ProcessManager\Model\MessageHandler\InstallMessageHandlerHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\InstallMessageHandlerHandlerFactory::class,
             'prooph.link.pm.workflow_collection' => \Prooph\Link\ProcessManager\Infrastructure\Factory\WorkflowCollectionFactory::class,
             'prooph.link.pm.message_handler_collection' => \Prooph\Link\ProcessManager\Infrastructure\Factory\MessageHandlerCollectionFactory::class,
+            'prooph.link.pm.task_collection' => \Prooph\Link\ProcessManager\Infrastructure\Factory\TaskCollectionFactory::class,
             'prooph.link.pm.local_processing_node' => \Prooph\Link\ProcessManager\Infrastructure\Factory\LocalProcessingNodeFactory::class,
         ],
         'invokables' => [
@@ -177,9 +188,14 @@ return array(
             \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder::class => \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder::class,
             \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerProjector::class => \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerProjector::class,
             \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerFinder::class => \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerFinder::class,
+            \Prooph\Link\ProcessManager\Projection\Task\TaskProjector::class => \Prooph\Link\ProcessManager\Projection\Task\TaskProjector::class,
+            \Prooph\Link\ProcessManager\Projection\Process\ProcessProjector::class => \Prooph\Link\ProcessManager\Projection\Process\ProcessProjector::class,
         ]
     ],
     'controllers' => array(
+        'invokables' => [
+            \Prooph\Link\ProcessManager\Api\Connection::class => \Prooph\Link\ProcessManager\Api\Connection::class,
+        ],
         'factories' => array(
             'Prooph\Link\ProcessManager\Controller\DashboardWidget' => \Prooph\Link\ProcessManager\Controller\Factory\DashboardWidgetControllerFactory::class,
             'Prooph\Link\ProcessManager\Controller\ProcessManager' => \Prooph\Link\ProcessManager\Controller\Factory\ProcessManagerControllerFactory::class,
@@ -194,6 +210,7 @@ return array(
             \Prooph\Link\ProcessManager\Command\Workflow\CreateWorkflowWithName::class => \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithNameHandler::class,
             \Prooph\Link\ProcessManager\Command\Workflow\ChangeWorkflowName::class => \Prooph\Link\ProcessManager\Model\Workflow\ChangeWorkflowNameHandler::class,
             \Prooph\Link\ProcessManager\Command\MessageHandler\InstallMessageHandler::class => \Prooph\Link\ProcessManager\Model\MessageHandler\InstallMessageHandlerHandler::class,
+            \Prooph\Link\ProcessManager\Command\Workflow\DetermineFirstTasksForWorkflow::class => \Prooph\Link\ProcessManager\Model\Workflow\DetermineFirstTasksForWorkflowHandler::class,
         ],
         'event_router_map' => [
             \Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasCreated::class => [
@@ -204,6 +221,18 @@ return array(
             ],
             \Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerWasInstalled::class => [
                 \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerProjector::class
+            ],
+            \Prooph\Link\ProcessManager\Model\Workflow\StartMessageWasAssignedToWorkflow::class => [
+                \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class,
+            ],
+            \Prooph\Link\ProcessManager\Model\Task\TaskWasSetUp::class => [
+                \Prooph\Link\ProcessManager\Projection\Task\TaskProjector::class
+            ],
+            \Prooph\Link\ProcessManager\Model\Workflow\TaskWasAddedToProcess::class => [
+                \Prooph\Link\ProcessManager\Projection\Task\TaskProjector::class
+            ],
+            \Prooph\Link\ProcessManager\Model\Workflow\ProcessWasAddedToWorkflow::class => [
+                \Prooph\Link\ProcessManager\Projection\Process\ProcessProjector::class
             ],
         ],
     ],

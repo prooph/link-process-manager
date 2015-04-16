@@ -12,9 +12,13 @@ namespace Prooph\Link\ProcessManager\Projection\Workflow;
 
 use Doctrine\DBAL\Connection;
 use Prooph\Link\Application\Service\ApplicationDbAware;
+use Prooph\Link\ProcessManager\Model\Workflow\Message;
+use Prooph\Link\ProcessManager\Model\Workflow\MessageType;
+use Prooph\Link\ProcessManager\Model\Workflow\StartMessageWasAssignedToWorkflow;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowNameWasChanged;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasCreated;
 use Prooph\Link\ProcessManager\Projection\Tables;
+use Prooph\Processing\Message\MessageNameUtils;
 
 /**
  * Class WorkflowProjector
@@ -50,11 +54,41 @@ final class WorkflowProjector implements ApplicationDbAware
     }
 
     /**
+     * @param StartMessageWasAssignedToWorkflow $event
+     */
+    public function onStartMessageWasAssignedToWorkflow(StartMessageWasAssignedToWorkflow $event)
+    {
+        $this->connection->update(
+            Tables::WORKFLOW,
+            ['start_message' => $this->determineMessageName($event->startMessage())],
+            ['id' => $event->workflowId()->toString()]
+        );
+    }
+
+    /**
      * @param Connection $connection
      * @return mixed
      */
     public function setApplicationDb(Connection $connection)
     {
         $this->connection = $connection;
+    }
+
+    /**
+     * @param Message $message
+     * @return string
+     */
+    private function determineMessageName(Message $message)
+    {
+        switch($message->messageType()->toString()) {
+            case MessageType::TYPE_DATA_PROCESSED:
+                return MessageNameUtils::getDataProcessedEventName($message->processingType()->of());
+            case MessageType::TYPE_PROCESS_DATA:
+                return MessageNameUtils::getProcessDataCommandName($message->processingType()->of());
+            case MessageType::TYPE_DATA_COLLECTED:
+                return MessageNameUtils::getDataCollectedEventName($message->processingType()->of());
+            case MessageType::TYPE_COLLECT_DATA:
+                return MessageNameUtils::getCollectDataCommandName($message->processingType()->of());
+        }
     }
 }

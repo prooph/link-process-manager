@@ -79,6 +79,9 @@ final class ProcessingNode
      * @param MessageHandler\DataDirection $dataDirection
      * @param MessageHandler\ProcessingTypes $supportedProcessingTypes
      * @param ProcessingMetadata $processingMetadata
+     * @param string $metadataRiotTag
+     * @param string $icon
+     * @param string $iconType
      * @param null|Prototype $preferredProcessingType
      * @param null|MessageHandler\ProcessingId $processingId
      * @return MessageHandler
@@ -90,6 +93,9 @@ final class ProcessingNode
         DataDirection $dataDirection,
         ProcessingTypes $supportedProcessingTypes,
         ProcessingMetadata $processingMetadata,
+        $metadataRiotTag,
+        $icon,
+        $iconType,
         Prototype $preferredProcessingType = null,
         ProcessingId $processingId = null
     ) {
@@ -101,6 +107,9 @@ final class ProcessingNode
             $dataDirection,
             $supportedProcessingTypes,
             $processingMetadata,
+            $metadataRiotTag,
+            $icon,
+            $iconType,
             $preferredProcessingType,
             $processingId
         );
