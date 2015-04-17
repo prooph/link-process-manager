@@ -295,7 +295,7 @@ final class Workflow extends AggregateRoot
             );
         }
 
-        return Task::setUp($messageHandler, $taskType, $taskMetadata);
+        return Task::setUp($messageHandler, $taskType, $previousMessage->processingType(), $taskMetadata);
     }
 
     /**

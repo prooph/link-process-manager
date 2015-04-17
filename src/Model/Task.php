@@ -13,8 +13,10 @@ namespace Prooph\Link\ProcessManager\Model;
 use Prooph\EventSourcing\AggregateRoot;
 use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerId;
 use Prooph\Link\ProcessManager\Model\Task\TaskId;
+use Prooph\Link\ProcessManager\Model\Task\TaskMetadataWasUpdated;
 use Prooph\Link\ProcessManager\Model\Task\TaskType;
 use Prooph\Link\ProcessManager\Model\Task\TaskWasSetUp;
+use Prooph\Processing\Type\Prototype;
 
 /**
  * Class Task
@@ -44,6 +46,11 @@ final class Task extends AggregateRoot
     private $messageHandlerId;
 
     /**
+     * @var Prototype
+     */
+    private $processingType;
+
+    /**
      * @var ProcessingMetadata
      */
     private $processingMetadata;
@@ -51,16 +58,27 @@ final class Task extends AggregateRoot
     /**
      * @param MessageHandler $messageHandler
      * @param TaskType $taskType
+     * @param Prototype $processingType
      * @param ProcessingMetadata $metadata
      * @return Task
      */
-    public static function setUp(MessageHandler $messageHandler, TaskType $taskType, ProcessingMetadata $metadata)
+    public static function setUp(MessageHandler $messageHandler, TaskType $taskType, Prototype $processingType, ProcessingMetadata $metadata)
     {
         $instance = new self();
 
-        $instance->recordThat(TaskWasSetUp::with(TaskId::generate(), $taskType, $messageHandler, $metadata));
+        $instance->recordThat(TaskWasSetUp::with(TaskId::generate(), $taskType, $messageHandler, $processingType, $metadata));
 
         return $instance;
+    }
+
+    /**
+     * Simply override existing metadata with the new one
+     *
+     * @param ProcessingMetadata $metadata
+     */
+    public function updateMetadata(ProcessingMetadata $metadata)
+    {
+        $this->recordThat(TaskMetadataWasUpdated::record($this->id(), $metadata));
     }
 
     /**
@@ -111,6 +129,15 @@ final class Task extends AggregateRoot
         $this->id = $event->taskId();
         $this->taskType = $event->taskType();
         $this->messageHandlerId = $event->messageHandlerId();
+        $this->processingType = $event->processingType();
         $this->processingMetadata = $event->taskMetadata();
+    }
+
+    /**
+     * @param TaskMetadataWasUpdated $event
+     */
+    protected function whenTaskMetadataWasUpdated(TaskMetadataWasUpdated $event)
+    {
+        $this->processingMetadata = $event->metadata();
     }
 }

@@ -71,6 +71,18 @@ return array(
                                             ]
                                         ]
                                     ],
+                                    'task' => [
+                                        'type' => 'Segment',
+                                        'options' => [
+                                            'route' => '/tasks[/:id]',
+                                            'constraints' => array(
+                                                'id' => '.+',
+                                            ),
+                                            'defaults' => [
+                                                'controller' => \Prooph\Link\ProcessManager\Api\Task::class,
+                                            ]
+                                        ]
+                                    ],
                                     'connection' => [
                                         'type' => 'Literal',
                                         'options' => [
@@ -176,6 +188,7 @@ return array(
             \Prooph\Link\ProcessManager\Model\Workflow\ChangeWorkflowNameHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\ChangeWorkflowNameHandlerFactory::class,
             \Prooph\Link\ProcessManager\Model\Workflow\DetermineFirstTasksForWorkflowHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\DetermineFirstTasksForWorkflowHandlerFactory::class,
             \Prooph\Link\ProcessManager\Model\MessageHandler\InstallMessageHandlerHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\InstallMessageHandlerHandlerFactory::class,
+            \Prooph\Link\ProcessManager\Model\Task\UpdateTaskMetadataHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\UpdateTaskMetadataHandlerFactory::class,
             'prooph.link.pm.workflow_collection' => \Prooph\Link\ProcessManager\Infrastructure\Factory\WorkflowCollectionFactory::class,
             'prooph.link.pm.message_handler_collection' => \Prooph\Link\ProcessManager\Infrastructure\Factory\MessageHandlerCollectionFactory::class,
             'prooph.link.pm.task_collection' => \Prooph\Link\ProcessManager\Infrastructure\Factory\TaskCollectionFactory::class,
@@ -189,6 +202,7 @@ return array(
             \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerProjector::class => \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerProjector::class,
             \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerFinder::class => \Prooph\Link\ProcessManager\Projection\MessageHandler\MessageHandlerFinder::class,
             \Prooph\Link\ProcessManager\Projection\Task\TaskProjector::class => \Prooph\Link\ProcessManager\Projection\Task\TaskProjector::class,
+            \Prooph\Link\ProcessManager\Projection\Task\TaskFinder::class => \Prooph\Link\ProcessManager\Projection\Task\TaskFinder::class,
             \Prooph\Link\ProcessManager\Projection\Process\ProcessProjector::class => \Prooph\Link\ProcessManager\Projection\Process\ProcessProjector::class,
         ]
     ],
@@ -203,6 +217,7 @@ return array(
             \Prooph\Link\ProcessManager\Api\Workflow::class => \Prooph\Link\ProcessManager\Api\Factory\WorkflowFactory::class,
             \Prooph\Link\ProcessManager\Api\Flowchart::class => \Prooph\Link\ProcessManager\Api\Factory\FlowchartFactory::class,
             \Prooph\Link\ProcessManager\Api\MessageHandler::class => \Prooph\Link\ProcessManager\Api\Factory\MessageHandlerFactory::class,
+            \Prooph\Link\ProcessManager\Api\Task::class => \Prooph\Link\ProcessManager\Api\Factory\TaskFactory::class,
         ),
     ),
     'prooph.psb' => [
@@ -211,6 +226,7 @@ return array(
             \Prooph\Link\ProcessManager\Command\Workflow\ChangeWorkflowName::class => \Prooph\Link\ProcessManager\Model\Workflow\ChangeWorkflowNameHandler::class,
             \Prooph\Link\ProcessManager\Command\MessageHandler\InstallMessageHandler::class => \Prooph\Link\ProcessManager\Model\MessageHandler\InstallMessageHandlerHandler::class,
             \Prooph\Link\ProcessManager\Command\Workflow\DetermineFirstTasksForWorkflow::class => \Prooph\Link\ProcessManager\Model\Workflow\DetermineFirstTasksForWorkflowHandler::class,
+            \Prooph\Link\ProcessManager\Command\Task\UpdateTaskMetadata::class => \Prooph\Link\ProcessManager\Model\Task\UpdateTaskMetadataHandler::class,
         ],
         'event_router_map' => [
             \Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasCreated::class => [
@@ -234,6 +250,9 @@ return array(
             \Prooph\Link\ProcessManager\Model\Workflow\ProcessWasAddedToWorkflow::class => [
                 \Prooph\Link\ProcessManager\Projection\Process\ProcessProjector::class
             ],
+            \Prooph\Link\ProcessManager\Model\Task\TaskMetadataWasUpdated::class => [
+                \Prooph\Link\ProcessManager\Projection\Task\TaskProjector::class,
+            ],
         ],
     ],
     'zf-content-negotiation' => [
@@ -241,18 +260,21 @@ return array(
             'Prooph\Link\ProcessManager\Api\Process' => 'Json',
             \Prooph\Link\ProcessManager\Api\Workflow::class => 'Json',
             \Prooph\Link\ProcessManager\Api\MessageHandler::class => 'Json',
+            \Prooph\Link\ProcessManager\Api\Task::class => 'Json',
             \Prooph\Link\ProcessManager\Api\Flowchart::class => 'Json',
         ],
         'accept_whitelist' => [
             'Prooph\Link\ProcessManager\Api\Process' => ['application/json'],
             \Prooph\Link\ProcessManager\Api\Workflow::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\MessageHandler::class => ['application/json'],
+            \Prooph\Link\ProcessManager\Api\Task::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\Flowchart::class => ['application/json'],
         ],
         'content_type_whitelist' => [
             'Prooph\Link\ProcessManager\Api\Process' => ['application/json'],
             \Prooph\Link\ProcessManager\Api\Workflow::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\MessageHandler::class => ['application/json'],
+            \Prooph\Link\ProcessManager\Api\Task::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\Flowchart::class => ['application/json'],
         ],
     ],

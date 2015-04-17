@@ -13,6 +13,7 @@ namespace Prooph\Link\ProcessManager\Projection\Task;
 use Doctrine\DBAL\Connection;
 use Prooph\Link\Application\Service\ApplicationDbAware;
 use Prooph\Link\ProcessManager\Model\Task\TaskId;
+use Prooph\Link\ProcessManager\Model\Task\TaskMetadataWasUpdated;
 use Prooph\Link\ProcessManager\Model\Task\TaskWasSetUp;
 use Prooph\Link\ProcessManager\Model\Workflow\TaskWasAddedToProcess;
 use Prooph\Link\ProcessManager\Projection\Tables;
@@ -42,6 +43,15 @@ final class TaskProjector implements ApplicationDbAware
     {
         $this->addEventToTempList($event->taskId(), $event);
         $this->insertTaskIfDataIsComplete($event->taskId());
+    }
+
+    public function onTaskMetadataWasUpdated(TaskMetadataWasUpdated $event)
+    {
+        $this->connection->update(
+            Tables::TASK,
+            ['metadata' => json_encode($event->metadata()->toArray())],
+            ['id' => $event->taskId()->toString()]
+        );
     }
 
     /**
@@ -91,6 +101,7 @@ final class TaskProjector implements ApplicationDbAware
                 $this->connection->insert(Tables::TASK, [
                     'id' => $taskWasSetUp->taskId()->toString(),
                     'type' => $taskWasSetUp->taskType()->toString(),
+                    'processing_type' => $taskWasSetUp->processingType()->of(),
                     'metadata' => json_encode($taskWasSetUp->taskMetadata()->toArray()),
                     'workflow_id' => $taskWasAddedToProcess->workflowId()->toString(),
                     'process_id' => $taskWasAddedToProcess->processId()->toString(),

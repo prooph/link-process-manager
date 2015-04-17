@@ -29,7 +29,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Save changes</button>
+                <button type="button" class="btn btn-primary btn-save">Save changes</button>
             </div>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
@@ -68,6 +68,8 @@
             }
 
             $elem.append($("<p></p>").addClass("element-label").html(elementData.name));
+
+            $elem.click(_.bind(self.onElementClick, $elem.get(0)));
 
             elementData.element_id = eleId;
 
@@ -321,7 +323,8 @@
             _.each(this.whiteboard.getConnections(), function (connection) {
                 connections.push({
                     'source' : connection.sourceId,
-                    'target' : connection.targetId
+                    'target' : connection.targetId,
+                    'class' : $(connection.canvas).attr("class")
                 });
             });
 
@@ -365,19 +368,22 @@
                                 epT = self.whiteboard.selectEndpoints({target: conn.target}).get(0);
 
                             if (epS) {
-                                self.whiteboard.connect({uuids: [epS.getUuid(), epT.getUuid()]});
+                                epS = epS.getUuid();
                             } else {
                                 //Handle special case of start point which has no endpoint
-                                var epSUuid = "ep_s_"+conn.source;
+                                epS = "ep_s_"+conn.source;
                                 self.whiteboard.addEndpoint(conn.source, {
                                     isSource:true,
                                     endpoint:[jsPlumbEndpoint, jsPlumbSourcePointStyle],
                                     anchor : "Right",
                                     maxConnections: 150,
-                                    uuid: epSUuid
+                                    uuid: epS
                                 });
-                                self.whiteboard.connect({uuids: [epSUuid, epT.getUuid()]});
                             }
+
+                            var connection = self.whiteboard.connect({uuids: [epS, epT.getUuid()]});
+
+                            $(connection.canvas).attr("class", conn.class);
                         });
 
                         self.whiteboard.setSuspendDrawing(false, true);
@@ -441,7 +447,36 @@
             var handlerDeferred = Q.defer();
             $("#metadata-modal-title").html(handlerName + " <?php echo $this->translate('Settings')  ?>");
             context.app.renderInto(self, '#metadata-modal-body', uiMetadataRiotTag, {
-                handlerData: {isNew : true, processingId : processingId},
+                handlerData: {is_new : true, processing_id : processingId},
+                handlerDeferred: handlerDeferred,
+                $modal: $("#metadata-modal")
+            });
+
+            $("#metadata-modal").modal();
+
+            return handlerDeferred.promise;
+        }
+
+        /**
+         * This method interacts with the given riot tag to request task metadata for the responsible message handler from it.
+         * The riot tag is loaded into a modal and when the user has entered all data, the riot tag should
+         * pass the data back via a promise so that the method can assign the new metadata to the related task and save it on the server.
+         */
+        this.requestTaskMetadataForMessageHandlerFromModule = function(handlerData, taskData) {
+            if (_.isEmpty(taskData.metadata)) {
+                taskData.metadata = {};
+            }
+
+            var handlerDeferred = Q.defer();
+            $("#metadata-modal-title").html(handlerData.name + " <?php echo $this->translate('Settings')  ?>");
+            context.app.renderInto(self, '#metadata-modal-body', handlerData.metadata_riot_tag, {
+                handlerData: {
+                    is_new : false,
+                    processing_id : handlerData.processing_id,
+                    task_metadata : _.cloneDeep(taskData.metadata),
+                    task_type : taskData.type,
+                    task_processing_type : taskData.processing_type
+                },
                 handlerDeferred: handlerDeferred,
                 $modal: $("#metadata-modal")
             });
@@ -483,8 +518,6 @@
                 return new Error("Unknown message type: " + processingHandler.allowed_messages[0]);
             }
 
-            console.log(handlerData);
-
             return handlerData;
         }
 
@@ -504,7 +537,10 @@
             $("#whiteboard").append($con);
 
             this.whiteboard.draggable($con, {
-                containment:"parent"
+                containment:"parent",
+                start: function(event, ui) {
+                    $(this).addClass('noclick');
+                }
             });
 
             this.whiteboard.addEndpoint($con.attr("id"), {
@@ -524,16 +560,24 @@
             });
         }
 
-
-
+        /**
+         * Reads source and target information from jsPlumb connection and sends it to the server.
+         *
+         * If connection was successfully created on the server the connection canvas
+         * gets a _jsPlumb_connector_success class assigned.
+         * If not it gets a _jsPlumb_connector_error class assigned to indicate
+         * that the user needs to adapt the connection and/or message handler settings.
+         *
+         * @param jsPlumbInfo object
+         */
         this.applyConnection = function(jsPlumbInfo) {
             if (this.flowchartIsLoaded) {
+                var handlerId = $(jsPlumbInfo.target).data("handler-id"),
+                    handlerData = _.findWhere(self.elements, {id : handlerId}),
+                    processingType = null;
+
                 Q.fcall(function () {
                     if (jsPlumbInfo.sourceId == "whiteboard-start-point") {
-
-                        var handlerId = $(jsPlumbInfo.target).data("handler-id"),
-                            handlerData = _.findWhere(self.elements, {id : handlerId}),
-                            processingType = null;
 
                         if (! _.isEmpty(handlerData.preferred_type)) {
                             processingType = handlerData.preferred_type;
@@ -543,7 +587,7 @@
                             throw new Error("Failed to detect the processing type to collect.");
                         }
 
-                        return $.postJSON('<?php echo $this->url('prooph.link/process_config/api/connection')  ?>', {
+                        return Q($.postJSON('<?php echo $this->url('prooph.link/process_config/api/connection')  ?>', {
                             'connection' : {
                                 'type' : 'start_connection',
                                 'workflow_id' : self.workflow.id,
@@ -553,22 +597,69 @@
                                 },
                                 'message_handler' : handlerId
                             }
-                        }).fail(function (jqXhr) {
+                        })).catch(function (jqXhr) {
                             $.failNotify(jqXhr);
                             throw new Error("Failed to create connection");
                         })
                     } else {
+                        $.appErrorNotify("Unable to handle connected source");
                         throw new Error("Unable to handle connected source");
                     }
-                }).done();
-
-                this.updateFlowchartConfig();
+                }).then(function () {
+                    return Q($.getJSON('<?php echo $this->url('prooph.link/process_config/api/task') ?>?message_handler_id='+encodeURIComponent(handlerId))).then(function (response) {
+                        return response.task_collection;
+                    }, function (jqXhr) {
+                        $.failNotify(jqXhr);
+                        throw new Error("Failed to load tasks for message handler");
+                    });
+                }).then(function(taskCollection) {
+                    handlerData.tasks = taskCollection;
+                }).then(function () {
+                    return "_jsPlumb_connector_success";
+                }, function () {
+                    return "_jsPlumb_connector_error";
+                }).done(function (conClass) {
+                    $(jsPlumbInfo.connection.canvas).attr("class", "_jsPlumb_connector " + conClass);
+                    self.updateFlowchartConfig();
+                });
             }
         }
 
         this.removeConnection = function(jsPlumbInfo) {
             console.log("remove connection: ", jsPlumbInfo);
             this.updateFlowchartConfig();
+        }
+
+        //Elements actions
+
+        this.onElementClick = function (e) {
+            e.preventDefault();
+
+            if ($(this).hasClass("noclick")) {
+                $(this).removeClass("noclick");
+                return;
+            }
+
+            var handlerData = _.findWhere(self.elements, {id : $(this).data('handler-id')});
+
+            if (!_.isEmpty(handlerData.tasks)) {
+                _.each(handlerData.tasks, function (taskData) {
+                   if (taskData.type !== '<?php echo \Prooph\Link\ProcessManager\Model\Task\TaskType::TYPE_RUN_SUB_PROCESS  ?>') {
+                       self.requestTaskMetadataForMessageHandlerFromModule(handlerData, taskData)
+                           .then(function (taskMetadata) {
+                               taskData.metadata = taskMetadata;
+                               return Q($.putJSON('<?php echo $this->url('prooph.link/process_config/api/task')  ?>/' + taskData.id, {
+                                   metadata : taskMetadata
+                               })).catch(function (xhr) {
+                                   $.failNotify(xhr);
+                                   throw new Error("Failed to save task metadata");
+                               });
+                           }).done(function () {
+                                self.updateFlowchartConfig();
+                           });
+                   }
+                });
+            }
         }
 
 

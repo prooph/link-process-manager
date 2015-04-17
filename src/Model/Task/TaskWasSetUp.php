@@ -13,6 +13,7 @@ namespace Prooph\Link\ProcessManager\Model\Task;
 use Prooph\EventSourcing\AggregateChanged;
 use Prooph\Link\ProcessManager\Model\MessageHandler;
 use Prooph\Link\ProcessManager\Model\ProcessingMetadata;
+use Prooph\Processing\Type\Prototype;
 
 /**
  * Class TaskWasSetUp
@@ -28,22 +29,34 @@ final class TaskWasSetUp extends AggregateChanged
 
     private $messageHandlerId;
 
+    private $processingType;
+
     private $taskMetadata;
 
     /**
      * @param TaskId $taskId
      * @param TaskType $taskType
      * @param MessageHandler $messageHandler
+     * @param Prototype $processingType
      * @param ProcessingMetadata $metadata
      * @return TaskWasSetUp
      */
-    public static function with(TaskId $taskId, TaskType $taskType, MessageHandler $messageHandler, ProcessingMetadata $metadata)
+    public static function with(TaskId $taskId, TaskType $taskType, MessageHandler $messageHandler, Prototype $processingType,  ProcessingMetadata $metadata)
     {
-        return self::occur($taskId->toString(), [
+        $event = self::occur($taskId->toString(), [
             'task_type' => $taskType->toString(),
             'message_handler_id' => $messageHandler->messageHandlerId()->toString(),
+            'processing_type' => $processingType->of(),
             'metadata' => $metadata->toArray(),
         ]);
+
+        $event->taskId = $taskId;
+        $event->taskType = $taskType;
+        $event->messageHandlerId = $messageHandler->messageHandlerId();
+        $event->processingType = $processingType;
+        $event->taskMetadata = $metadata;
+
+        return $event;
     }
 
     /**
@@ -79,6 +92,18 @@ final class TaskWasSetUp extends AggregateChanged
             $this->messageHandlerId = MessageHandler\MessageHandlerId::fromString($this->payload['message_handler_id']);
         }
         return $this->messageHandlerId;
+    }
+
+    /**
+     * @return Prototype
+     */
+    public function processingType()
+    {
+        if (is_null($this->processingType)) {
+            $type = $this->payload['processing_type'];
+            $this->processingType = $type::prototype();
+        }
+        return $this->processingType;
     }
 
     /**
