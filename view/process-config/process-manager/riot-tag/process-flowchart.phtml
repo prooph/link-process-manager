@@ -28,8 +28,23 @@
             <div id="metadata-modal-body" class="modal-body">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary btn-save">Save changes</button>
+                <button type="button" class="btn btn-default btn-abort" data-dismiss="modal"><?php echo $this->translate('Close') ?></button>
+                <button type="button" class="btn btn-primary btn-save"><?php echo $this->translate('Save changes') ?></button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+<div id="processing-type-modal" class="modal fade">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title"><?php echo $this->translate('Choose Data Type')?></h4>
+            </div>
+            <div id="processing-type-modal-body" class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary btn-save" data-dismiss="modal"><?php echo $this->translate('Ok') ?></button>
             </div>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
@@ -128,7 +143,7 @@
             jsPlumb.ready(function () {
                 self.whiteboard = jsPlumb.getInstance({
                     Container : "whiteboard",
-                    Connector : "Bezier",
+                    Connector : "Flowchart",
                     ConnectionOverlays  : [
                         [ "PlainArrow", { width:10, length:10, location:1} ]
                     ]
@@ -467,8 +482,11 @@
                 taskData.metadata = {};
             }
 
-            var handlerDeferred = Q.defer();
+            var handlerDeferred = Q.defer(),
+                $modal = $("#metadata-modal");
+
             $("#metadata-modal-title").html(handlerData.name + " <?php echo $this->translate('Settings')  ?>");
+
             context.app.renderInto(self, '#metadata-modal-body', handlerData.metadata_riot_tag, {
                 handlerData: {
                     is_new : false,
@@ -478,16 +496,19 @@
                     task_processing_type : taskData.processing_type
                 },
                 handlerDeferred: handlerDeferred,
-                $modal: $("#metadata-modal")
+                $modal: $modal
             });
 
-            $("#metadata-modal").modal();
+            $modal.modal();
 
-            return handlerDeferred.promise;
+            return handlerDeferred.promise.finally(function () {
+                //cleanup event handlers
+                $("#metadata-modal").unbind("hide.bs.modal").find(".btn-save").unbind();
+            });
         }
 
         /**
-         * The method takes a processing handler and translate it to data that can be handled by the process manager backend.
+         * The method takes a processing handler and translates it to data that can be handled by the process manager backend.
          */
         this.translateProcessingHandlerToProcessManagerHandler = function (processingHandler, type) {
             var handlerData = {type : type};
@@ -579,27 +600,38 @@
                 Q.fcall(function () {
                     if (jsPlumbInfo.sourceId == "whiteboard-start-point") {
 
-                        if (! _.isEmpty(handlerData.preferred_type)) {
-                            processingType = handlerData.preferred_type;
-                        } else if (!_.isEmpty(handlerData.processing_types)) {
-                            processingType = handlerData.processing_types[0];
-                        } else {
-                            throw new Error("Failed to detect the processing type to collect.");
-                        }
+                        return Q.fcall(function () {
+                            if (! _.isEmpty(handlerData.preferred_type)) {
+                                return handlerData.preferred_type;
+                            } else if (!_.isEmpty(handlerData.processing_types)) {
+                                if (handlerData.processing_types.length == 1) {
+                                    return handlerData.processing_types[0];
+                                } else {
+                                    var deferred = Q.defer();
 
-                        return Q($.postJSON('<?php echo $this->url('prooph.link/process_config/api/connection')  ?>', {
-                            'connection' : {
-                                'type' : 'start_connection',
-                                'workflow_id' : self.workflow.id,
-                                'start_message' : {
-                                    'message_type' : '<?php echo \Prooph\Link\ProcessManager\Model\Workflow\MessageType::TYPE_COLLECT_DATA  ?>',
-                                    'processing_type' : processingType
-                                },
-                                'message_handler' : handlerId
+                                    self.chooseProcessingTypeViaModal(handlerData, deferred);
+
+                                    return deferred.promise;
+                                }
+                            } else {
+                                throw new Error("Failed to detect the processing type to collect.");
                             }
-                        })).catch(function (jqXhr) {
-                            $.failNotify(jqXhr);
-                            throw new Error("Failed to create connection");
+                        }).then(function (processingType) {
+                            console.log("apply connection: ", processingType);
+                            return Q($.postJSON('<?php echo $this->url('prooph.link/process_config/api/connection')  ?>', {
+                                'connection' : {
+                                    'type' : 'start_connection',
+                                    'workflow_id' : self.workflow.id,
+                                    'start_message' : {
+                                        'message_type' : '<?php echo \Prooph\Link\ProcessManager\Model\Workflow\MessageType::TYPE_COLLECT_DATA  ?>',
+                                        'processing_type' : processingType
+                                    },
+                                    'message_handler' : handlerId
+                                }
+                            })).catch(function (jqXhr) {
+                                $.failNotify(jqXhr);
+                                throw new Error("Failed to create connection");
+                            })
                         })
                     } else {
                         $.appErrorNotify("Unable to handle connected source");
@@ -644,22 +676,78 @@
 
             if (!_.isEmpty(handlerData.tasks)) {
                 _.each(handlerData.tasks, function (taskData) {
-                   if (taskData.type !== '<?php echo \Prooph\Link\ProcessManager\Model\Task\TaskType::TYPE_RUN_SUB_PROCESS  ?>') {
-                       self.requestTaskMetadataForMessageHandlerFromModule(handlerData, taskData)
-                           .then(function (taskMetadata) {
-                               taskData.metadata = taskMetadata;
-                               return Q($.putJSON('<?php echo $this->url('prooph.link/process_config/api/task')  ?>/' + taskData.id, {
-                                   metadata : taskMetadata
-                               })).catch(function (xhr) {
-                                   $.failNotify(xhr);
-                                   throw new Error("Failed to save task metadata");
-                               });
-                           }).done(function () {
+                    if (taskData.type !== '<?php echo \Prooph\Link\ProcessManager\Model\Task\TaskType::TYPE_RUN_SUB_PROCESS  ?>') {
+                        self.requestTaskMetadataForMessageHandlerFromModule(handlerData, taskData)
+                            .then(function (taskMetadata) {
+                                taskData.metadata = taskMetadata;
+                                return Q($.putJSON('<?php echo $this->url('prooph.link/process_config/api/task')  ?>/' + taskData.id, {
+                                    metadata : taskMetadata
+                                })).catch(function (xhr) {
+                                    $.failNotify(xhr);
+                                    throw new Error("Failed to save task metadata");
+                                });
+                            }).done(function () {
                                 self.updateFlowchartConfig();
-                           });
-                   }
+                            });
+                    }
                 });
             }
+        }
+
+        this.chooseProcessingTypeViaModal = function (handlerData, deferred) {
+            var $modal = $("#processing-type-modal"),
+                $modalBody = $("#processing-type-modal-body"),
+                processingTypes = handlerData.processing_types,
+                selectedProcessingType = handlerData.processing_types[0],
+                _getSelectedProcessingType = function () {
+                    var selectedProcessingType = null;
+                    $modalBody.find('.modal_processing_type').each(function (i, radio) {
+                        if ($(radio).prop("checked")) {
+                            selectedProcessingType = $(radio).val();
+                        }
+                    })
+
+                    if (_.isEmpty(selectedProcessingType)) {
+                        selectedProcessingType = handlerData.processing_types[0];
+                    }
+
+                    return selectedProcessingType;
+                };
+
+            //Reset current modal session
+            $modalBody.html("");
+            $modal.off("hide.bs.modal");
+
+            window.setTimeout(function () {
+                $modal.on("hide.bs.modal", function () {
+                    if (!deferred.promise.isFulfilled()) {
+                        deferred.resolve(_getSelectedProcessingType());
+                    }
+                })
+            }, 100);
+
+            _.each(processingTypes, function(processingType) {
+                var processingTypeObj = _.findWhere(context.app.processingTypes, {value : processingType});
+
+                if (!_.isUndefined(processingTypeObj)) {
+                    $modalBody.append(
+                        $("<div />").addClass("radio").append(
+                            $("<label />").append(
+                                $("<input />").attr({
+                                    type : "radio",
+                                    name : "modal_processing_type",
+                                    value : processingTypeObj.value
+                                }).addClass("modal_processing_type")
+                                .prop({
+                                    checked : selectedProcessingType === processingTypeObj.value
+                                })
+                            ).append(processingTypeObj.label)
+                        )
+                    );
+                }
+            });
+
+            $modal.modal();
         }
 
 
