@@ -43,7 +43,7 @@ use Prooph\Processing\Type\Description\NativeType;
  * Whenever possible the workflow tries to use a LinearMessagingProcess because this is the simplest process.
  *
  * @package Prooph\Link\ProcessManager\Model\Workflow
- * @author Alexander Miertsch <alexander.miertsch.extern@sixt.com>
+ * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
 final class Workflow extends AggregateRoot
 {

@@ -20,7 +20,7 @@ use Prooph\Link\ProcessManager\Model\Workflow\Message;
  * This exception is thrown by the Workflow aggregate if a Message can not be handled
  *
  * @package Prooph\Link\ProcessManager\Model\Workflow\Exception
- * @author Alexander Miertsch <alexander.miertsch.extern@sixt.com>
+ * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
 final class MessageIsNotManageable extends \RuntimeException implements ClientError
 {

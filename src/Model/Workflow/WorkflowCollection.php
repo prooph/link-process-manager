@@ -16,7 +16,7 @@ use Prooph\Link\ProcessManager\Model\Workflow;
  * WorkflowCollection
  *
  * @package Prooph\Link\ProcessManager\Model\Workflow
- * @author Alexander Miertsch <alexander.miertsch.extern@sixt.com>
+ * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
 interface WorkflowCollection
 {

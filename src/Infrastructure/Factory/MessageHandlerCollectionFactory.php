@@ -18,7 +18,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  * Class MessageHandlerCollectionFactory
  *
  * @package Prooph\Link\ProcessManager\Infrastructure\Factory
- * @author Alexander Miertsch <alexander.miertsch.extern@sixt.com>
+ * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
 final class MessageHandlerCollectionFactory implements FactoryInterface
 {
