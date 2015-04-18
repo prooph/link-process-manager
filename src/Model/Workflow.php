@@ -15,6 +15,7 @@ use Prooph\EventSourcing\AggregateRoot;
 use Prooph\Link\ProcessManager\Model\Task\TaskType;
 use Prooph\Link\ProcessManager\Model\Workflow\Exception\MessageIsNotManageable;
 use Prooph\Link\ProcessManager\Model\Workflow\Exception\StartTaskIsAlreadyDefined;
+use Prooph\Link\ProcessManager\Model\Workflow\Exception\TaskProcessNotFound;
 use Prooph\Link\ProcessManager\Model\Workflow\Message;
 use Prooph\Link\ProcessManager\Model\Workflow\Process;
 use Prooph\Link\ProcessManager\Model\Workflow\ProcessId;
@@ -153,16 +154,18 @@ final class Workflow extends AggregateRoot
     }
 
     /**
-     * @param Message $lastAnswer
+     * @param Task $previousTask
+     * @param MessageHandler $previousMessageHandler
      * @param MessageHandler $nextMessageHandler
-     * @return Task[]
-     * @throws Workflow\Exception\MessageIsNotManageable
      * @throws \RuntimeException
+     * @internal param \Prooph\Link\ProcessManager\Model\Workflow\Message $lastAnswer
+     * @return Task[]
      */
-    public function determineNextTasks(Message $lastAnswer, MessageHandler $nextMessageHandler)
+    public function determineNextTasks(Task $previousTask, MessageHandler $previousMessageHandler, MessageHandler $nextMessageHandler)
     {
         $tasks = [];
         $taskMetadata = ProcessingMetadata::noData();
+        $lastAnswer = $previousMessageHandler->emulateAnswerMessage($previousTask);
 
         //@TODO: Implement sub process set up
         if (! $this->processingNodeName()->equals($nextMessageHandler->processingNodeName())) {
@@ -174,14 +177,18 @@ final class Workflow extends AggregateRoot
 
         $processType = $this->determineProcessType($nextMessage, $nextMessageHandler);
 
-        $lastProcess = $this->lastProcess();
+        $previousTaskProcess = $this->getProcessOfTask($previousTask);
 
-        if (! $lastProcess->type()->isLinearMessaging() || ! $processType->isLinearMessaging()) {
+        if (is_null($previousTaskProcess)) {
+            throw TaskProcessNotFound::of($previousTask, $this);
+        }
+
+        if (! $previousTaskProcess->type()->isLinearMessaging() || ! $processType->isLinearMessaging()) {
             //@TODO: Implement sub process handling
             throw new \RuntimeException("Handling follow up tasks with a process type other than linear messaging is not supported yet!");
         }
 
-        $this->recordThat(TaskWasAddedToProcess::record($this->workflowId(), $lastProcess, $task));
+        $this->recordThat(TaskWasAddedToProcess::record($this->workflowId(), $previousTaskProcess, $task));
 
         $tasks[] = $task;
 
@@ -221,16 +228,20 @@ final class Workflow extends AggregateRoot
     }
 
     /**
+     * @param Task $task
      * @return Process|null
      */
-    private function lastProcess()
+    private function getProcessOfTask(Task $task)
     {
-        if (empty($this->processList)) return null;
+        foreach ($this->processList as $process) {
+            foreach($process->tasks() as $taskId) {
+                if ($taskId->equals($task->id())) {
+                    return $process;
+                }
+            }
+        }
 
-        $lastProcess = end($this->processList);
-        reset($this->processList);
-
-        return $lastProcess;
+        return null;
     }
 
     /**

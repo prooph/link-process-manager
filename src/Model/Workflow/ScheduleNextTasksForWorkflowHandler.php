@@ -78,9 +78,7 @@ final class ScheduleNextTasksForWorkflowHandler
             throw MessageHandlerNotFound::withId($command->nextMessageHandlerId());
         }
 
-        $lastAnswer = $previousMessageHandler->emulateAnswerMessage($previousTask);
-
-        $nextTasks = $workflow->determineNextTasks($lastAnswer, $nextMessageHandler);
+        $nextTasks = $workflow->determineNextTasks($previousTask, $previousMessageHandler, $nextMessageHandler);
 
         foreach ($nextTasks as $nextTask) {
             $this->taskCollection->add($nextTask);
