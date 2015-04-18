@@ -33,10 +33,6 @@ final class MessageHandler extends AbstractRestController implements ActionContr
 
     public function create($data)
     {
-        if (! array_key_exists('message_handler', $data)) return $this->apiProblem(422, "Missing root key -message_handler-");
-
-        $data = $data['message_handler'];
-
         if (! array_key_exists('name', $data)) return $this->apiProblem(422, "No name given for the message handler");
         if (! array_key_exists('node_name', $data)) return $this->apiProblem(422, "No node_name given for the message handler");
         if (! array_key_exists('type', $data)) return $this->apiProblem(422, "No type given for the message handler");

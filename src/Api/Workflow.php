@@ -44,14 +44,12 @@ final class Workflow extends AbstractRestController implements ActionController
      */
     public function create($data)
     {
-        if (! array_key_exists('workflow', $data)) return $this->apiProblem(422, "Missing root key -workflow-");
-
-        if (! array_key_exists('name', $data['workflow'])) return $this->apiProblem(422, "No name given for the workflow");
+        if (! array_key_exists('name', $data)) return $this->apiProblem(422, "No name given for the workflow");
 
         $workflowId = WorkflowId::generate();
 
         try {
-            $command = new CreateWorkflowWithName($workflowId, $data['workflow']['name']);
+            $command = new CreateWorkflowWithName($workflowId, $data['name']);
         } catch (\Exception $e) {
             return $this->apiProblem(422, $e->getMessage());
         }
@@ -85,12 +83,10 @@ final class Workflow extends AbstractRestController implements ActionController
 
     public function update($id, $data)
     {
-        if (! array_key_exists('workflow', $data)) return $this->apiProblem(422, "Missing root key -workflow-");
-
-        if (! array_key_exists('name', $data['workflow'])) return $this->apiProblem(422, "No name given for the workflow");
+        if (! array_key_exists('name', $data)) return $this->apiProblem(422, "No name given for the workflow");
 
         try {
-            $this->commandBus->dispatch(new ChangeWorkflowName($id, $data['workflow']['name']));
+            $this->commandBus->dispatch(new ChangeWorkflowName($id, $data['name']));
         } catch (CommandDispatchException $ex) {
             if ($ex->getFailedCommandDispatch()->getException() instanceof WorkflowNotFound) {
                 return $this->apiProblem(404, "Workflow not found");

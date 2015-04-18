@@ -22,12 +22,8 @@ final class Connection extends AbstractRestController implements ActionControlle
      */
     private $commandBus;
 
-    public function create($data)
+    public function create($connection)
     {
-        if (! array_key_exists('connection', $data)) return $this->apiProblem(422, "Missing root key -connection-");
-
-        $connection = $data['connection'];
-
         if (! array_key_exists('type', $connection)) return $this->apiProblem(422, "No type given for the connection");
         if (! array_key_exists('message_handler', $connection)) return $this->apiProblem(422, "No message_handler given for the connection");
         if (! array_key_exists('workflow_id', $connection)) return $this->apiProblem(422, "No workflow_id given for the connection");

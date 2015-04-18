@@ -36,24 +36,22 @@ final class Flowchart extends AbstractRestController
 
     public function create($data)
     {
-        if (! array_key_exists('flowchart', $data)) return $this->apiProblem(422, "Missing root key -flowchart-");
-        if (! array_key_exists('workflow_id', $data['flowchart'])) return $this->apiProblem(422, "No workflow_id given for the flowchart");
-        if (! array_key_exists('config', $data['flowchart'])) return $this->apiProblem(422, "No config given for the flowchart");
+        if (! array_key_exists('workflow_id', $data)) return $this->apiProblem(422, "No workflow_id given for the flowchart");
+        if (! array_key_exists('config', $data)) return $this->apiProblem(422, "No config given for the flowchart");
 
-        $this->flowchartStore->addFlowchartConfig($data['flowchart']['workflow_id'], $data['flowchart']['config']);
+        $this->flowchartStore->addFlowchartConfig($data['workflow_id'], $data['config']);
 
         return $this->location(
-            $this->url()->fromRoute('prooph.link/process_config/api/flowchart', ['id' => $data['flowchart']['workflow_id']])
+            $this->url()->fromRoute('prooph.link/process_config/api/flowchart', ['id' => $data['workflow_id']])
         );
     }
 
     public function update($id, $data)
     {
-        if (! array_key_exists('flowchart', $data)) return $this->apiProblem(422, "Missing root key -flowchart-");
-        if (! array_key_exists('workflow_id', $data['flowchart'])) return $this->apiProblem(422, "No workflow_id given for the flowchart");
-        if (! array_key_exists('config', $data['flowchart'])) return $this->apiProblem(422, "No config given for the flowchart");
+        if (! array_key_exists('workflow_id', $data)) return $this->apiProblem(422, "No workflow_id given for the flowchart");
+        if (! array_key_exists('config', $data)) return $this->apiProblem(422, "No config given for the flowchart");
 
-        $this->flowchartStore->updateFlowchartConfig($data['flowchart']['workflow_id'], $data['flowchart']['config']);
+        $this->flowchartStore->updateFlowchartConfig($data['workflow_id'], $data['config']);
 
         return $this->accepted();
     }

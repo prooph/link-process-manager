@@ -49,6 +49,23 @@
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+<div id="detach-connection-modal" class="modal">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title"><?php echo $this->translate('Remove Connection')?></h4>
+            </div>
+            <div class="modal-body">
+                <?php echo $this->translate('Do you want to remove the connection?')?>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default btn-abort" data-dismiss="modal"><?php echo $this->translate('No') ?></button>
+                <button type="button" class="btn btn-primary btn-save" data-dismiss="modal"><?php echo $this->translate('Yes') ?></button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 <img src="<?php echo $this->basePath() ?>/img/paper_blue.jpg" class="hidden">
 <script type="text/javascript">
     function (context) {
@@ -115,9 +132,9 @@
                     }
                 });
 
-                $.postJSON('<?php echo $this->url('prooph.link/process_config/api/workflow')  ?>', {
-                    "workflow" : {"name" : "Undefined"}
-                }).then(
+                $.postJSON('<?php echo $this->url('prooph.link/process_config/api/workflow')  ?>',
+                    {"name" : "Undefined"}
+                ).then(
                     function(data, textStatus, request) {
                         self.workflow['location'] = request.getResponseHeader('location');
                         self.reloadWorkflow();
@@ -143,7 +160,7 @@
             jsPlumb.ready(function () {
                 self.whiteboard = jsPlumb.getInstance({
                     Container : "whiteboard",
-                    Connector : "Flowchart",
+                    Connector : "Bezier",
                     ConnectionOverlays  : [
                         [ "PlainArrow", { width:10, length:10, location:1} ]
                     ]
@@ -264,7 +281,7 @@
 
             this.isEditingWorkflowName = false;
 
-            $.putJSON(this.workflow.location, {workflow : {name : this.workflow_name.value}}).then(
+            $.putJSON(this.workflow.location, {name : this.workflow_name.value}).then(
                 function () {
                     self.workflow['name'] = self.workflow_name.value;
                 },
@@ -295,11 +312,9 @@
         this.createFlowchartConfig = function () {
             $.postJSON(
                 '<?php echo $this->url('prooph.link/process_config/api/flowchart')  ?>',
-                {flowchart :
-                    {
-                        workflow_id : this.workflow.id,
-                        config : { connections : [], elements : []}
-                    }
+                {
+                    workflow_id : this.workflow.id,
+                    config : { connections : [], elements : []}
                 }
             ).then(
                 function (data, textStatus, request) {
@@ -345,12 +360,10 @@
 
 
             $.putJSON('<?php echo $this->url('prooph.link/process_config/api/flowchart') ?>/' + self.workflow.id, {
-                'flowchart' : {
-                    'workflow_id' : self.workflow.id,
-                    'config' : {
-                        'elements' : elements,
-                        'connections' : connections
-                    }
+                'workflow_id' : self.workflow.id,
+                'config' : {
+                    'elements' : elements,
+                    'connections' : connections
                 }
             });
         }
@@ -399,6 +412,7 @@
                             var connection = self.whiteboard.connect({uuids: [epS, epT.getUuid()]});
 
                             $(connection.canvas).attr("class", conn.class);
+                            connection.bind("click", self.onConnectionClick);
                         });
 
                         self.whiteboard.setSuspendDrawing(false, true);
@@ -418,7 +432,7 @@
         this.createMessageHandler = function (handlerData) {
             return Q($.postJSON(
                 '<?php echo $this->url('prooph.link/process_config/api/message_handler') ?>',
-                {message_handler: handlerData}
+                handlerData
             ).then(
                 function (data, textStatus, request) {
                     return $.getJSON(request.getResponseHeader("location")).then(function(data) {
@@ -597,6 +611,8 @@
                     handlerData = _.findWhere(self.elements, {id : handlerId}),
                     processingType = null;
 
+                jsPlumbInfo.connection.bind("click", self.onConnectionClick);
+
                 Q.fcall(function () {
                     if (jsPlumbInfo.sourceId == "whiteboard-start-point") {
 
@@ -619,23 +635,20 @@
                         }).then(function (processingType) {
                             console.log("apply connection: ", processingType);
                             return Q($.postJSON('<?php echo $this->url('prooph.link/process_config/api/connection')  ?>', {
-                                'connection' : {
-                                    'type' : 'start_connection',
-                                    'workflow_id' : self.workflow.id,
-                                    'start_message' : {
-                                        'message_type' : '<?php echo \Prooph\Link\ProcessManager\Model\Workflow\MessageType::TYPE_COLLECT_DATA  ?>',
-                                        'processing_type' : processingType
-                                    },
-                                    'message_handler' : handlerId
-                                }
+                                'type' : 'start_connection',
+                                'workflow_id' : self.workflow.id,
+                                'start_message' : {
+                                    'message_type' : '<?php echo \Prooph\Link\ProcessManager\Model\Workflow\MessageType::TYPE_COLLECT_DATA  ?>',
+                                    'processing_type' : processingType
+                                },
+                                'message_handler' : handlerId
                             })).catch(function (jqXhr) {
                                 $.failNotify(jqXhr);
                                 throw new Error("Failed to create connection");
                             })
                         })
                     } else {
-                        $.appErrorNotify("Unable to handle connected source");
-                        throw new Error("Unable to handle connected source");
+
                     }
                 }).then(function () {
                     return Q($.getJSON('<?php echo $this->url('prooph.link/process_config/api/task') ?>?message_handler_id='+encodeURIComponent(handlerId))).then(function (response) {
@@ -692,6 +705,21 @@
                     }
                 });
             }
+        }
+
+        this.onConnectionClick = function (conn) {
+            var $modal = $('#detach-connection-modal'),
+                $btnSave = $modal.find(".btn-save");
+
+            $btnSave.off();
+
+            window.setTimeout(function () {
+                $btnSave.click(function () {
+                    self.whiteboard.detach(conn);
+                });
+            }, 100);
+
+            $modal.modal();
         }
 
         this.chooseProcessingTypeViaModal = function (handlerData, deferred) {
