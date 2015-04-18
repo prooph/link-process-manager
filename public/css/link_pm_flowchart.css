@@ -37,22 +37,23 @@ background-image: linear-gradient(45deg, transparent 34%, #E8ECEB 34%, #EFF4F0 6
 
 #whiteboard .element .element-label {font-size: 12px; background-color: #f0f0f0; padding: 3px;}
 
-#whiteboard .start-point {top: 60px; left: 40px; width: 30px; height: 30px; position: absolute; cursor: pointer}
-#whiteboard .start-point svg circle {stroke: black; stroke-width: 3; fill: black; fill-opacity: 0.0;}
+#whiteboard .start-point {top: 80px; left: 50px; width: 30px; height: 30px; position: absolute; cursor: pointer}
+#whiteboard .start-point svg circle {stroke: black; stroke-width: 4; fill: black; fill-opacity: 0.0;}
 
 #whiteboard .source-point {cursor: pointer}
-#whiteboard .source-point svg * {fill : #fff; fill-opacity: 0.0; stroke: #008800; stroke-width: 1}
-#whiteboard .source-point-hover svg * {fill: #008800; fill-opacity: 1.0}
+#whiteboard .source-point svg * {fill : #fff; fill-opacity: 0.0; stroke: #0d3388; stroke-width: 1}
+#whiteboard .source-point-hover svg * {fill: #0d3388; fill-opacity: 1.0}
 
 #whiteboard .target-point svg * {fill : #808080}
 
-#whiteboard ._jsPlumb_endpoint_drop_allowed svg * {fill: #008800}
+#whiteboard ._jsPlumb_endpoint_drop_allowed svg * {fill: #0d3388}
 
-#whiteboard ._jsPlumb_endpoint_connected svg * {fill: #008800; fill-opacity: 1.0}
+#whiteboard ._jsPlumb_endpoint_connected svg * {fill: #0d3388; fill-opacity: 1.0}
 
-#whiteboard ._jsPlumb_connector path {stroke: #bababa; stroke-width: 3; cursor: pointer}
-#whiteboard ._jsPlumb_connector_error path {stroke: #bb0f15;}
-#whiteboard ._jsPlumb_connector_success path {stroke: #008800;}
+#whiteboard ._jsPlumb_connector path {fill: #bababa; stroke: #bababa; stroke-width: 4; cursor: pointer}
+#whiteboard ._jsPlumb_connector path:nth-child(2) {stroke-width: 2;}
+#whiteboard ._jsPlumb_connector_error path {fill: #bb0f15; stroke: #bb0f15;}
+#whiteboard ._jsPlumb_connector_success path {fill: #1a9fcf; stroke: #1a9fcf;}
 
 
 #whiteboard_overlay {background-color: #000000; opacity: 0.5; position: absolute}

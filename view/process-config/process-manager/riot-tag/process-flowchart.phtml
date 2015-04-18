@@ -160,7 +160,7 @@
             jsPlumb.ready(function () {
                 self.whiteboard = jsPlumb.getInstance({
                     Container : "whiteboard",
-                    Connector : "Bezier",
+                    Connector : ["Flowchart", {gap: 10}],
                     ConnectionOverlays  : [
                         [ "PlainArrow", { width:10, length:10, location:1} ]
                     ]
@@ -575,6 +575,31 @@
                 containment:"parent",
                 start: function(event, ui) {
                     $(this).addClass('noclick');
+                },
+                stop : function(event, ui) {
+                    var source = null,
+                        target = ui.helper.context;
+
+                    self.whiteboard.select({target : $(target).attr("id")}).each(function (conn) {
+                        console.log("conn found: ", conn);
+                        source = conn.source;
+                    });
+
+                    if (!_.isEmpty(source)) {
+                        var sourcePos = $(source).position(),
+                            targetPos = $(target).position();
+
+                        if ($(source).attr("id") == "whiteboard-start-point") {
+                            sourcePos.top = sourcePos.top - 33;
+                        }
+
+                        if (Math.abs(sourcePos.top - targetPos.top) < 20) {
+                            $(target).css("top", sourcePos.top - 0.1);
+                            self.whiteboard.repaint(target, {left: targetPos.left, top: sourcePos.top - 0.1});
+                        }
+                    }
+
+                    self.updateFlowchartConfig();
                 }
             });
 
