@@ -186,7 +186,7 @@ return array(
         'factories' => [
             \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithNameHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\CreateWorkflowWithNameHandlerFactory::class,
             \Prooph\Link\ProcessManager\Model\Workflow\ChangeWorkflowNameHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\ChangeWorkflowNameHandlerFactory::class,
-            \Prooph\Link\ProcessManager\Model\Workflow\DetermineFirstTasksForWorkflowHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\DetermineFirstTasksForWorkflowHandlerFactory::class,
+            \Prooph\Link\ProcessManager\Model\Workflow\ScheduleFirstTasksForWorkflowHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\ScheduleFirstTasksForWorkflowHandlerFactory::class,
             \Prooph\Link\ProcessManager\Model\MessageHandler\InstallMessageHandlerHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\InstallMessageHandlerHandlerFactory::class,
             \Prooph\Link\ProcessManager\Model\Task\UpdateTaskMetadataHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\UpdateTaskMetadataHandlerFactory::class,
             'prooph.link.pm.workflow_collection' => \Prooph\Link\ProcessManager\Infrastructure\Factory\WorkflowCollectionFactory::class,
@@ -225,7 +225,7 @@ return array(
             \Prooph\Link\ProcessManager\Command\Workflow\CreateWorkflowWithName::class => \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithNameHandler::class,
             \Prooph\Link\ProcessManager\Command\Workflow\ChangeWorkflowName::class => \Prooph\Link\ProcessManager\Model\Workflow\ChangeWorkflowNameHandler::class,
             \Prooph\Link\ProcessManager\Command\MessageHandler\InstallMessageHandler::class => \Prooph\Link\ProcessManager\Model\MessageHandler\InstallMessageHandlerHandler::class,
-            \Prooph\Link\ProcessManager\Command\Workflow\DetermineFirstTasksForWorkflow::class => \Prooph\Link\ProcessManager\Model\Workflow\DetermineFirstTasksForWorkflowHandler::class,
+            \Prooph\Link\ProcessManager\Command\Workflow\ScheduleFirstTasksForWorkflow::class => \Prooph\Link\ProcessManager\Model\Workflow\ScheduleFirstTasksForWorkflowHandler::class,
             \Prooph\Link\ProcessManager\Command\Task\UpdateTaskMetadata::class => \Prooph\Link\ProcessManager\Model\Task\UpdateTaskMetadataHandler::class,
         ],
         'event_router_map' => [

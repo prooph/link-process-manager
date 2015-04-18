@@ -9,19 +9,19 @@
  * Date: 4/16/15 - 6:36 PM
  */
 namespace Prooph\Link\ProcessManager\Model\Workflow;
-use Prooph\Link\ProcessManager\Command\Workflow\DetermineFirstTasksForWorkflow;
+use Prooph\Link\ProcessManager\Command\Workflow\ScheduleFirstTasksForWorkflow;
 use Prooph\Link\ProcessManager\Model\MessageHandler\Exception\MessageHandlerNotFound;
 use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerCollection;
 use Prooph\Link\ProcessManager\Model\Task\TaskCollection;
 use Prooph\Link\ProcessManager\Model\Workflow\Exception\WorkflowNotFound;
 
 /**
- * Command Handler DetermineFirstTasksHandler
+ * Command Handler ScheduleFirstTasksForWorkflowHandler
  *
  * @package Prooph\Link\ProcessManager\Model\Workflow
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class DetermineFirstTasksForWorkflowHandler
+final class ScheduleFirstTasksForWorkflowHandler
 {
     /**
      * @var WorkflowCollection
@@ -51,11 +51,11 @@ final class DetermineFirstTasksForWorkflowHandler
     }
 
     /**
-     * @param DetermineFirstTasksForWorkflow $command
+     * @param ScheduleFirstTasksForWorkflow $command
      * @throws Exception\WorkflowNotFound
      * @throws \Prooph\Link\ProcessManager\Model\MessageHandler\Exception\MessageHandlerNotFound
      */
-    public function handle(DetermineFirstTasksForWorkflow $command)
+    public function handle(ScheduleFirstTasksForWorkflow $command)
     {
         $workflow = $this->workflowCollection->get($command->workflowId());
 

@@ -12,7 +12,7 @@ namespace Prooph\Link\ProcessManager\Api;
 
 use Prooph\Link\Application\Service\AbstractRestController;
 use Prooph\Link\Application\Service\ActionController;
-use Prooph\Link\ProcessManager\Command\Workflow\DetermineFirstTasksForWorkflow;
+use Prooph\Link\ProcessManager\Command\Workflow\ScheduleFirstTasksForWorkflow;
 use Prooph\ServiceBus\CommandBus;
 
 final class Connection extends AbstractRestController implements ActionController
@@ -31,7 +31,7 @@ final class Connection extends AbstractRestController implements ActionControlle
         if ($connection['type'] == "start_connection") {
             if (! array_key_exists('start_message', $connection)) return $this->apiProblem(422, "No start_message given for the connection");
 
-            $this->commandBus->dispatch(new DetermineFirstTasksForWorkflow(
+            $this->commandBus->dispatch(new ScheduleFirstTasksForWorkflow(
                 $connection['workflow_id'],
                 $connection['start_message'],
                 $connection['message_handler']
@@ -40,6 +40,8 @@ final class Connection extends AbstractRestController implements ActionControlle
             return $this->location(
                 $this->url()->fromRoute('prooph.link/process_config/api/message_handler', ['id' => $connection['message_handler']])
             );
+        } elseif ($connection['type'] == "source_target_connection") {
+
         } else {
             return $this->apiProblem(422, "Unknown connection type");
         }

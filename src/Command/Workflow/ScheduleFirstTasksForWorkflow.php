@@ -22,7 +22,7 @@ use Prooph\Processing\Type\Type;
 use Prooph\ServiceBus\Message\MessageNameProvider;
 
 /**
- * Command DetermineFirstTasksForWorkflow
+ * Command ScheduleFirstTasksForWorkflow
  *
  * Given a start message and the first message handler the corresponding Workflow should determine the first tasks to process
  * the start message with the message handler.
@@ -30,7 +30,7 @@ use Prooph\ServiceBus\Message\MessageNameProvider;
  * @package Prooph\Link\ProcessManager\Command\Workflow
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class DetermineFirstTasksForWorkflow implements TransactionCommand, MessageNameProvider
+final class ScheduleFirstTasksForWorkflow implements TransactionCommand, MessageNameProvider
 {
     use TransactionIdGenerator;
 
