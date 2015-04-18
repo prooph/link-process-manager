@@ -615,7 +615,7 @@
 
                 Q.fcall(function () {
                     if (jsPlumbInfo.sourceId == "whiteboard-start-point") {
-
+                        //Create start connection
                         return Q.fcall(function () {
                             if (! _.isEmpty(handlerData.preferred_type)) {
                                 return handlerData.preferred_type;
@@ -633,7 +633,6 @@
                                 throw new Error("Failed to detect the processing type to collect.");
                             }
                         }).then(function (processingType) {
-                            console.log("apply connection: ", processingType);
                             return Q($.postJSON('<?php echo $this->url('prooph.link/process_config/api/connection')  ?>', {
                                 'type' : 'start_connection',
                                 'workflow_id' : self.workflow.id,
@@ -648,20 +647,41 @@
                             })
                         })
                     } else {
+                        //Create a source -> target connection
+                        var prevHandlerId = $(jsPlumbInfo.source).data("handler-id"),
+                            prevHandlerData = _.findWhere(self.elements, {id : prevHandlerId});
 
+                        if (_.isUndefined(prevHandlerData.tasks) || _.isEmpty(prevHandlerData.tasks)) {
+                            throw new Error("<?php echo $this->translate('Can\'t establish a connection, because the source has no connection to the workflow!')  ?>");
+                        }
+
+                        var prevTask = _.last(prevHandlerData.tasks);
+
+                        return Q($.postJSON('<?php echo $this->url('prooph.link/process_config/api/connection')  ?>', {
+                            'type' : 'source_target_connection',
+                            'workflow_id' : self.workflow.id,
+                            'previous_task' : prevTask.id,
+                            'message_handler' : handlerId
+                        })).catch(function (jqXhr) {
+                            $.failNotify(jqXhr);
+                            throw new Error("<?php echo $this->translate('Failed to create connection on the server.')  ?>");
+                        })
                     }
                 }).then(function () {
+                    //Load tasks for target message handler
                     return Q($.getJSON('<?php echo $this->url('prooph.link/process_config/api/task') ?>?message_handler_id='+encodeURIComponent(handlerId))).then(function (response) {
                         return response.task_collection;
                     }, function (jqXhr) {
                         $.failNotify(jqXhr);
-                        throw new Error("Failed to load tasks for message handler");
+                        throw new Error("<?php echo $this->translate('Failed to load tasks for message handler from server.')  ?>");
                     });
                 }).then(function(taskCollection) {
+                    //Assign tasks to the target message handler
                     handlerData.tasks = taskCollection;
                 }).then(function () {
                     return "_jsPlumb_connector_success";
-                }, function () {
+                }, function (reason) {
+                    $.appErrorNotify(reason);
                     return "_jsPlumb_connector_error";
                 }).done(function (conClass) {
                     $(jsPlumbInfo.connection.canvas).attr("class", "_jsPlumb_connector " + conClass);

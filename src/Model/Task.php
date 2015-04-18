@@ -16,6 +16,8 @@ use Prooph\Link\ProcessManager\Model\Task\TaskId;
 use Prooph\Link\ProcessManager\Model\Task\TaskMetadataWasUpdated;
 use Prooph\Link\ProcessManager\Model\Task\TaskType;
 use Prooph\Link\ProcessManager\Model\Task\TaskWasSetUp;
+use Prooph\Link\ProcessManager\Model\Workflow\Message;
+use Prooph\Link\ProcessManager\Model\Workflow\MessageType;
 use Prooph\Processing\Type\Prototype;
 
 /**
@@ -82,6 +84,26 @@ final class Task extends AggregateRoot
     }
 
     /**
+     * @return Message
+     * @throws \RuntimeException
+     */
+    public function emulateWorkflowMessage()
+    {
+        if ($this->type()->isCollectData()) {
+            $messageType = MessageType::collectData();
+        } elseif ($this->type()->isProcessData()) {
+            $messageType = MessageType::processData();
+        } else {
+            throw new \RuntimeException(sprintf(
+                "Can't create a message type for task type %s",
+                $this->type()->toString()
+            ));
+        }
+
+        return Message::emulateProcessingWorkflowMessage($messageType, $this->processingType(), $this->metadata());
+    }
+
+    /**
      * @return TaskId
      */
     public function id()
@@ -111,6 +133,14 @@ final class Task extends AggregateRoot
     public function metadata()
     {
         return $this->processingMetadata;
+    }
+
+    /**
+     * @return Prototype
+     */
+    public function processingType()
+    {
+        return $this->processingType;
     }
 
     /**

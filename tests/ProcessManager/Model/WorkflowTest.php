@@ -137,18 +137,6 @@ final class WorkflowTest extends TestCase
                 Task\TaskType::TYPE_COLLECT_DATA,
                 Workflow\ProcessType::TYPE_PARALLEL_CHUNK
             ],
-            //Chunk collect data defined by task metadata
-            [
-                Workflow\Message::emulateProcessingWorkflowMessage(
-                    Workflow\MessageType::collectData(),
-                    ArticleCollection::prototype(),
-                    ProcessingMetadata::noData()
-                ),
-                $this->getArticleExporterMessageHandler(),
-                ProcessingMetadata::fromArray([MessageMetadata::LIMIT => 100]),
-                Task\TaskType::TYPE_COLLECT_DATA,
-                Workflow\ProcessType::TYPE_PARALLEL_CHUNK
-            ],
             //Chunk process data defined by message metadata
             [
                 Workflow\Message::emulateProcessingWorkflowMessage(
@@ -161,18 +149,14 @@ final class WorkflowTest extends TestCase
                 Task\TaskType::TYPE_PROCESS_DATA,
                 Workflow\ProcessType::TYPE_PARALLEL_CHUNK
             ],
-            //Chunk collect data defined by task metadata
-            [
-                Workflow\Message::emulateProcessingWorkflowMessage(
-                    Workflow\MessageType::dataCollected(),
-                    ArticleCollection::prototype(),
-                    ProcessingMetadata::noData()
-                ),
-                $this->getArticleImporterMessageHandler(),
-                ProcessingMetadata::fromArray([MessageMetadata::LIMIT => 100]),
-                Task\TaskType::TYPE_PROCESS_DATA,
-                Workflow\ProcessType::TYPE_PARALLEL_CHUNK
-            ],
         ];
+    }
+
+    /**
+     * @test
+     */
+    function it_determines_one_follow_up_task_as_long_as_message_handler_is_located_on_the_same_processing_node()
+    {
+        $this->markTestIncomplete(__CLASS__ . '#' . __FUNCTION__);
     }
 } 

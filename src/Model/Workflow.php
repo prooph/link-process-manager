@@ -116,33 +116,26 @@ final class Workflow extends AggregateRoot
      *
      * @param Message $startMessage
      * @param MessageHandler $firstMessageHandler
-     * @param ProcessingMetadata $taskMetadata
      * @return Task[]
      * @throws \RuntimeException
      * @throws Workflow\Exception\StartTaskIsAlreadyDefined
      */
-    public function determineFirstTasks(Message $startMessage, MessageHandler $firstMessageHandler, ProcessingMetadata $taskMetadata = null)
+    public function determineFirstTasks(Message $startMessage, MessageHandler $firstMessageHandler)
     {
         if ($this->hasStartMessage()) {
             throw StartTaskIsAlreadyDefined::forWorkflow($this);
         }
 
-        //We have some kind of chicken egg problem here. We don't know the first task yet, but need to ask
-        //the message handler if it can handle the start message. As long as the start message is a command
-        //everything is fine, but when the workflow is triggered by an event it will be converted to a command by
-        //the first task. To emulate this behaviour we need to convert the event to a command, so that the message handler
-        //can perform its check based on the correct message type.
-        if ($startMessage->messageType()->isEvent()) {
-            $nextMessage = $startMessage->toProcessDataMessage();
-        } else {
-            $nextMessage = $startMessage;
+        $tasks = [];
+        $taskMetadata = $startMessage->processingMetadata();
+
+        //@TODO: Implement sub process set up
+        if (! $this->processingNodeName()->equals($firstMessageHandler->processingNodeName())) {
+            throw new \RuntimeException("Running message handler on different nodes is not supported yet!");
         }
 
-        if (is_null($taskMetadata)) {
-            $taskMetadata = ProcessingMetadata::noData();
-        } else {
-            $nextMessage = $this->mergeTaskMetadataIntoMessageMetadata($taskMetadata, $nextMessage);
-        }
+        $task = $this->scheduleTaskFor($firstMessageHandler, $taskMetadata, $startMessage);
+        $nextMessage = $task->emulateWorkflowMessage();
 
         $processType = $this->determineProcessType($nextMessage, $firstMessageHandler);
 
@@ -152,17 +145,43 @@ final class Workflow extends AggregateRoot
 
         $this->recordThat(ProcessWasAddedToWorkflow::record($process, $this));
 
+        $this->recordThat(TaskWasAddedToProcess::record($this->workflowId(), $process, $task));
+
+        $tasks[] = $task;
+
+        return $tasks;
+    }
+
+    /**
+     * @param Message $lastAnswer
+     * @param MessageHandler $nextMessageHandler
+     * @return Task[]
+     * @throws Workflow\Exception\MessageIsNotManageable
+     * @throws \RuntimeException
+     */
+    public function determineNextTasks(Message $lastAnswer, MessageHandler $nextMessageHandler)
+    {
         $tasks = [];
+        $taskMetadata = ProcessingMetadata::noData();
 
         //@TODO: Implement sub process set up
-        if (! $this->processingNodeName()->equals($firstMessageHandler->processingNodeName())) {
+        if (! $this->processingNodeName()->equals($nextMessageHandler->processingNodeName())) {
             throw new \RuntimeException("Running message handler on different nodes is not supported yet!");
         }
 
-        //NOTE: To schedule the first task correctly we use the original start message, not the emulated next command
-        $task = $this->scheduleTaskFor($firstMessageHandler, $taskMetadata, $startMessage);
+        $task = $this->scheduleTaskFor($nextMessageHandler, $taskMetadata, $lastAnswer);
+        $nextMessage = $task->emulateWorkflowMessage();
 
-        $this->recordThat(TaskWasAddedToProcess::record($this->workflowId(), $process, $task));
+        $processType = $this->determineProcessType($nextMessage, $nextMessageHandler);
+
+        $lastProcess = $this->lastProcess();
+
+        if (! $lastProcess->type()->isLinearMessaging() || ! $processType->isLinearMessaging()) {
+            //@TODO: Implement sub process handling
+            throw new \RuntimeException("Handling follow up tasks with a process type other than linear messaging is not supported yet!");
+        }
+
+        $this->recordThat(TaskWasAddedToProcess::record($this->workflowId(), $lastProcess, $task));
 
         $tasks[] = $task;
 
@@ -202,6 +221,19 @@ final class Workflow extends AggregateRoot
     }
 
     /**
+     * @return Process|null
+     */
+    private function lastProcess()
+    {
+        if (empty($this->processList)) return null;
+
+        $lastProcess = end($this->processList);
+        reset($this->processList);
+
+        return $lastProcess;
+    }
+
+    /**
      * Checks if the message handler can handle a workflow message with the item processing type of a collection.
      *
      * @param Message $message
@@ -221,22 +253,6 @@ final class Workflow extends AggregateRoot
         );
 
         return $messageHandler->canHandleMessage($itemMessage);
-    }
-
-    /**
-     * Returns a new message VO with task metadata merged into message metadata
-     *
-     * @param ProcessingMetadata $taskMetadata
-     * @param Message $message
-     * @return Message
-     */
-    private function mergeTaskMetadataIntoMessageMetadata(ProcessingMetadata $taskMetadata, Message $message)
-    {
-        return Message::emulateProcessingWorkflowMessage(
-            $message->messageType(),
-            $message->processingType(),
-            $message->processingMetadata()->merge($taskMetadata)
-        );
     }
 
     /**
@@ -272,30 +288,34 @@ final class Workflow extends AggregateRoot
     }
 
     /**
-     * Creates a new task for given message handler
+     * Creates a new task for given message handler and workflow message
      *
      * @param MessageHandler $messageHandler
      * @param ProcessingMetadata $taskMetadata
-     * @param Workflow\Message $previousMessage
+     * @param Workflow\Message $workflowMessage
      * @return \Prooph\Link\ProcessManager\Model\Task
      * @throws \RuntimeException
      */
-    private function scheduleTaskFor(MessageHandler $messageHandler, ProcessingMetadata $taskMetadata, Message $previousMessage)
+    private function scheduleTaskFor(MessageHandler $messageHandler, ProcessingMetadata $taskMetadata, Message $workflowMessage)
     {
-        if ($previousMessage->messageType()->isCollectDataMessage()) {
+        if ($workflowMessage->messageType()->isCollectDataMessage()) {
             $taskType = TaskType::collectData();
-        } elseif ($previousMessage->messageType()->isDataCollectedMessage() || $previousMessage->messageType()->isDataProcessedMessage()) {
+        } elseif ($workflowMessage->messageType()->isDataCollectedMessage() || $workflowMessage->messageType()->isDataProcessedMessage()) {
             $taskType = TaskType::processData();
         } else {
             throw new \RuntimeException(
                 sprintf(
                     "Failed to determine a task type which can handle a %s message",
-                    $previousMessage->messageType()->toString()
+                    $workflowMessage->messageType()->toString()
                 )
             );
         }
 
-        return Task::setUp($messageHandler, $taskType, $previousMessage->processingType(), $taskMetadata);
+        if (! empty($messageHandler->processingMetadata()->toArray())) {
+            $taskMetadata = $taskMetadata->merge($messageHandler->processingMetadata());
+        }
+
+        return Task::setUp($messageHandler, $taskType, $workflowMessage->processingType(), $taskMetadata);
     }
 
     /**

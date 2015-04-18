@@ -47,7 +47,10 @@ class TestCase extends \PHPUnit_Framework_TestCase
             MessageHandler\HandlerType::connector(),
             MessageHandler\DataDirection::source(),
             MessageHandler\ProcessingTypes::support([$supportedProcessingType]),
-            ProcessingMetadata::fromArray(['chunk_support' => true])
+            ProcessingMetadata::fromArray(['chunk_support' => true]),
+            'sqlconnector-pm-metadata',
+            'glyphicon-hdd',
+            'glyphicon'
         );
     }
 
@@ -66,7 +69,10 @@ class TestCase extends \PHPUnit_Framework_TestCase
             MessageHandler\HandlerType::connector(),
             MessageHandler\DataDirection::target(),
             MessageHandler\ProcessingTypes::support([$supportedProcessingType]),
-            ProcessingMetadata::fromArray(['chunk_support' => true])
+            ProcessingMetadata::fromArray(['chunk_support' => true]),
+            'sqlconnector-pm-metadata',
+            'glyphicon-hdd',
+            'glyphicon'
         );
     }
 

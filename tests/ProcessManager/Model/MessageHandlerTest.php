@@ -10,15 +10,17 @@
  */
 namespace ProophTest\Link\ProcessManager\Model;
 
-use Prooph\Link\Application\DataType\SqlConnector\Ifair\ArticlesCollection;
 use Prooph\Link\Application\SharedKernel\MessageMetadata;
 use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerId;
 use Prooph\Link\ProcessManager\Model\MessageHandler;
 use Prooph\Link\ProcessManager\Model\ProcessingMetadata;
+use Prooph\Link\ProcessManager\Model\Task\TaskType;
+use Prooph\Link\ProcessManager\Model\Task;
 use Prooph\Link\ProcessManager\Model\Workflow\Message;
 use Prooph\Link\ProcessManager\Model\Workflow\MessageType;
 use Prooph\Processing\Processor\NodeName;
 use ProophTest\Link\ProcessManager\Mock\ProcessingType\Article;
+use ProophTest\Link\ProcessManager\Mock\ProcessingType\ArticleCollection;
 use ProophTest\Link\ProcessManager\TestCase;
 
 final class MessageHandlerTest extends TestCase
@@ -32,7 +34,7 @@ final class MessageHandlerTest extends TestCase
 
         $message = Message::emulateProcessingWorkflowMessage(
             MessageType::collectData(),
-            ArticlesCollection::prototype(),
+            ArticleCollection::prototype(),
             ProcessingMetadata::noData()
         );
 
@@ -48,7 +50,7 @@ final class MessageHandlerTest extends TestCase
 
         $message = Message::emulateProcessingWorkflowMessage(
             MessageType::collectData(),
-            ArticlesCollection::prototype(),
+            ArticleCollection::prototype(),
             ProcessingMetadata::noData()
         );
 
@@ -64,7 +66,7 @@ final class MessageHandlerTest extends TestCase
 
         $message = Message::emulateProcessingWorkflowMessage(
             MessageType::processData(),
-            ArticlesCollection::prototype(),
+            ArticleCollection::prototype(),
             ProcessingMetadata::noData()
         );
 
@@ -80,7 +82,7 @@ final class MessageHandlerTest extends TestCase
 
         $message = Message::emulateProcessingWorkflowMessage(
             MessageType::processData(),
-            ArticlesCollection::prototype(),
+            ArticleCollection::prototype(),
             ProcessingMetadata::noData()
         );
 
@@ -96,7 +98,7 @@ final class MessageHandlerTest extends TestCase
 
         $message = Message::emulateProcessingWorkflowMessage(
             MessageType::processData(),
-            ArticlesCollection::prototype(),
+            ArticleCollection::prototype(),
             ProcessingMetadata::noData()
         );
 
@@ -112,7 +114,7 @@ final class MessageHandlerTest extends TestCase
 
         $message = Message::emulateProcessingWorkflowMessage(
             MessageType::collectData(),
-            ArticlesCollection::prototype(),
+            ArticleCollection::prototype(),
             ProcessingMetadata::noData()
         );
 
@@ -128,7 +130,7 @@ final class MessageHandlerTest extends TestCase
 
         $message = Message::emulateProcessingWorkflowMessage(
             MessageType::processData(),
-            ArticlesCollection::prototype(),
+            ArticleCollection::prototype(),
             ProcessingMetadata::fromArray([MessageMetadata::LIMIT => 100])
         );
 
@@ -148,7 +150,7 @@ final class MessageHandlerTest extends TestCase
 
         $message = Message::emulateProcessingWorkflowMessage(
             MessageType::processData(),
-            ArticlesCollection::prototype(),
+            ArticleCollection::prototype(),
             ProcessingMetadata::fromArray([MessageMetadata::LIMIT => 100])
         );
 
@@ -172,32 +174,68 @@ final class MessageHandlerTest extends TestCase
             [
                 Message::emulateProcessingWorkflowMessage(
                     MessageType::collectData(),
-                    ArticlesCollection::prototype(),
+                    ArticleCollection::prototype(),
                     ProcessingMetadata::noData()
                 )
             ],
             [
                 Message::emulateProcessingWorkflowMessage(
                     MessageType::dataCollected(),
-                    ArticlesCollection::prototype(),
+                    ArticleCollection::prototype(),
                     ProcessingMetadata::noData()
                 )
             ],
             [
                 Message::emulateProcessingWorkflowMessage(
                     MessageType::processData(),
-                    ArticlesCollection::prototype(),
+                    ArticleCollection::prototype(),
                     ProcessingMetadata::noData()
                 )
             ],
             [
                 Message::emulateProcessingWorkflowMessage(
                     MessageType::dataProcessed(),
-                    ArticlesCollection::prototype(),
+                    ArticleCollection::prototype(),
                     ProcessingMetadata::noData()
                 )
             ],
         ];
+    }
+
+    /**
+     * @test
+     */
+    function it_returns_a_emulated_data_collected_answer_when_it_is_a_source_connector()
+    {
+        $messageHandler = $this->getMessageHandler(MessageHandler\DataDirection::DIRECTION_SOURCE, MessageHandler\HandlerType::TYPE_CONNECTOR, ['chunk_support' => true]);
+
+        $connectedTask = Task::setUp($messageHandler, TaskType::collectData(), ArticleCollection::prototype(), ProcessingMetadata::fromArray([MessageMetadata::LIMIT => 100]));
+
+        $answer = $messageHandler->emulateAnswerMessage($connectedTask);
+
+        $this->assertInstanceOf(Message::class, $answer);
+
+        $this->assertTrue($answer->messageType()->isDataCollectedMessage());
+        $this->assertEquals($connectedTask->processingType()->of(), $answer->processingType()->of());
+        $this->assertEquals($connectedTask->metadata()->toArray(), $answer->processingMetadata()->toArray());
+    }
+
+    /**
+     * @test
+     */
+    function it_returns_a_emulated_data_processed_answer_when_it_is_target_connector()
+    {
+        $messageHandler = $this->getMessageHandler(MessageHandler\DataDirection::DIRECTION_TARGET, MessageHandler\HandlerType::TYPE_CONNECTOR, ['chunk_support' => true]);
+
+        $connectedTask = Task::setUp($messageHandler, TaskType::processData(), ArticleCollection::prototype(), ProcessingMetadata::fromArray([MessageMetadata::LIMIT => 100]));
+
+        $answer = $messageHandler->emulateAnswerMessage($connectedTask);
+
+        $this->assertInstanceOf(Message::class, $answer);
+
+        $this->assertTrue($answer->messageType()->isDataProcessedMessage());
+        $this->assertEquals($connectedTask->processingType()->of(), $answer->processingType()->of());
+        $this->assertEquals($connectedTask->metadata()->toArray(), $answer->processingMetadata()->toArray());
     }
 
     /**
@@ -226,8 +264,11 @@ final class MessageHandlerTest extends TestCase
             NodeName::defaultName(),
             $handlerType,
             MessageHandler\DataDirection::fromString($dataDirection),
-            MessageHandler\ProcessingTypes::support([ArticlesCollection::prototype(), Article::prototype()]),
+            MessageHandler\ProcessingTypes::support([ArticleCollection::prototype(), Article::prototype()]),
             $metadata,
+            'sqlconnector-pm-metadata',
+            'glyphicon-hdd',
+            'glyphicon',
             Article::prototype(),
             MessageHandler\ProcessingId::fromString('sqlconnector:::example')
         );

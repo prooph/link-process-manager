@@ -62,6 +62,9 @@ final class ProcessingNodeTest extends TestCase
             DataDirection::source(),
             ProcessingTypes::support([ArticleCollection::prototype()]),
             ProcessingMetadata::noData(),
+            'sqlconnector-pm-metadata',
+            'glyphicon-hdd',
+            'glyphicon',
             ArticleCollection::prototype(),
             ProcessingId::fromString('sqlconnector:::example')
         );

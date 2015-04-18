@@ -13,12 +13,15 @@ namespace Prooph\Link\ProcessManager\Model;
 use Assert\Assertion;
 use Prooph\EventSourcing\AggregateRoot;
 use Prooph\Link\ProcessManager\Model\MessageHandler\DataDirection;
+use Prooph\Link\ProcessManager\Model\MessageHandler\Exception\DataDirectionIsNotSupported;
+use Prooph\Link\ProcessManager\Model\MessageHandler\Exception\ProcessingTypeIsNotSupported;
 use Prooph\Link\ProcessManager\Model\MessageHandler\HandlerType;
 use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerId;
 use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerWasInstalled;
 use Prooph\Link\ProcessManager\Model\MessageHandler\ProcessingId;
 use Prooph\Link\ProcessManager\Model\MessageHandler\ProcessingTypes;
 use Prooph\Link\ProcessManager\Model\Task\TaskId;
+use Prooph\Link\ProcessManager\Model\Workflow\Exception\MessageIsNotManageable;
 use Prooph\Link\ProcessManager\Model\Workflow\Message;
 use Prooph\Link\ProcessManager\Model\Workflow\MessageType;
 use Prooph\Processing\Processor\NodeName;
@@ -49,13 +52,6 @@ final class MessageHandler extends AggregateRoot
      * @var string
      */
     private $name;
-
-    /**
-     * Connected process task
-     *
-     * @var TaskId
-     */
-    private $taskId;
 
     /**
      * Defines either the handler acts as a source (collects data) or as a target (processes data)
@@ -213,6 +209,14 @@ final class MessageHandler extends AggregateRoot
     }
 
     /**
+     * @return ProcessingMetadata
+     */
+    public function processingMetadata()
+    {
+        return $this->processingMetadata;
+    }
+
+    /**
      * @param Message $message
      * @return bool
      */
@@ -245,6 +249,26 @@ final class MessageHandler extends AggregateRoot
         }
 
         return true;
+    }
+
+    /**
+     * @param Task $connectedTask
+     * @return Message
+     * @throws Workflow\Exception\MessageIsNotManageable
+     */
+    public function emulateAnswerMessage(Task $connectedTask)
+    {
+        if (! $this->canHandleMessage($connectedTask->emulateWorkflowMessage())) {
+            throw MessageIsNotManageable::byMessageHandler($this, $connectedTask->emulateWorkflowMessage());
+        }
+
+        if ($connectedTask->type()->isCollectData()) {
+            $messageType = MessageType::dataCollected();
+        } else {
+            $messageType = MessageType::dataProcessed();
+        }
+
+        return Message::emulateProcessingWorkflowMessage($messageType, $connectedTask->processingType(), $connectedTask->metadata());
     }
 
     /**
