@@ -35,8 +35,11 @@ window.PM = Prooph.Link.App.create(
         connectors   : {$connectors},
         locations    : {$locations},
         manipulationScripts : {$manipulationScripts},
-        buildTaskDesc : function (task) {
-
+        getConnector : function (id) {
+            return _.findWhere(this.connectors, {id : id})
+        },
+        getProcessingType : function (typeClass) {
+            return _.findWhere(this.processingTypes, { value : typeClass})
         }
     }
 );
