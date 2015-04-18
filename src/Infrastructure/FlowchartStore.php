@@ -38,7 +38,13 @@ final class FlowchartStore implements ApplicationDbAware
      */
     public function addFlowchartConfig($workflowId, array $config)
     {
-        $this->connection->insert($this->flowchartConfigTable, ['workflow_id' => $workflowId, 'config' => json_encode($config)]);
+        $this->connection->insert(
+            $this->flowchartConfigTable,
+            [
+                'workflow_id' => $workflowId,
+                'config' => json_encode($config),
+                'last_updated_at' => (new \DateTime())->format(\DateTime::ISO8601),
+            ]);
     }
 
     /**
@@ -47,7 +53,14 @@ final class FlowchartStore implements ApplicationDbAware
      */
     public function updateFlowchartConfig($workflowId, array $config)
     {
-        $this->connection->update($this->flowchartConfigTable, ['config' => json_encode($config)], ['workflow_id' => $workflowId]);
+        $this->connection->update(
+            $this->flowchartConfigTable,
+            [
+                'config' => json_encode($config),
+                'last_updated_at' => (new \DateTime())->format(\DateTime::ISO8601),
+            ],
+            ['workflow_id' => $workflowId]
+        );
     }
 
     /**
@@ -64,7 +77,8 @@ final class FlowchartStore implements ApplicationDbAware
 
         return [
             'workflow_id' => $flowchartConfig['workflow_id'],
-            'config' => json_decode($flowchartConfig['config'], true)
+            'config' => json_decode($flowchartConfig['config'], true),
+            'last_updated_at' => $flowchartConfig['last_updated_at'],
         ];
     }
 
