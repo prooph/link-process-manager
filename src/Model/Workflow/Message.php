@@ -11,6 +11,7 @@
 namespace Prooph\Link\ProcessManager\Model\Workflow;
 
 use Prooph\Link\ProcessManager\Model\ProcessingMetadata;
+use Prooph\Processing\Message\MessageNameUtils;
 use Prooph\Processing\Type\Prototype;
 
 /**
@@ -61,6 +62,23 @@ final class Message
         $this->messageType = $messageType;
         $this->processingType = $prototype;
         $this->processingMetadata = $metadata;
+    }
+
+    /**
+     * @return string
+     */
+    public function messageName()
+    {
+        switch($this->messageType()->toString()) {
+            case MessageType::TYPE_DATA_PROCESSED:
+                return MessageNameUtils::getDataProcessedEventName($message->processingType()->of());
+            case MessageType::TYPE_PROCESS_DATA:
+                return MessageNameUtils::getProcessDataCommandName($message->processingType()->of());
+            case MessageType::TYPE_DATA_COLLECTED:
+                return MessageNameUtils::getDataCollectedEventName($message->processingType()->of());
+            case MessageType::TYPE_COLLECT_DATA:
+                return MessageNameUtils::getCollectDataCommandName($message->processingType()->of());
+        }
     }
 
     /**

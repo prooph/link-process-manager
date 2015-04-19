@@ -84,6 +84,7 @@ final class ProcessingNode
      * @param string $iconType
      * @param null|Prototype $preferredProcessingType
      * @param null|MessageHandler\ProcessingId $processingId
+     * @param array $additionalData
      * @return MessageHandler
      */
     public function installMessageHandler(
@@ -97,7 +98,8 @@ final class ProcessingNode
         $icon,
         $iconType,
         Prototype $preferredProcessingType = null,
-        ProcessingId $processingId = null
+        ProcessingId $processingId = null,
+        array $additionalData = []
     ) {
         return MessageHandler::fromDefinition(
             $messageHandlerId,
@@ -111,7 +113,8 @@ final class ProcessingNode
             $icon,
             $iconType,
             $preferredProcessingType,
-            $processingId
+            $processingId,
+            $additionalData
         );
     }
 

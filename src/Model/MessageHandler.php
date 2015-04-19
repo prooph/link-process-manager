@@ -114,6 +114,11 @@ final class MessageHandler extends AggregateRoot
     private $iconType;
 
     /**
+     * @var array
+     */
+    private $additionalData;
+
+    /**
      * Stores the reason in case the message handler can't handle a message.
      *
      * This property is reset each time the {@method canHandleMessage} is called.
@@ -136,6 +141,7 @@ final class MessageHandler extends AggregateRoot
      * @param string $iconType
      * @param null|Prototype $preferredProcessingType
      * @param null|MessageHandler\ProcessingId $processingId
+     * @param array $additionalData
      * @return MessageHandler
      */
     public static function fromDefinition(
@@ -150,7 +156,8 @@ final class MessageHandler extends AggregateRoot
         $icon,
         $iconType,
         Prototype $preferredProcessingType = null,
-        ProcessingId $processingId = null
+        ProcessingId $processingId = null,
+        array $additionalData = []
     ) {
         Assertion::string($name);
         Assertion::notEmpty($name);
@@ -178,7 +185,8 @@ final class MessageHandler extends AggregateRoot
             $icon,
             $iconType,
             $preferredProcessingType,
-            $processingId
+            $processingId,
+            $additionalData
         ));
 
         return $instance;
@@ -201,6 +209,14 @@ final class MessageHandler extends AggregateRoot
     }
 
     /**
+     * @return HandlerType
+     */
+    public function handlerType()
+    {
+        return $this->handlerType;
+    }
+
+    /**
      * @return NodeName
      */
     public function processingNodeName()
@@ -214,6 +230,54 @@ final class MessageHandler extends AggregateRoot
     public function processingMetadata()
     {
         return $this->processingMetadata;
+    }
+
+    /**
+     * @return DataDirection
+     */
+    public function dataDirection()
+    {
+        return $this->dataDirection;
+    }
+
+    /**
+     * @return ProcessingTypes
+     */
+    public function supportedProcessingTypes()
+    {
+        return $this->supportedProcessingTypes;
+    }
+
+    /**
+     * @return null|Prototype
+     */
+    public function preferredProcessingType()
+    {
+        return $this->preferredProcessingType;
+    }
+
+    /**
+     * @return null|ProcessingId
+     */
+    public function processingId()
+    {
+        return $this->processingId;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isKnownInProcessingSystem()
+    {
+        return ! is_null($this->processingId);
+    }
+
+    /**
+     * @return array
+     */
+    public function additionalData()
+    {
+        return $this->additionalData;
     }
 
     /**
@@ -323,6 +387,7 @@ final class MessageHandler extends AggregateRoot
         $this->icon = $event->icon();
         $this->iconType = $event->iconType();
         $this->processingId = $event->processingId();
+        $this->additionalData = $event->additionalData();
     }
 
     /**

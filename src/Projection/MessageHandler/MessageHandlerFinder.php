@@ -102,6 +102,8 @@ final class MessageHandlerFinder implements ApplicationDbAware
 
         $handlerData['processing_metadata'] = json_decode($handlerData['processing_metadata'], true);
 
+        $handlerData['additional_data'] = json_decode($handlerData['additional_data'], true);
+
         //Force object when metadata is empty,
         //otherwise the result json for the client would contain an array instead of an empty object
         if (empty($handlerData['processing_metadata'])) {

@@ -43,6 +43,7 @@ final class MessageHandlerProjector implements ApplicationDbAware
             'icon_type' => $event->iconType(),
             'preferred_type' => (! is_null($event->preferredProcessingType()))? $event->preferredProcessingType()->of() : null,
             'processing_id' => (! is_null($event->processingId()))? $event->processingId()->toString() : null,
+            'additional_data' => json_encode($event->additionalData()),
         ]);
     }
 

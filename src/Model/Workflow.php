@@ -16,6 +16,7 @@ use Prooph\Link\ProcessManager\Model\Task\TaskType;
 use Prooph\Link\ProcessManager\Model\Workflow\Exception\MessageIsNotManageable;
 use Prooph\Link\ProcessManager\Model\Workflow\Exception\StartTaskIsAlreadyDefined;
 use Prooph\Link\ProcessManager\Model\Workflow\Exception\TaskProcessNotFound;
+use Prooph\Link\ProcessManager\Model\Workflow\Exception\WorkflowReleaseAlreadyExists;
 use Prooph\Link\ProcessManager\Model\Workflow\Message;
 use Prooph\Link\ProcessManager\Model\Workflow\Process;
 use Prooph\Link\ProcessManager\Model\Workflow\ProcessId;
@@ -25,7 +26,9 @@ use Prooph\Link\ProcessManager\Model\Workflow\StartMessageWasAssignedToWorkflow;
 use Prooph\Link\ProcessManager\Model\Workflow\TaskWasAddedToProcess;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowNameWasChanged;
+use Prooph\Link\ProcessManager\Model\Workflow\WorkflowPublisher;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasCreated;
+use Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasReleased;
 use Prooph\Processing\Processor\NodeName;
 use Prooph\Processing\Type\Description\NativeType;
 
@@ -67,6 +70,11 @@ final class Workflow extends AggregateRoot
      * @var Message
      */
     private $startMessage;
+
+    /**
+     * @var int
+     */
+    private $currentReleaseNumber = 0;
 
     /**
      * Internal list of processes which are required to fulfill the workflow.
@@ -196,6 +204,23 @@ final class Workflow extends AggregateRoot
     }
 
     /**
+     * @param int $newReleaseNumber
+     * @param WorkflowPublisher $workflowPublisher
+     * @throws Workflow\Exception\WorkflowReleaseAlreadyExists
+     */
+    public function releaseCurrentVersion($newReleaseNumber, WorkflowPublisher $workflowPublisher)
+    {
+        if ($this->currentReleaseNumber >= $newReleaseNumber) {
+            throw WorkflowReleaseAlreadyExists::withReleaseNumber($newReleaseNumber, $this);
+        }
+
+        $workflowPublisher->writeToProcessingConfig($this);
+
+        //We increase the version to include the WorkflowWasReleased event
+        $this->recordThat(WorkflowWasReleased::withVersion($this->workflowId(), $this->version + 1, $newReleaseNumber));
+    }
+
+    /**
      * @return NodeName
      */
     public function processingNodeName()
@@ -217,6 +242,22 @@ final class Workflow extends AggregateRoot
     public function name()
     {
         return $this->name;
+    }
+
+    /**
+     * @return Workflow\Process[]
+     */
+    public function processList()
+    {
+        return $this->processList;
+    }
+
+    /**
+     * @return Message
+     */
+    public function startMessage()
+    {
+        return $this->startMessage;
     }
 
     /**
@@ -382,5 +423,13 @@ final class Workflow extends AggregateRoot
     protected function whenWorkflowNameWasChanged(WorkflowNameWasChanged $event)
     {
         $this->name = $event->newName();
+    }
+
+    /**
+     * @param WorkflowWasReleased $event
+     */
+    protected function whenWorkflowWasReleased(WorkflowWasReleased $event)
+    {
+        $this->currentReleaseNumber = $event->releaseNumber();
     }
 }

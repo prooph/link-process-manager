@@ -17,6 +17,7 @@ use Prooph\Link\ProcessManager\Model\Workflow\MessageType;
 use Prooph\Link\ProcessManager\Model\Workflow\StartMessageWasAssignedToWorkflow;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowNameWasChanged;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasCreated;
+use Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasReleased;
 use Prooph\Link\ProcessManager\Projection\Tables;
 use Prooph\Processing\Message\MessageNameUtils;
 
@@ -60,7 +61,19 @@ final class WorkflowProjector implements ApplicationDbAware
     {
         $this->connection->update(
             Tables::WORKFLOW,
-            ['start_message' => $this->determineMessageName($event->startMessage())],
+            ['start_message' => $event->startMessage()->messageName()],
+            ['id' => $event->workflowId()->toString()]
+        );
+    }
+
+    /**
+     * @param WorkflowWasReleased $event
+     */
+    public function onWorkflowWasReleased(WorkflowWasReleased $event)
+    {
+        $this->connection->update(
+            Tables::WORKFLOW,
+            ['current_release' => $event->releaseNumber(), 'last_published_at' => (new \DateTime())->format(\DateTime::ISO8601)],
             ['id' => $event->workflowId()->toString()]
         );
     }
@@ -72,23 +85,5 @@ final class WorkflowProjector implements ApplicationDbAware
     public function setApplicationDb(Connection $connection)
     {
         $this->connection = $connection;
-    }
-
-    /**
-     * @param Message $message
-     * @return string
-     */
-    private function determineMessageName(Message $message)
-    {
-        switch($message->messageType()->toString()) {
-            case MessageType::TYPE_DATA_PROCESSED:
-                return MessageNameUtils::getDataProcessedEventName($message->processingType()->of());
-            case MessageType::TYPE_PROCESS_DATA:
-                return MessageNameUtils::getProcessDataCommandName($message->processingType()->of());
-            case MessageType::TYPE_DATA_COLLECTED:
-                return MessageNameUtils::getDataCollectedEventName($message->processingType()->of());
-            case MessageType::TYPE_COLLECT_DATA:
-                return MessageNameUtils::getCollectDataCommandName($message->processingType()->of());
-        }
     }
 }

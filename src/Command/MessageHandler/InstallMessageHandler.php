@@ -95,6 +95,11 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
     private $handlerProcessingId;
 
     /**
+     * @var array
+     */
+    private $additionalData;
+
+    /**
      * @param MessageHandlerId|string $messageHandlerId
      * @param string $name
      * @param NodeName|string $nodeName
@@ -107,6 +112,7 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
      * @param string $iconType
      * @param null|string|Prototype $preferredProcessingType
      * @param null|string|ProcessingId $handlerProcessingId
+     * @param array $additionalData
      */
     public function __construct(
         $messageHandlerId,
@@ -120,7 +126,8 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
         $icon,
         $iconType,
         $preferredProcessingType = null,
-        $handlerProcessingId = null
+        $handlerProcessingId = null,
+        array $additionalData = []
     ) {
         Assertion::string($name);
         Assertion::notEmpty($name);
@@ -185,6 +192,7 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
         $this->iconType = $iconType;
         $this->preferredProcessingType = $preferredProcessingType;
         $this->handlerProcessingId = $handlerProcessingId;
+        $this->additionalData = $additionalData;
     }
 
     /**
@@ -281,6 +289,14 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
     public function handlerProcessingId()
     {
         return $this->handlerProcessingId;
+    }
+
+    /**
+     * @return array
+     */
+    public function additionalData()
+    {
+        return $this->additionalData;
     }
 
     /**

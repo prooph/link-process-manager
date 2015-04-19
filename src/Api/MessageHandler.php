@@ -57,6 +57,10 @@ final class MessageHandler extends AbstractRestController implements ActionContr
             $data['processing_id'] = null;
         }
 
+        if(!isset($data['additional_data'])) {
+            $data['additional_data'] = [];
+        }
+
         $messageHandlerId = MessageHandlerId::generate();
 
         $this->commandBus->dispatch(new InstallMessageHandler(
@@ -71,7 +75,8 @@ final class MessageHandler extends AbstractRestController implements ActionContr
             $data['icon'],
             $data['icon_type'],
             $data['preferred_type'],
-            $data['processing_id']
+            $data['processing_id'],
+            $data['additional_data']
         ));
 
         return $this->location(

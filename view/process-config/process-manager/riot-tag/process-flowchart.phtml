@@ -527,21 +527,32 @@
         this.translateProcessingHandlerToProcessManagerHandler = function (processingHandler, type) {
             var handlerData = {type : type};
 
+            processingHandler = _.cloneDeep(processingHandler);
+
             handlerData.name = processingHandler.name;
+            delete processingHandler.name;
             handlerData.node_name = processingHandler.node_name;
+            delete processingHandler.node_name;
             handlerData.processing_types = processingHandler.allowed_types;
+            delete processingHandler.allowed_types;
             handlerData.processing_id = processingHandler.id;
+            delete processingHandler.id;
             handlerData.metadata_riot_tag = processingHandler.ui_metadata_riot_tag;
+            delete processingHandler.ui_metadata_riot_tag;
             handlerData.icon = processingHandler.icon;
+            delete processingHandler.icon;
             handlerData.icon_type = processingHandler.icon_type;
+            delete processingHandler.icon_type;
 
             if (!_.isEmpty(processingHandler.metadata)) {
                 handlerData.processing_metadata = processingHandler.metadata;
             }
+            delete processingHandler.metadata;
 
             if(!_.isEmpty(processingHandler.preferred_type)) {
                 handlerData.preferred_type = processingHandler.preferred_type;
             }
+            delete processingHandler.preferred_type;
 
             if (processingHandler.allowed_messages.length == 2) {
                 handlerData.data_direction = '<?php echo \Prooph\Link\ProcessManager\Model\MessageHandler\DataDirection::DIRECTION_SOURCE_AND_TARGET  ?>';
@@ -552,6 +563,9 @@
             } else {
                 return new Error("Unknown message type: " + processingHandler.allowed_messages[0]);
             }
+            delete processingHandler.allowed_messages;
+
+            handlerData.additional_data = processingHandler;
 
             return handlerData;
         }

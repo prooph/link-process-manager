@@ -56,6 +56,7 @@ final class MessageHandlerWasInstalled extends AggregateChanged implements Trans
      * @param string $iconType
      * @param Prototype $preferredProcessingType
      * @param ProcessingId $processingId
+     * @param array $additionalData
      * @return MessageHandlerWasInstalled
      */
     public static function record(
@@ -70,7 +71,8 @@ final class MessageHandlerWasInstalled extends AggregateChanged implements Trans
         $icon,
         $iconType,
         Prototype $preferredProcessingType = null,
-        ProcessingId $processingId = null
+        ProcessingId $processingId = null,
+        array $additionalData = []
     ) {
         $event = self::occur(
             $messageHandlerId->toString(),
@@ -86,6 +88,7 @@ final class MessageHandlerWasInstalled extends AggregateChanged implements Trans
                 'icon_type' => $iconType,
                 'preferred_processing_type' => ($preferredProcessingType)? $preferredProcessingType->of() : null,
                 'processing_id' => ($processingId)? $processingId->toString() : null,
+                'additional_data' => $additionalData
             ]
         );
 
@@ -219,5 +222,13 @@ final class MessageHandlerWasInstalled extends AggregateChanged implements Trans
         if (is_null($this->payload['processing_id'])) return null;
 
         return ProcessingId::fromString($this->payload['processing_id']);
+    }
+
+    /**
+     * @return array
+     */
+    public function additionalData()
+    {
+        return $this->payload['additional_data'];
     }
 } 

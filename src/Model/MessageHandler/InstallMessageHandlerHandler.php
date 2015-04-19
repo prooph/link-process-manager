@@ -59,7 +59,8 @@ final class InstallMessageHandlerHandler
             $command->icon(),
             $command->iconType(),
             $command->preferredProcessingType(),
-            $command->handlerProcessingId()
+            $command->handlerProcessingId(),
+            $command->additionalData()
         );
 
         $this->messageHandlerCollection->add($handler);

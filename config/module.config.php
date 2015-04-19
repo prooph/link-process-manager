@@ -104,6 +104,18 @@ return array(
                                             ]
                                         ]
                                     ],
+                                    'workflow_release' => [
+                                        'type' => 'Segment',
+                                        'options' => [
+                                            'route' => '/workflow-releases[/:id]',
+                                            'constraints' => array(
+                                                'id' => '.+',
+                                            ),
+                                            'defaults' => [
+                                                'controller' => \Prooph\Link\ProcessManager\Api\WorkflowRelease::class,
+                                            ]
+                                        ]
+                                    ],
                                     'process' => [
                                         'type' => 'Segment',
                                         'options' => [
@@ -219,6 +231,7 @@ return array(
             \Prooph\Link\ProcessManager\Api\Flowchart::class => \Prooph\Link\ProcessManager\Api\Factory\FlowchartFactory::class,
             \Prooph\Link\ProcessManager\Api\MessageHandler::class => \Prooph\Link\ProcessManager\Api\Factory\MessageHandlerFactory::class,
             \Prooph\Link\ProcessManager\Api\Task::class => \Prooph\Link\ProcessManager\Api\Factory\TaskFactory::class,
+            \Prooph\Link\ProcessManager\Api\WorkflowRelease::class => \Prooph\Link\ProcessManager\Api\Factory\WorkflowReleaseFactory::class,
         ),
     ),
     'prooph.psb' => [
@@ -255,6 +268,9 @@ return array(
             \Prooph\Link\ProcessManager\Model\Task\TaskMetadataWasUpdated::class => [
                 \Prooph\Link\ProcessManager\Projection\Task\TaskProjector::class,
             ],
+            \Prooph\Link\ProcessManager\Model\Workflow\WorkflowWasReleased::class => [
+                \Prooph\Link\ProcessManager\Projection\Workflow\WorkflowProjector::class,
+            ],
         ],
     ],
     'zf-content-negotiation' => [
@@ -264,6 +280,7 @@ return array(
             \Prooph\Link\ProcessManager\Api\MessageHandler::class => 'Json',
             \Prooph\Link\ProcessManager\Api\Task::class => 'Json',
             \Prooph\Link\ProcessManager\Api\Flowchart::class => 'Json',
+            \Prooph\Link\ProcessManager\Api\WorkflowRelease::class => 'Json',
         ],
         'accept_whitelist' => [
             'Prooph\Link\ProcessManager\Api\Process' => ['application/json'],
@@ -271,6 +288,7 @@ return array(
             \Prooph\Link\ProcessManager\Api\MessageHandler::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\Task::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\Flowchart::class => ['application/json'],
+            \Prooph\Link\ProcessManager\Api\WorkflowRelease::class => ['application/json'],
         ],
         'content_type_whitelist' => [
             'Prooph\Link\ProcessManager\Api\Process' => ['application/json'],
@@ -278,6 +296,7 @@ return array(
             \Prooph\Link\ProcessManager\Api\MessageHandler::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\Task::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\Flowchart::class => ['application/json'],
+            \Prooph\Link\ProcessManager\Api\WorkflowRelease::class => ['application/json'],
         ],
     ],
 );
