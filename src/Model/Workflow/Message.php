@@ -71,13 +71,13 @@ final class Message
     {
         switch($this->messageType()->toString()) {
             case MessageType::TYPE_DATA_PROCESSED:
-                return MessageNameUtils::getDataProcessedEventName($message->processingType()->of());
+                return MessageNameUtils::getDataProcessedEventName($this->processingType()->of());
             case MessageType::TYPE_PROCESS_DATA:
-                return MessageNameUtils::getProcessDataCommandName($message->processingType()->of());
+                return MessageNameUtils::getProcessDataCommandName($this->processingType()->of());
             case MessageType::TYPE_DATA_COLLECTED:
-                return MessageNameUtils::getDataCollectedEventName($message->processingType()->of());
+                return MessageNameUtils::getDataCollectedEventName($this->processingType()->of());
             case MessageType::TYPE_COLLECT_DATA:
-                return MessageNameUtils::getCollectDataCommandName($message->processingType()->of());
+                return MessageNameUtils::getCollectDataCommandName($this->processingType()->of());
         }
     }
 

@@ -37,7 +37,7 @@ final class UpdateTaskMetadataHandler
      * @param UpdateTaskMetadata $command
      * @throws Exception\TaskNotFound
      */
-    public function handleUpdateTaskMetadata(UpdateTaskMetadata $command)
+    public function handle(UpdateTaskMetadata $command)
     {
         $task = $this->taskCollection->get($command->taskId());
 

@@ -300,6 +300,17 @@
             }
         }
 
+        this.publishWorkflow = function () {
+            $.postJSON(
+                '<?php echo $this->url('prooph.link/process_config/api/workflow_release')  ?>',
+                {
+                    workflow_id : self.workflow.id
+                }
+            ).then(function (data, textStatus, jqXhr) {
+                context.app.trigger("WorkflowWasPublished", {location: jqXhr.getResponseHeader("location")});
+            }, $.failNotify);
+        }
+
         //Flowchart operations
 
         /**
@@ -751,9 +762,11 @@
                     if (taskData.type !== '<?php echo \Prooph\Link\ProcessManager\Model\Task\TaskType::TYPE_RUN_SUB_PROCESS  ?>') {
                         self.requestTaskMetadataForMessageHandlerFromModule(handlerData, taskData)
                             .then(function (taskMetadata) {
-                                taskData.metadata = taskMetadata;
+                                var metadata = (!_.isUndefined(handlerData.processing_metadata))? handlerData.processing_metadata : {};
+                                _.merge(metadata, taskMetadata);
+                                taskData.metadata = metadata;
                                 return Q($.putJSON('<?php echo $this->url('prooph.link/process_config/api/task')  ?>/' + taskData.id, {
-                                    metadata : taskMetadata
+                                    metadata : taskData.metadata
                                 })).catch(function (xhr) {
                                     $.failNotify(xhr);
                                     throw new Error("Failed to save task metadata");
@@ -861,9 +874,14 @@
         //RiotJs events
 
         this.on("mount", function () {
+            context.app.on("publishWorkflow", this.publishWorkflow);
             this.initWorkflow();
             this.initWhiteboard();
             this.update();
         });
+
+        this.on("unmount", function () {
+            context.app.off("publishWorkflow", this.publishWorkflow);
+        })
     }
 </script>

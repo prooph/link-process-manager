@@ -273,6 +273,30 @@ final class MessageHandler extends AggregateRoot
     }
 
     /**
+     * @return string
+     */
+    public function icon()
+    {
+        return $this->icon;
+    }
+
+    /**
+     * @return string
+     */
+    public function iconType()
+    {
+        return $this->iconType;
+    }
+
+    /**
+     * @return string
+     */
+    public function metadataRiotTag()
+    {
+        return $this->metadataRiotTag;
+    }
+
+    /**
      * @return array
      */
     public function additionalData()

@@ -118,13 +118,29 @@ final class ProcessingTypes
     }
 
     /**
+     * @return bool
+     */
+    public function areAllTypesSupported()
+    {
+        return $this->supportAllTypes;
+    }
+
+    /**
+     * @return array
+     */
+    public function typeList()
+    {
+        return array_map(function (Prototype $prototype) {return $prototype->of();}, $this->supportedProcessingTypes);
+    }
+
+    /**
      * @return array
      */
     public function toArray()
     {
         return [
             'support_all' => $this->supportAllTypes,
-            'processing_types' => array_map(function (Prototype $prototype) {return $prototype->of();}, $this->supportedProcessingTypes),
+            'processing_types' => $this->typeList(),
         ];
     }
 }

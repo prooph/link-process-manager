@@ -5,7 +5,8 @@
             <li ><a href="#" class="elements-tab" onclick="{ toggleActive }"><?php echo $this->translate('Elements') ?></a></li>
         </ul>
         <div if="{ isProcessTabActive() }">
-            <h3>Process tab</h3>
+            <p></p>
+            <button id="pm-publish-workflow" type="button" class="btn btn-default"><?php echo $this->translate('Publish Workflow')?></button>
         </div>
         <div if="{ isElementsTabActive() }">
             <p></p>
@@ -57,11 +58,24 @@
             }).click(function(e) {
                 e.preventDefault();
             });
+
+            $("#pm-publish-workflow").click(function () {
+                context.app.trigger("publishWorkflow");
+            });
+        }
+
+        this.onWorkflowWasPublished = function (event) {
+            console.log("Workflow was published: ", event);
         }
 
         this.on("mount", function () {
             this.init();
             this.update();
+            context.app.on("workflowWasPublished", this.onWorkflowWasPublished);
+        })
+
+        this.on("unmount", function () {
+            context.app.off("workflowWasPublished", this.onWorkflowWasPublished);
         })
     }
 </script>
