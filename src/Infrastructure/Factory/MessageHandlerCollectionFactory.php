@@ -31,6 +31,6 @@ final class MessageHandlerCollectionFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        return new PESMessageHandlerCollection($serviceLocator->get('prooph.event_store'));
+        return new PESMessageHandlerCollection($serviceLocator->get('proophessor.event_store'));
     }
 }

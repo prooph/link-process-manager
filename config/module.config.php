@@ -217,7 +217,7 @@ return array(
             \Prooph\Link\ProcessManager\Api\WorkflowRelease::class => \Prooph\Link\ProcessManager\Api\Factory\WorkflowReleaseFactory::class,
         ),
     ),
-    'prooph.psb' => [
+    'proophessor' => [
         'command_router_map' => [
             \Prooph\Link\ProcessManager\Command\Workflow\CreateWorkflowWithName::class => \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithNameHandler::class,
             \Prooph\Link\ProcessManager\Command\Workflow\ChangeWorkflowName::class => \Prooph\Link\ProcessManager\Model\Workflow\ChangeWorkflowNameHandler::class,

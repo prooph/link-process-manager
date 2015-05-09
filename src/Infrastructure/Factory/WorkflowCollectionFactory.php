@@ -30,6 +30,6 @@ final class WorkflowCollectionFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        return new PESWorkflowCollection($serviceLocator->get('prooph.event_store'));
+        return new PESWorkflowCollection($serviceLocator->get('proophessor.event_store'));
     }
 }

@@ -34,7 +34,7 @@ final class WorkflowPublisherFactory implements FactoryInterface
             $serviceLocator->get('prooph.link.pm.task_collection'),
             $serviceLocator->get('prooph.link.pm.message_handler_collection'),
             $serviceLocator->get('prooph.link.system_config'),
-            $serviceLocator->get('prooph.psb.command_bus'),
+            $serviceLocator->get('proophessor.command_bus'),
             $serviceLocator->get('prooph.link.app.config_location')
         );
     }

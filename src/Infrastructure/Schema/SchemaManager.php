@@ -9,6 +9,7 @@
  * Date: 4/4/15 - 9:58 PM
  */
 namespace Prooph\Link\ProcessManager\Infrastructure\Schema;
+
 use Doctrine\DBAL\Schema\Schema;
 
 /**

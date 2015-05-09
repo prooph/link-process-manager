@@ -29,6 +29,6 @@ final class TaskCollectionFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        return new PESTaskCollection($serviceLocator->get('prooph.event_store'));
+        return new PESTaskCollection($serviceLocator->get('proophessor.event_store'));
     }
 }
