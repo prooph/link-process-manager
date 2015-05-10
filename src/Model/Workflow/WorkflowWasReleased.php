@@ -44,7 +44,7 @@ final class WorkflowWasReleased extends AggregateChanged
      */
     public function releasedVersion()
     {
-        return $this->toPayloadReader()->integerValue('released_version');
+        return (int)$this->payload['released_version'];
     }
 
     /**
@@ -52,6 +52,6 @@ final class WorkflowWasReleased extends AggregateChanged
      */
     public function releaseNumber()
     {
-        return $this->toPayloadReader()->integerValue('release_number');
+        return (int)$this->payload['release_number'];
     }
 }

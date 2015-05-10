@@ -23,10 +23,8 @@ use Prooph\Processing\Type\Prototype;
  * @package Prooph\Link\ProcessManager\Model\MessageHandler
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class MessageHandlerWasInstalled extends AggregateChanged implements TransactionEvent
+final class MessageHandlerWasInstalled extends AggregateChanged
 {
-    use TransactionIdAware;
-
     private $messageHandlerId;
 
     private $processingNodeName;

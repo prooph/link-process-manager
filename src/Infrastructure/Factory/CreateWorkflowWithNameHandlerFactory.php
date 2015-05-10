@@ -10,7 +10,7 @@
  */
 namespace Prooph\Link\ProcessManager\Infrastructure\Factory;
 
-use Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithNameHandler;
+use Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowHandler;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -30,7 +30,7 @@ final class CreateWorkflowWithNameHandlerFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        return new CreateWorkflowWithNameHandler(
+        return new CreateWorkflowHandler(
             $serviceLocator->get('prooph.link.pm.local_processing_node'),
             $serviceLocator->get('prooph.link.pm.workflow_collection')
         );

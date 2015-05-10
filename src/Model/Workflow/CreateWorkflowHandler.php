@@ -10,17 +10,17 @@
  */
 namespace Prooph\Link\ProcessManager\Model\Workflow;
 
-use Prooph\Link\ProcessManager\Command\Workflow\CreateWorkflowWithName;
+use Prooph\Link\ProcessManager\Command\Workflow\CreateWorkflow;
 use Prooph\Link\ProcessManager\Model\ProcessingNode;
 use Prooph\Link\ProcessManager\Model\Workflow;
 
 /**
- * CreateWorkflowWithNameHandler
+ * CreateWorkflowHandler
  *
  * @package Prooph\Link\ProcessManager\Model\Workflow
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class CreateWorkflowWithNameHandler 
+final class CreateWorkflowHandler
 {
     /**
      * @var WorkflowCollection
@@ -43,9 +43,9 @@ final class CreateWorkflowWithNameHandler
     }
 
     /**
-     * @param CreateWorkflowWithName $command
+     * @param CreateWorkflow $command
      */
-    public function handle(CreateWorkflowWithName $command)
+    public function handle(CreateWorkflow $command)
     {
         $workflow = $this->processingNode->setUpNewWorkflow($command->workflowId(), $command->workflowName());
 

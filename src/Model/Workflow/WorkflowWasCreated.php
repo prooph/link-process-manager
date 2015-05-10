@@ -21,10 +21,8 @@ use Prooph\Processing\Processor\NodeName;
  * @package Prooph\Link\ProcessManager\Model\Workflow
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class WorkflowWasCreated extends AggregateChanged implements TransactionEvent
+final class WorkflowWasCreated extends AggregateChanged
 {
-    use TransactionIdAware;
-
     /**
      * @param NodeName $nodeName
      * @param WorkflowId $workflowId

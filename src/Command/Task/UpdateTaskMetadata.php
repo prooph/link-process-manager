@@ -9,12 +9,11 @@
  * Date: 4/17/15 - 9:59 PM
  */
 namespace Prooph\Link\ProcessManager\Command\Task;
-use Prooph\Link\Application\Service\TransactionCommand;
-use Prooph\Link\Application\Service\TransactionId;
-use Prooph\Link\Application\Service\TransactionIdGenerator;
+
+use Assert\Assertion;
+use Prooph\Common\Messaging\Command;
 use Prooph\Link\ProcessManager\Model\ProcessingMetadata;
 use Prooph\Link\ProcessManager\Model\Task\TaskId;
-use Prooph\ServiceBus\Message\MessageNameProvider;
 
 /**
  * Command UpdateTaskMetadata
@@ -22,32 +21,24 @@ use Prooph\ServiceBus\Message\MessageNameProvider;
  * @package Prooph\Link\ProcessManager\Command\Task
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class UpdateTaskMetadata implements TransactionCommand, MessageNameProvider
+final class UpdateTaskMetadata extends Command
 {
-    use TransactionIdGenerator;
-
     /**
-     * @var TaskId
+     * @param array $taskMetadata
+     * @param string $taskId
+     * @return UpdateTaskMetadata
      */
-    private $taskId;
-
-    /**
-     * @var ProcessingMetadata
-     */
-    private $taskMetadata;
-
-    public function __construct($taskId, $taskMetadata)
+    public static function to(array $taskMetadata, $taskId)
     {
-        if (! $taskId instanceof TaskId) {
-            $taskId = TaskId::fromString($taskId);
-        }
+        Assertion::uuid($taskId);
 
-        if (! $taskMetadata instanceof ProcessingMetadata) {
-            $taskMetadata = ProcessingMetadata::fromArray($taskMetadata);
-        }
-
-        $this->taskId = $taskId;
-        $this->taskMetadata = $taskMetadata;
+        return new self(
+            __CLASS__,
+            [
+                'task_id' => $taskId,
+                'task_metadata' => $taskMetadata
+            ]
+        );
     }
 
     /**
@@ -55,7 +46,7 @@ final class UpdateTaskMetadata implements TransactionCommand, MessageNameProvide
      */
     public function taskId()
     {
-        return $this->taskId;
+        return TaskId::fromString($this->payload['task_id']);
     }
 
     /**
@@ -63,14 +54,6 @@ final class UpdateTaskMetadata implements TransactionCommand, MessageNameProvide
      */
     public function metadata()
     {
-        return $this->taskMetadata;
-    }
-
-    /**
-     * @return string Name of the message
-     */
-    public function getMessageName()
-    {
-        return __CLASS__;
+        return ProcessingMetadata::fromArray($this->payload['task_metadata']);
     }
 }

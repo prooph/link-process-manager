@@ -47,7 +47,7 @@ final class TaskWasSetUp extends AggregateChanged
             'task_type' => $taskType->toString(),
             'message_handler_id' => $messageHandler->messageHandlerId()->toString(),
             'processing_type' => $processingType->of(),
-            'metadata' => $metadata->toArray(),
+            'task_metadata' => $metadata->toArray(),
         ]);
 
         $event->taskId = $taskId;
@@ -112,7 +112,7 @@ final class TaskWasSetUp extends AggregateChanged
     public function taskMetadata()
     {
         if (is_null($this->taskMetadata)) {
-            $this->taskMetadata = ProcessingMetadata::fromArray($this->payload['metadata']);
+            $this->taskMetadata = ProcessingMetadata::fromArray($this->payload['task_metadata']);
         }
         return $this->taskMetadata;
     }

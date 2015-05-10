@@ -168,6 +168,6 @@ final class Task extends AggregateRoot
      */
     protected function whenTaskMetadataWasUpdated(TaskMetadataWasUpdated $event)
     {
-        $this->processingMetadata = $event->metadata();
+        $this->processingMetadata = $event->taskMetadata();
     }
 }

@@ -11,15 +11,13 @@
 namespace Prooph\Link\ProcessManager\Command\Workflow;
 
 use Assert\Assertion;
-use Prooph\Link\Application\Service\TransactionCommand;
-use Prooph\Link\Application\Service\TransactionIdGenerator;
+use Prooph\Common\Messaging\Command;
 use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerId;
 use Prooph\Link\ProcessManager\Model\ProcessingMetadata;
 use Prooph\Link\ProcessManager\Model\Workflow\Message;
 use Prooph\Link\ProcessManager\Model\Workflow\MessageType;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
 use Prooph\Processing\Type\Type;
-use Prooph\ServiceBus\Message\MessageNameProvider;
 
 /**
  * Command ScheduleFirstTasksForWorkflow
@@ -30,55 +28,34 @@ use Prooph\ServiceBus\Message\MessageNameProvider;
  * @package Prooph\Link\ProcessManager\Command\Workflow
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class ScheduleFirstTasksForWorkflow implements TransactionCommand, MessageNameProvider
+final class ScheduleFirstTasksForWorkflow extends Command
 {
-    use TransactionIdGenerator;
-
-    private $workflowId;
-
-    private $startMessage;
-
-    private $messageHandlerId;
-
     /**
-     * @param string|WorkflowId $workflowId
-     * @param array|Message $startMessage
-     * @param string|MessageHandlerId $firstMessageHandlerId
+     * @param string $workflowId
+     * @param array $startMessage
+     * @param string $firstMessageHandlerId
+     * @return ScheduleFirstTasksForWorkflow
      */
-    public function __construct($workflowId, $startMessage, $firstMessageHandlerId)
+    public static function withData($workflowId, $startMessage, $firstMessageHandlerId)
     {
-        if (! $workflowId instanceof WorkflowId) {
-            $workflowId = WorkflowId::fromString($workflowId);
-        }
+        Assertion::uuid($workflowId);
+        Assertion::uuid($firstMessageHandlerId);
+        Assertion::isArray($startMessage);
+        Assertion::keyExists($startMessage, 'message_type');
+        Assertion::keyExists($startMessage, 'processing_type');
 
-        if (! $startMessage instanceof Message) {
-            Assertion::keyExists($startMessage, 'message_type');
-            Assertion::keyExists($startMessage, 'processing_type');
+        $processingType = $startMessage['processing_type'];
 
-            $processingType = $startMessage['processing_type'];
+        Assertion::implementsInterface($processingType, Type::class);
 
-            Assertion::implementsInterface($processingType, Type::class);
-
-            if (isset($startMessage['metadata'])) {
-                $metadata = ProcessingMetadata::fromArray($startMessage['metadata']);
-            } else {
-                $metadata = ProcessingMetadata::noData();
-            }
-
-            $startMessage = Message::emulateProcessingWorkflowMessage(
-                MessageType::fromString($startMessage['message_type']),
-                $processingType::prototype(),
-                $metadata
-            );
-        }
-
-        if (! $firstMessageHandlerId instanceof MessageHandlerId) {
-            $firstMessageHandlerId = MessageHandlerId::fromString($firstMessageHandlerId);
-        }
-
-        $this->workflowId = $workflowId;
-        $this->startMessage = $startMessage;
-        $this->messageHandlerId = $firstMessageHandlerId;
+        return new self(
+            __CLASS__,
+            [
+                'workflow_id' => $workflowId,
+                'start_message' => $startMessage,
+                'first_message_handler' => $firstMessageHandlerId
+            ]
+        );
     }
 
     /**
@@ -86,7 +63,7 @@ final class ScheduleFirstTasksForWorkflow implements TransactionCommand, Message
      */
     public function workflowId()
     {
-        return $this->workflowId;
+        return WorkflowId::fromString($this->payload['workflow_id']);
     }
 
     /**
@@ -94,7 +71,21 @@ final class ScheduleFirstTasksForWorkflow implements TransactionCommand, Message
      */
     public function startMessage()
     {
-        return $this->startMessage;
+        $startMessage = $this->payload['start_message'];
+
+        if (isset($startMessage['metadata'])) {
+            $metadata = ProcessingMetadata::fromArray($startMessage['metadata']);
+        } else {
+            $metadata = ProcessingMetadata::noData();
+        }
+
+        $processingType = $startMessage['processing_type'];
+
+        return Message::emulateProcessingWorkflowMessage(
+            MessageType::fromString($startMessage['message_type']),
+            $processingType::prototype(),
+            $metadata
+        );
     }
 
     /**
@@ -102,14 +93,6 @@ final class ScheduleFirstTasksForWorkflow implements TransactionCommand, Message
      */
     public function firstMessageHandlerId()
     {
-        return $this->messageHandlerId;
-    }
-
-    /**
-     * @return string Name of the message
-     */
-    public function getMessageName()
-    {
-        return __CLASS__;
+        return MessageHandlerId::fromString($this->payload['first_message_handler']);
     }
 }

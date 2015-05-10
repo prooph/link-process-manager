@@ -50,7 +50,7 @@ final class WorkflowRelease extends AbstractRestController implements ActionCont
         $newRelease = (int)$workflowData['current_release'];
         $newRelease++;
 
-        $this->commandBus->dispatch(new PublishWorkflow($data['workflow_id'], $newRelease));
+        $this->commandBus->dispatch(PublishWorkflow::withReleaseNumber($newRelease, $data['workflow_id']));
 
         return $this->location(
             $this->url()->fromRoute('prooph.link/process_config/api/workflow_release', ['id' => $newRelease])

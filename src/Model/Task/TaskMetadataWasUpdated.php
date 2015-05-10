@@ -21,20 +21,18 @@ use Prooph\Link\ProcessManager\Model\ProcessingMetadata;
  * @package Prooph\Link\ProcessManager\Model\Task
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class TaskMetadataWasUpdated extends AggregateChanged implements TransactionEvent
+final class TaskMetadataWasUpdated extends AggregateChanged
 {
-    use TransactionIdAware;
-
     private $taskId;
 
-    private $metadata;
+    private $taskMetadata;
 
     public static function record(TaskId $taskId, ProcessingMetadata $metadata)
     {
-        $event = self::occur($taskId->toString(), ['metadata' => $metadata->toArray()]);
+        $event = self::occur($taskId->toString(), ['task_metadata' => $metadata->toArray()]);
 
         $event->taskId = $taskId;
-        $event->metadata = $metadata;
+        $event->taskMetadata = $metadata;
 
         return $event;
     }
@@ -53,11 +51,11 @@ final class TaskMetadataWasUpdated extends AggregateChanged implements Transacti
     /**
      * @return ProcessingMetadata
      */
-    public function metadata()
+    public function taskMetadata()
     {
-        if (is_null($this->metadata)) {
-            $this->metadata = ProcessingMetadata::fromArray($this->payload['metadata']);
+        if (is_null($this->taskMetadata)) {
+            $this->taskMetadata = ProcessingMetadata::fromArray($this->payload['task_metadata']);
         }
-        return $this->metadata;
+        return $this->taskMetadata;
     }
 }

@@ -49,7 +49,7 @@ final class TaskProjector implements ApplicationDbAware
     {
         $this->connection->update(
             Tables::TASK,
-            ['metadata' => json_encode($event->metadata()->toArray())],
+            ['metadata' => json_encode($event->taskMetadata()->toArray())],
             ['id' => $event->taskId()->toString()]
         );
     }

@@ -51,7 +51,7 @@ final class Task extends AbstractRestController implements ActionController
     {
         if (! array_key_exists('metadata', $data)) return $this->apiProblem(422, "No metadata given for the task");
 
-        $this->commandBus->dispatch(new UpdateTaskMetadata($id, $data['metadata']));
+        $this->commandBus->dispatch(UpdateTaskMetadata::to($data['metadata'], $id));
 
         return $this->accepted();
     }

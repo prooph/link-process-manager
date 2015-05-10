@@ -20,10 +20,8 @@ use Prooph\Link\Application\Service\TransactionIdAware;
  * @package Prooph\Link\ProcessManager\Model\Workflow
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class WorkflowNameWasChanged extends AggregateChanged implements TransactionEvent
+final class WorkflowNameWasChanged extends AggregateChanged
 {
-    use TransactionIdAware;
-
     private $workflowId;
 
     /**

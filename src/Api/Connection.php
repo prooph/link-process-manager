@@ -32,7 +32,7 @@ final class Connection extends AbstractRestController implements ActionControlle
         if ($connection['type'] == "start_connection") {
             if (! array_key_exists('start_message', $connection)) return $this->apiProblem(422, "No start_message given for the connection");
 
-            $this->commandBus->dispatch(new ScheduleFirstTasksForWorkflow(
+            $this->commandBus->dispatch(ScheduleFirstTasksForWorkflow::withData(
                 $connection['workflow_id'],
                 $connection['start_message'],
                 $connection['message_handler']
@@ -42,7 +42,7 @@ final class Connection extends AbstractRestController implements ActionControlle
         } elseif ($connection['type'] == "source_target_connection") {
             if (! array_key_exists('previous_task', $connection)) return $this->apiProblem(422, "No previous_task given for the connection");
 
-            $this->commandBus->dispatch(new ScheduleNextTasksForWorkflow(
+            $this->commandBus->dispatch(ScheduleNextTasksForWorkflow::withData(
                 $connection['workflow_id'],
                 $connection['previous_task'],
                 $connection['message_handler']

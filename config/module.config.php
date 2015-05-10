@@ -178,7 +178,7 @@ return array(
     ),
     'service_manager' => [
         'factories' => [
-            \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithNameHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\CreateWorkflowWithNameHandlerFactory::class,
+            \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\CreateWorkflowWithNameHandlerFactory::class,
             \Prooph\Link\ProcessManager\Model\Workflow\ChangeWorkflowNameHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\ChangeWorkflowNameHandlerFactory::class,
             \Prooph\Link\ProcessManager\Model\Workflow\ScheduleFirstTasksForWorkflowHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\ScheduleFirstTasksForWorkflowHandlerFactory::class,
             \Prooph\Link\ProcessManager\Model\Workflow\ScheduleNextTasksForWorkflowHandler::class => \Prooph\Link\ProcessManager\Infrastructure\Factory\ScheduleNextTasksForWorkflowHandlerFactory::class,
@@ -219,7 +219,7 @@ return array(
     ),
     'proophessor' => [
         'command_router_map' => [
-            \Prooph\Link\ProcessManager\Command\Workflow\CreateWorkflowWithName::class => \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowWithNameHandler::class,
+            \Prooph\Link\ProcessManager\Command\Workflow\CreateWorkflow::class => \Prooph\Link\ProcessManager\Model\Workflow\CreateWorkflowHandler::class,
             \Prooph\Link\ProcessManager\Command\Workflow\ChangeWorkflowName::class => \Prooph\Link\ProcessManager\Model\Workflow\ChangeWorkflowNameHandler::class,
             \Prooph\Link\ProcessManager\Command\MessageHandler\InstallMessageHandler::class => \Prooph\Link\ProcessManager\Model\MessageHandler\InstallMessageHandlerHandler::class,
             \Prooph\Link\ProcessManager\Command\Workflow\ScheduleFirstTasksForWorkflow::class => \Prooph\Link\ProcessManager\Model\Workflow\ScheduleFirstTasksForWorkflowHandler::class,

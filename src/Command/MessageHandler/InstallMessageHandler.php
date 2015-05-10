@@ -11,8 +11,7 @@
 namespace Prooph\Link\ProcessManager\Command\MessageHandler;
 
 use Assert\Assertion;
-use Prooph\Link\Application\Service\TransactionCommand;
-use Prooph\Link\Application\Service\TransactionIdGenerator;
+use Prooph\Common\Messaging\Command;
 use Prooph\Link\ProcessManager\Model\MessageHandler\DataDirection;
 use Prooph\Link\ProcessManager\Model\MessageHandler\HandlerType;
 use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerId;
@@ -22,7 +21,6 @@ use Prooph\Link\ProcessManager\Model\ProcessingMetadata;
 use Prooph\Processing\Processor\NodeName;
 use Prooph\Processing\Type\Prototype;
 use Prooph\Processing\Type\Type;
-use Prooph\ServiceBus\Message\MessageNameProvider;
 
 /**
  * Class InstallMessageHandler
@@ -30,98 +28,32 @@ use Prooph\ServiceBus\Message\MessageNameProvider;
  * @package Prooph\Link\ProcessManager\Command\MessageHandler
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class InstallMessageHandler implements TransactionCommand, MessageNameProvider
+final class InstallMessageHandler extends Command
 {
-    use TransactionIdGenerator;
-
     /**
-     * @var MessageHandlerId
-     */
-    private $messageHandlerId;
-
-    /**
-     * @var string
-     */
-    private $name;
-
-    /**
-     * @var NodeName
-     */
-    private $nodeName;
-
-    /**
-     * @var HandlerType
-     */
-    private $handlerType;
-
-    /**
-     * @var DataDirection
-     */
-    private $dataDirection;
-
-    /**
-     * @var ProcessingTypes
-     */
-    private $processingTypes;
-
-    /**
-     * @var ProcessingMetadata
-     */
-    private $processingMetadata;
-
-    /**
-     * @var string
-     */
-    private $metadataRiotTag;
-
-    /**
-     * @var string
-     */
-    private $icon;
-
-    /**
-     * @var string
-     */
-    private $iconType;
-
-    /**
-     * @var Prototype
-     */
-    private $preferredProcessingType;
-
-    /**
-     * @var ProcessingId
-     */
-    private $handlerProcessingId;
-
-    /**
-     * @var array
-     */
-    private $additionalData;
-
-    /**
-     * @param MessageHandlerId|string $messageHandlerId
+     * @param string $messageHandlerId
      * @param string $name
-     * @param NodeName|string $nodeName
-     * @param HandlerType|string $handlerType
-     * @param DataDirection|string $dataDirection
-     * @param ProcessingTypes|array|string $supportedProcessingTypes
-     * @param ProcessingMetadata|array $processingMetadata
+     * @param string $nodeName
+     * @param string $handlerType
+     * @param string $dataDirection
+     * @param array|string $supportedProcessingTypes
+     * @param array $processingMetadata
      * @param string $metadataRiotTag
      * @param string $icon
      * @param string $iconType
-     * @param null|string|Prototype $preferredProcessingType
-     * @param null|string|ProcessingId $handlerProcessingId
+     * @param null|string $preferredProcessingType
+     * @param null|string $handlerProcessingId
      * @param array $additionalData
+     * @return InstallMessageHandler
      */
-    public function __construct(
+    public static function withData(
         $messageHandlerId,
         $name,
         $nodeName,
         $handlerType,
         $dataDirection,
         $supportedProcessingTypes,
-        $processingMetadata,
+        array $processingMetadata,
         $metadataRiotTag,
         $icon,
         $iconType,
@@ -129,70 +61,48 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
         $handlerProcessingId = null,
         array $additionalData = []
     ) {
+        Assertion::uuid($messageHandlerId);
         Assertion::string($name);
         Assertion::notEmpty($name);
-
-        if (! $messageHandlerId instanceof MessageHandlerId) {
-            $messageHandlerId = MessageHandlerId::fromString($messageHandlerId);
-        }
-
-        if (! $nodeName instanceof NodeName) {
-            $nodeName = NodeName::fromString($nodeName);
-        }
-
-        if (! $handlerType instanceof HandlerType) {
-            $handlerType = HandlerType::fromString($handlerType);
-        }
-
-        if (! $dataDirection instanceof DataDirection) {
-            $dataDirection = DataDirection::fromString($dataDirection);
-        }
-
-        if (! $supportedProcessingTypes instanceof ProcessingTypes) {
-            if (is_string($supportedProcessingTypes) && $supportedProcessingTypes === ProcessingTypes::SUPPORT_ALL) {
-               $supportedProcessingTypes = ProcessingTypes::supportAll();
-            } else {
-                $supportedProcessingTypes = ProcessingTypes::support($supportedProcessingTypes);
-            }
-        }
-
-        if (! $processingMetadata instanceof ProcessingMetadata) {
-            $processingMetadata = ProcessingMetadata::fromArray($processingMetadata);
-        }
-
-        if (! is_null($preferredProcessingType) && ! $preferredProcessingType instanceof Prototype) {
-            Assertion::string($preferredProcessingType);
-            Assertion::classExists($preferredProcessingType);
-            Assertion::implementsInterface($preferredProcessingType, Type::class);
-            $preferredProcessingType = $preferredProcessingType::prototype();
-        }
-
-        if (! is_null($handlerProcessingId) && ! $handlerProcessingId instanceof ProcessingId) {
-            $handlerProcessingId = ProcessingId::fromString($handlerProcessingId);
-        }
-
+        Assertion::string($nodeName);
+        Assertion::notEmpty($nodeName);
+        Assertion::string($handlerType);
+        Assertion::string($dataDirection);
         Assertion::string($metadataRiotTag);
-        Assertion::notEmpty($metadataRiotTag);
-
         Assertion::string($icon);
-        Assertion::notEmpty($icon);
-
         Assertion::string($iconType);
-        Assertion::notEmpty($iconType);
 
-        $this->messageHandlerId = $messageHandlerId;
-        $this->name = $name;
-        $this->nodeName = $nodeName;
-        $this->handlerType = $handlerType;
-        $this->dataDirection = $dataDirection;
-        $this->processingTypes = $supportedProcessingTypes;
-        $this->processingMetadata = $processingMetadata;
-        $this->metadataRiotTag = $metadataRiotTag;
-        $this->icon = $icon;
-        $this->iconType = $iconType;
-        $this->preferredProcessingType = $preferredProcessingType;
-        $this->handlerProcessingId = $handlerProcessingId;
-        $this->additionalData = $additionalData;
+        if (! is_null($preferredProcessingType)) {
+            Assertion::string($preferredProcessingType);
+            Assertion::implementsInterface($preferredProcessingType, Type::class);
+        }
+
+        if (! is_null($handlerProcessingId)) {
+            Assertion::string($handlerProcessingId);
+        }
+
+        if (!is_string($supportedProcessingTypes)) {
+            Assertion::isArray($supportedProcessingTypes);
+        }
+
+        return new self(
+            __CLASS__,
+            [
+                'message_handler_id' => $messageHandlerId,
+                'name' => $name,
+                'node_name' => $nodeName,
+                'handler_type' => $handlerType,
+                'data_direction' => $dataDirection,
+                'supported_processing_types' => $supportedProcessingTypes,
+                'processing_metadata' => $processingMetadata,
+                'metadata_riot_tag' => $metadataRiotTag,
+                'icon' => $icon,
+                'icon_type' => $iconType,
+                'preferred_processing_type' => $preferredProcessingType,
+                'handler_processing_id' => $handlerProcessingId,
+                'additional_data' => $additionalData
+            ]
+        );
     }
 
     /**
@@ -200,7 +110,7 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
      */
     public function messageHandlerId()
     {
-        return $this->messageHandlerId;
+        return MessageHandlerId::fromString($this->payload['message_handler_id']);
     }
 
     /**
@@ -208,7 +118,7 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
      */
     public function messageHandlerName()
     {
-        return $this->name;
+        return $this->payload['name'];
     }
 
     /**
@@ -216,7 +126,7 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
      */
     public function nodeName()
     {
-        return $this->nodeName;
+        return NodeName::fromString($this->payload['node_name']);
     }
 
     /**
@@ -224,7 +134,7 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
      */
     public function handlerType()
     {
-        return $this->handlerType;
+        return HandlerType::fromString($this->payload['handler_type']);
     }
 
     /**
@@ -232,7 +142,7 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
      */
     public function dataDirection()
     {
-        return $this->dataDirection;
+        return DataDirection::fromString($this->payload['data_direction']);
     }
 
     /**
@@ -240,7 +150,14 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
      */
     public function supportedProcessingTypes()
     {
-        return $this->processingTypes;
+        $supportedProcessingTypes = $this->payload['supported_processing_types'];
+
+        if (is_string($supportedProcessingTypes) && $supportedProcessingTypes === ProcessingTypes::SUPPORT_ALL) {
+            $supportedProcessingTypes = ProcessingTypes::supportAll();
+        } else {
+            $supportedProcessingTypes = ProcessingTypes::support($supportedProcessingTypes);
+        }
+        return $supportedProcessingTypes;
     }
 
     /**
@@ -248,7 +165,7 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
      */
     public function processingMetadata()
     {
-        return $this->processingMetadata;
+        return ProcessingMetadata::fromArray($this->payload['processing_metadata']);
     }
 
     /**
@@ -256,7 +173,7 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
      */
     public function metadataRiotTag()
     {
-        return $this->metadataRiotTag;
+        return $this->payload['metadata_riot_tag'];
     }
 
     /**
@@ -264,7 +181,7 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
      */
     public function icon()
     {
-        return $this->icon;
+        return $this->payload['icon'];
     }
 
     /**
@@ -272,7 +189,7 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
      */
     public function iconType()
     {
-        return $this->iconType;
+        return $this->payload['icon_type'];
     }
 
     /**
@@ -280,7 +197,10 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
      */
     public function preferredProcessingType()
     {
-        return $this->preferredProcessingType;
+        $type = $this->payload['preferred_processing_type'];
+
+        if ($type) return $type::prototype();
+        return null;
     }
 
     /**
@@ -288,7 +208,11 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
      */
     public function handlerProcessingId()
     {
-        return $this->handlerProcessingId;
+        if (! is_null($this->payload['handler_processing_id'])) {
+            return ProcessingId::fromString($this->payload['handler_processing_id']);
+        }
+
+        return null;
     }
 
     /**
@@ -296,14 +220,6 @@ final class InstallMessageHandler implements TransactionCommand, MessageNameProv
      */
     public function additionalData()
     {
-        return $this->additionalData;
-    }
-
-    /**
-     * @return string Name of the message
-     */
-    public function getMessageName()
-    {
-        return __CLASS__;
+        return $this->payload['additional_data'];
     }
 }

@@ -13,7 +13,7 @@ namespace Prooph\Link\ProcessManager\Api;
 use Prooph\Link\Application\Service\AbstractRestController;
 use Prooph\Link\Application\Service\ActionController;
 use Prooph\Link\ProcessManager\Command\Workflow\ChangeWorkflowName;
-use Prooph\Link\ProcessManager\Command\Workflow\CreateWorkflowWithName;
+use Prooph\Link\ProcessManager\Command\Workflow\CreateWorkflow;
 use Prooph\Link\ProcessManager\Model\Workflow\Exception\WorkflowNotFound;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
 use Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder;
@@ -49,7 +49,7 @@ final class Workflow extends AbstractRestController implements ActionController
         $workflowId = WorkflowId::generate();
 
         try {
-            $command = new CreateWorkflowWithName($workflowId, $data['name']);
+            $command = CreateWorkflow::withName($data['name'], $workflowId);
         } catch (\Exception $e) {
             return $this->apiProblem(422, $e->getMessage());
         }
@@ -86,7 +86,7 @@ final class Workflow extends AbstractRestController implements ActionController
         if (! array_key_exists('name', $data)) return $this->apiProblem(422, "No name given for the workflow");
 
         try {
-            $this->commandBus->dispatch(new ChangeWorkflowName($id, $data['name']));
+            $this->commandBus->dispatch(ChangeWorkflowName::to($data['name'], $id));
         } catch (CommandDispatchException $ex) {
             if ($ex->getFailedCommandDispatch()->getException() instanceof WorkflowNotFound) {
                 return $this->apiProblem(404, "Workflow not found");

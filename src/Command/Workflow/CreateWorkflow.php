@@ -6,7 +6,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  * 
- * Date: 4/12/15 - 5:00 PM
+ * Date: 4/4/15 - 12:51 AM
  */
 namespace Prooph\Link\ProcessManager\Command\Workflow;
 
@@ -15,29 +15,33 @@ use Prooph\Common\Messaging\Command;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
 
 /**
- * Command ChangeWorkflowName
+ * Command CreateWorkflow
  *
- * @package Prooph\Link\ProcessManager\Command\Workflow
+ * Command to create a new Workflow with a name and a unique WorkflowId
+ *
+ * @package Prooph\Link\ProcessManager\Model\Workflow
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class ChangeWorkflowName extends Command
+final class CreateWorkflow extends Command
 {
     /**
-     * @param string $newName
+     * @param string $workflowName
      * @param string $workflowId
-     * @return ChangeWorkflowName
+     * @return CreateWorkflow
      */
-    public static function to($newName, $workflowId)
+    public static function withName($workflowName, $workflowId)
     {
-        Assertion::string($newName);
-        Assertion::notEmpty($newName);
-        Assertion::string($workflowId);
-        Assertion::notEmpty($workflowId);
+        Assertion::string($workflowName);
+        Assertion::notEmpty($workflowName);
+        Assertion::uuid($workflowId);
 
-        return new self(__CLASS__, [
-            'workflow_id' => $workflowId,
-            'name' => $newName
-        ]);
+        return new self(
+            __CLASS__,
+            [
+                'workflow_id' => $workflowId,
+                'name' => $workflowName
+            ]
+        );
     }
 
     /**
@@ -51,7 +55,7 @@ final class ChangeWorkflowName extends Command
     /**
      * @return string
      */
-    public function name()
+    public function workflowName()
     {
         return $this->payload['name'];
     }

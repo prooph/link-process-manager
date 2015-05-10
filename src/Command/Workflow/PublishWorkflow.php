@@ -11,10 +11,8 @@
 namespace Prooph\Link\ProcessManager\Command\Workflow;
 
 use Assert\Assertion;
-use Prooph\Link\Application\Service\TransactionCommand;
-use Prooph\Link\Application\Service\TransactionIdGenerator;
+use Prooph\Common\Messaging\Command;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
-use Prooph\ServiceBus\Message\MessageNameProvider;
 
 /**
  * Command PublishWorkflow
@@ -22,35 +20,20 @@ use Prooph\ServiceBus\Message\MessageNameProvider;
  * @package Prooph\Link\ProcessManager\Command\Workflow
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class PublishWorkflow implements TransactionCommand, MessageNameProvider
+final class PublishWorkflow extends Command
 {
-    use TransactionIdGenerator;
-
-    /**
-     * @var WorkflowId
-     */
-    private $workflowId;
-
-    /**
-     * @var int
-     */
-    private $releaseNumber;
-
-    /**
-     * @param string|WorkflowId $workflowId
-     * @param int $releaseNumber
-     */
-    public function __construct($workflowId, $releaseNumber)
+    public static function withReleaseNumber($releaseNumber, $workflowId)
     {
-        if (! $workflowId instanceof WorkflowId) {
-            $workflowId = WorkflowId::fromString($workflowId);
-        }
-
         Assertion::integer($releaseNumber);
+        Assertion::uuid($workflowId);
 
-        $this->workflowId = $workflowId;
-
-        $this->releaseNumber = $releaseNumber;
+        return new self(
+            __CLASS__,
+            [
+                'workflow_id' => $workflowId,
+                'release_number' => $releaseNumber
+            ]
+        );
     }
 
     /**
@@ -58,7 +41,7 @@ final class PublishWorkflow implements TransactionCommand, MessageNameProvider
      */
     public function workflowId()
     {
-        return $this->workflowId;
+        return WorkflowId::fromString($this->payload['workflow_id']);
     }
 
     /**
@@ -66,14 +49,6 @@ final class PublishWorkflow implements TransactionCommand, MessageNameProvider
      */
     public function releaseNumber()
     {
-        return $this->releaseNumber;
-    }
-
-    /**
-     * @return string Name of the message
-     */
-    public function getMessageName()
-    {
-        return __CLASS__;
+        return $this->payload['release_number'];
     }
 }

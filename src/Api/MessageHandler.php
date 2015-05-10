@@ -46,7 +46,7 @@ final class MessageHandler extends AbstractRestController implements ActionContr
         }
 
         if (!isset($data['processing_metadata'])) {
-            $data['processing_metadata'] = ProcessingMetadata::noData();
+            $data['processing_metadata'] = ProcessingMetadata::noData()->toArray();
         }
 
         if (!isset($data['preferred_type'])) {
@@ -63,7 +63,7 @@ final class MessageHandler extends AbstractRestController implements ActionContr
 
         $messageHandlerId = MessageHandlerId::generate();
 
-        $this->commandBus->dispatch(new InstallMessageHandler(
+        $this->commandBus->dispatch(InstallMessageHandler::withData(
             $messageHandlerId,
             $data['name'],
             $data['node_name'],

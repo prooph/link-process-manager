@@ -9,13 +9,11 @@
  * Date: 4/18/15 - 6:32 PM
  */
 namespace Prooph\Link\ProcessManager\Command\Workflow;
-use Prooph\Link\Application\Service\TransactionCommand;
-use Prooph\Link\Application\Service\TransactionId;
-use Prooph\Link\Application\Service\TransactionIdGenerator;
+use Assert\Assertion;
+use Prooph\Common\Messaging\Command;
 use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerId;
 use Prooph\Link\ProcessManager\Model\Task\TaskId;
 use Prooph\Link\ProcessManager\Model\Workflow\WorkflowId;
-use Prooph\ServiceBus\Message\MessageNameProvider;
 
 /**
  * Command ScheduleNextTasksForWorkflow
@@ -23,38 +21,22 @@ use Prooph\ServiceBus\Message\MessageNameProvider;
  * @package Prooph\Link\ProcessManager\Command\Workflow
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class ScheduleNextTasksForWorkflow implements TransactionCommand, MessageNameProvider
+final class ScheduleNextTasksForWorkflow extends Command
 {
-    use TransactionIdGenerator;
-
-    private $workflowId;
-
-    private $previousTaskId;
-
-    private $nextMessageHandlerId;
-
-    /**
-     * @param string|WorkflowId $workflowId
-     * @param string|TaskId $previousTaskId
-     * @param string|MessageHandlerId $nextMessageHandlerId
-     */
-    public function __construct($workflowId, $previousTaskId, $nextMessageHandlerId)
+    public static function withData($workflowId, $previousTaskId, $nextMessageHandlerId)
     {
-        if (! $workflowId instanceof WorkflowId) {
-            $workflowId = WorkflowId::fromString($workflowId);
-        }
+        Assertion::uuid($workflowId);
+        Assertion::uuid($previousTaskId);
+        Assertion::uuid($nextMessageHandlerId);
 
-        if (! $previousTaskId instanceof TaskId) {
-            $previousTaskId = TaskId::fromString($previousTaskId);
-        }
-
-        if (! $nextMessageHandlerId instanceof MessageHandlerId) {
-            $nextMessageHandlerId = MessageHandlerId::fromString($nextMessageHandlerId);
-        }
-
-        $this->workflowId = $workflowId;
-        $this->previousTaskId = $previousTaskId;
-        $this->nextMessageHandlerId = $nextMessageHandlerId;
+        return new self(
+            __CLASS__,
+            [
+                'workflow_id' => $workflowId,
+                'previous_task_id' => $previousTaskId,
+                'next_message_handler_id' => $nextMessageHandlerId
+            ]
+        );
     }
 
     /**
@@ -62,7 +44,7 @@ final class ScheduleNextTasksForWorkflow implements TransactionCommand, MessageN
      */
     public function workflowId()
     {
-        return $this->workflowId;
+        return WorkflowId::fromString($this->payload['workflow_id']);
     }
 
     /**
@@ -70,7 +52,7 @@ final class ScheduleNextTasksForWorkflow implements TransactionCommand, MessageN
      */
     public function previousTaskId()
     {
-        return $this->previousTaskId;
+        return TaskId::fromString($this->payload['previous_task_id']);
     }
 
     /**
@@ -78,14 +60,6 @@ final class ScheduleNextTasksForWorkflow implements TransactionCommand, MessageN
      */
     public function nextMessageHandlerId()
     {
-        return $this->nextMessageHandlerId;
-    }
-
-    /**
-     * @return string Name of the message
-     */
-    public function getMessageName()
-    {
-        return __CLASS__;
+        return MessageHandlerId::fromString($this->payload['next_message_handler_id']);
     }
 }
