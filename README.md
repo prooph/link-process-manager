@@ -4,6 +4,8 @@ Process configurator for [prooph LINK](https://github.com/prooph/link)
 
 # Flowchart like process configuration
 
+![flowchart](https://github.com/prooph/link-process-manager/blob/master/docs/img/flowchart.png)
+
 The process manager is currently under heavy refactoring. Goal is to provide a flowchart like process configurator for easy creation of a workflow process. Documentation will follow as soons as the flowchart UI is available.
 
 # Support
