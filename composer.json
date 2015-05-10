@@ -20,9 +20,9 @@
     ],
     "require": {
         "php": ">=5.5",
-        "prooph/link-app-core" : "0.1.*",
-        "prooph/link-monitor" : "0.1.*",
-        "prooph/link-processor-proxy" : "0.1.*",
+        "prooph/link-app-core" : "dev-master",
+        "prooph/link-monitor" : "dev-master",
+        "prooph/link-processor-proxy" : "dev-master",
         "codeliner/array-reader" : "~1.1"
     },
     "require-dev": {
