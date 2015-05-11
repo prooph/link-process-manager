@@ -17,7 +17,6 @@ use Prooph\Link\Application\Command\ChangeProcessConfig;
 use Prooph\Link\Application\Command\RemoveProcessConfig;
 use Prooph\Link\Application\Projection\ProcessingConfig;
 use Prooph\Link\Application\SharedKernel\ConfigLocation;
-use Prooph\Link\ProcessManager\Model\MessageHandler\DataDirection;
 use Prooph\Link\ProcessManager\Model\MessageHandler\Exception\MessageHandlerNotFound;
 use Prooph\Link\ProcessManager\Model\MessageHandler\MessageHandlerCollection;
 use Prooph\Link\ProcessManager\Model\MessageHandler;
@@ -205,6 +204,7 @@ final class WorkflowToProcessingConfigTranslator implements WorkflowPublisher
         $additionalData['node_name'] = $messageHandler->processingNodeName()->toString();
         $additionalData['icon'] = $messageHandler->icon();
         $additionalData['icon_type'] = $messageHandler->iconType();
+        $additionalData['metadata'] = $messageHandler->processingMetadata()->toArray();
         $additionalData['ui_metadata_riot_tag'] = $messageHandler->metadataRiotTag();
 
         $allowedTypes = ($messageHandler->supportedProcessingTypes()->areAllTypesSupported())?
