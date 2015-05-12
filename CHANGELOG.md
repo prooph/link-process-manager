@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+## [0.3.2] - 2015-05-12
+### Fixed
+- #13 riot tags not working correctly after upgrade to riot v2.0.15
+
 ## [0.3.1] - 2015-05-11
 ### Fixed
 - [#11](https://github.com/prooph/link-process-manager/issues/11) Connector metadata was removed on publish workflow
