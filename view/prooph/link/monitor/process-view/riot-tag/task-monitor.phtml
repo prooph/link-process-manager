@@ -28,12 +28,12 @@
         this.task = context.task;
 
         this.toggleTaskDetails = function () {
-            $(this.root).find(".task-summary").toggleClass("active");
-            $(this.root).find(".task-details").slideToggle(500);
+            $(self.root).find(".task-summary").toggleClass("active");
+            $(self.root).find(".task-details").slideToggle(500);
         }
 
         this.on("mount", function () {
-            $(this.root).find(".task-details").removeClass("hidden").hide();
+            $(self.root).find(".task-details").removeClass("hidden").hide();
         });
     }
 </script>
