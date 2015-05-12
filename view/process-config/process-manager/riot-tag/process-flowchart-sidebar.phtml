@@ -36,23 +36,27 @@
 <script type="text/javascript">
     function (context) {
 
+        var self = this;
         this.context = context;
 
         this.isProcessTabActive = function () {
-            return $(this.root).find(".process-tab").parent().hasClass("active");
+            return $(self.root).find(".process-tab").parent().hasClass("active");
         }
 
         this.isElementsTabActive = function () {
-            return $(this.root).find(".elements-tab").parent().hasClass("active");
+            return $(self.root).find(".elements-tab").parent().hasClass("active");
         }
 
         this.toggleActive = function (e) {
-            $(this.root).find(".process-tab").parent().toggleClass("active");
-            $(this.root).find(".elements-tab").parent().toggleClass("active");
+            $(self.root).find(".process-tab").parent().toggleClass("active");
+            $(self.root).find(".elements-tab").parent().toggleClass("active");
+            //@TODO Find a better way of handling new riot.js if behaviour
+            self.update();
+            self.init();
         }
 
         this.init = function () {
-            $(this.root).find('.preconfigured-connectors-list li').draggable({
+            $(self.root).find('.preconfigured-connectors-list li').draggable({
                 appendTo : "body",
                 helper : "clone"
             }).click(function(e) {
@@ -69,13 +73,14 @@
         }
 
         this.on("mount", function () {
-            this.init();
-            this.update();
-            context.app.on("workflowWasPublished", this.onWorkflowWasPublished);
+            console.log("on mount");
+            self.init();
+            self.update();
+            context.app.on("workflowWasPublished", self.onWorkflowWasPublished);
         })
 
         this.on("unmount", function () {
-            context.app.off("workflowWasPublished", this.onWorkflowWasPublished);
+            context.app.off("workflowWasPublished", self.onWorkflowWasPublished);
         })
     }
 </script>

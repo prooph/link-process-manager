@@ -24,15 +24,16 @@
 </div>
 <script type="text/javascript">
     function (context) {
+        var self = this;
         this.process = context.app.process;
         this.app = context.app;
 
         this.updateStatusIcon = function () {
-            $(this.process_status).html(status_icon(this.process.status));
+            $(self.process_status).html(status_icon(self.process.status));
         }
 
         this.on("mount", function () {
-            this.updateStatusIcon();
+            self.updateStatusIcon();
         });
     }
 </script>

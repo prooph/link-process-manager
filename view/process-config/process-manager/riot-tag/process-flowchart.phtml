@@ -124,13 +124,7 @@
          */
         this.initWorkflow = function () {
             if (context.isNew) {
-                this.isEditingWorkflowName = true;
-
-                $( window ).unload(function() {
-                    if (window.location.hash == "#workflows/create") {
-                        window.location.hash = "workflows/" + self.workflow.id + "/show";
-                    }
-                });
+                self.isEditingWorkflowName = true;
 
                 $.postJSON('<?php echo $this->url('prooph.link/process_config/api/workflow')  ?>',
                     {"name" : "Undefined"}
@@ -139,15 +133,22 @@
                         self.workflow['location'] = request.getResponseHeader('location');
                         self.reloadWorkflow();
                         self.one("workflowWasReloaded", self.createFlowchartConfig);
+                        self.one("flowchartConfigWasCreated", function () {
+                            if (window.location.hash == "#workflows/create") {
+                                context.app.router.stop();
+                                window.location.hash = "workflows/" + self.workflow.id + "/show";
+                                window.setTimeout(function() {context.app.router.restart()}, 100);
+                            }
+                        });
                     },
                     $.failNotify
                 );
             } else {
-                this.workflow = _.findWhere(context.app.workflows, {id : context.workflowId});
-                this.workflow['location'] = '<?php echo $this->url('prooph.link/process_config/api/workflow')  ?>/' + context.workflowId;
-                this.workflow_name.value = this.workflow.name;
+                self.workflow = _.findWhere(context.app.workflows, {id : context.workflowId});
+                self.workflow['location'] = '<?php echo $this->url('prooph.link/process_config/api/workflow')  ?>/' + context.workflowId;
+                self.workflow_name.value = this.workflow.name;
 
-                this.loadFlowchart();
+                self.loadFlowchart();
             }
         };
 
@@ -277,11 +278,11 @@
          * Save workflow name to server and apply it to workflow entity on success
          */
         this.saveWorkflowName = function () {
-            if (_.isEmpty(this.workflow_name.value)) return;
+            if (_.isEmpty(self.workflow_name.value)) return;
 
-            this.isEditingWorkflowName = false;
+            self.isEditingWorkflowName = false;
 
-            $.putJSON(this.workflow.location, {name : this.workflow_name.value}).then(
+            $.putJSON(this.workflow.location, {name : self.workflow_name.value}).then(
                 function () {
                     self.workflow['name'] = self.workflow_name.value;
                 },
@@ -293,10 +294,10 @@
          * Event handler for workflow_name changed event
          */
         this.onWorkflowNameChanged = function () {
-            if (_.isEmpty(this.workflow_name.value)) {
+            if (_.isEmpty(self.workflow_name.value)) {
                 this.isEditingWorkflowName = true;
             } else {
-                this.saveWorkflowName();
+                self.saveWorkflowName();
             }
         }
 
@@ -324,7 +325,7 @@
             $.postJSON(
                 '<?php echo $this->url('prooph.link/process_config/api/flowchart')  ?>',
                 {
-                    workflow_id : this.workflow.id,
+                    workflow_id : self.workflow.id,
                     config : { connections : [], elements : []}
                 }
             ).then(
@@ -596,7 +597,7 @@
 
             $("#whiteboard").append($con);
 
-            this.whiteboard.draggable($con, {
+            self.whiteboard.draggable($con, {
                 containment:"parent",
                 start: function(event, ui) {
                     $(this).addClass('noclick');
@@ -628,7 +629,7 @@
                 }
             });
 
-            this.whiteboard.addEndpoint($con.attr("id"), {
+            self.whiteboard.addEndpoint($con.attr("id"), {
                 isSource:true,
                 endpoint:[jsPlumbEndpoint, jsPlumbSourcePointStyle],
                 anchor : "Right",
@@ -636,7 +637,7 @@
                 uuid: "ep_s_"+$con.attr("id")
             });
 
-            this.whiteboard.addEndpoint($con.attr("id"), {
+            self.whiteboard.addEndpoint($con.attr("id"), {
                 isTarget:true,
                 endpoint:[jsPlumbEndpoint, jsPlumbTargetPointStyle],
                 anchor : "Left",
@@ -656,7 +657,7 @@
          * @param jsPlumbInfo object
          */
         this.applyConnection = function(jsPlumbInfo) {
-            if (this.flowchartIsLoaded) {
+            if (self.flowchartIsLoaded) {
                 var handlerId = $(jsPlumbInfo.target).data("handler-id"),
                     handlerData = _.findWhere(self.elements, {id : handlerId}),
                     processingType = null;
@@ -742,7 +743,7 @@
 
         this.removeConnection = function(jsPlumbInfo) {
             console.log("remove connection: ", jsPlumbInfo);
-            this.updateFlowchartConfig();
+            self.updateFlowchartConfig();
         }
 
         //Elements actions
@@ -874,14 +875,14 @@
         //RiotJs events
 
         this.on("mount", function () {
-            context.app.on("publishWorkflow", this.publishWorkflow);
-            this.initWorkflow();
-            this.initWhiteboard();
-            this.update();
+            context.app.on("publishWorkflow", self.publishWorkflow);
+            self.initWorkflow();
+            self.initWhiteboard();
+            self.update();
         });
 
         this.on("unmount", function () {
-            context.app.off("publishWorkflow", this.publishWorkflow);
+            context.app.off("publishWorkflow", self.publishWorkflow);
         })
     }
 </script>
