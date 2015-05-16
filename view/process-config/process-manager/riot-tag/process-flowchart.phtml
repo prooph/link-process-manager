@@ -1,14 +1,4 @@
-<div class="row">
-    <div class="col-md-8 col-lg-offset-2">
-        <p class="text-center text-btn-align" if="{ ! isEditingWorkflowName }"><strong>{ workflow_name.value }</strong></p>
-        <input name="workflow_name" if="{ isEditingWorkflowName }" type="text" class="form-control" placeholder="<?php echo $this->translate('Enter Workflow Name')?>" onchange="{ onWorkflowNameChanged }" >
-        <p></p>
-    </div>
-    <div class="col-md-2">
-        <button class="btn btn-default" onclick="{ editWorkflowName }" if="{ ! isEditingWorkflowName }"><?php echo $this->translate('change')?></button>
-        <button class="btn btn-default" onclick="{ saveWorkflowName }" if="{ isEditingWorkflowName }"><?php echo $this->translate('save')?></button>
-    </div>
-</div>
+<workflow-name></workflow-name>
 <div class="row">
     <div id="whiteboard" class="col-md-12">
         <div id="whiteboard-start-point" class="start-point">
@@ -70,7 +60,6 @@
 <script type="text/javascript">
     function (context) {
         var self = this,
-            isEditingWorkflowName = false,
             whiteboardReady = false,
             whiteboardReadyCBs = [],
             jsPlumbEndpoint = "Dot",
@@ -121,10 +110,12 @@
 
         /**
          * Initialize workflow entity on riot tag mount
+         *
+         * @triggers WorkflowWasInitialized {workflow}
          */
         this.initWorkflow = function () {
             if (context.isNew) {
-                self.isEditingWorkflowName = true;
+                self.trigger("willCreateNewWorkflow");
 
                 $.postJSON('<?php echo $this->url('prooph.link/process_config/api/workflow')  ?>',
                     {"name" : "Undefined"}
@@ -139,6 +130,8 @@
                                 window.location.hash = "workflows/" + self.workflow.id + "/show";
                                 window.setTimeout(function() {context.app.router.restart()}, 100);
                             }
+
+                            self.trigger("WorkflowWasInitialized", {workflow : self.workflow});
                         });
                     },
                     $.failNotify
@@ -146,8 +139,7 @@
             } else {
                 self.workflow = _.findWhere(context.app.workflows, {id : context.workflowId});
                 self.workflow['location'] = '<?php echo $this->url('prooph.link/process_config/api/workflow')  ?>/' + context.workflowId;
-                self.workflow_name.value = this.workflow.name;
-
+                self.trigger("WorkflowWasInitialized", {workflow : self.workflow});
                 self.loadFlowchart();
             }
         };
@@ -253,7 +245,7 @@
         /**
          * Load workflow from server and replace workflow entity with fetched data
          *
-         * @triggers workflowWasReloaded
+         * @triggers workflowWasReloaded {workflow}
          */
         this.reloadWorkflow = function () {
             $.getJSON(this.workflow.location).then(
@@ -261,46 +253,20 @@
                     var workflowData = data.workflow;
                     workflowData['location'] = self.workflow.location;
                     self.workflow = workflowData;
-                    self.trigger("workflowWasReloaded");
+                    self.trigger("workflowWasReloaded", {workflow : self.workflow});
                 },
                 $.failNotify
             );
         }
 
-        /**
-         * Enable workflow editing mode
-         */
-        this.editWorkflowName = function () {
-            this.isEditingWorkflowName = true;
-        }
 
         /**
-         * Save workflow name to server and apply it to workflow entity on success
+         * Event handler for publish workflow user action
+         *
+         * Creates a release for the workflow on the server
+         *
+         * @triggers WorkflowWasPublished
          */
-        this.saveWorkflowName = function () {
-            if (_.isEmpty(self.workflow_name.value)) return;
-
-            self.isEditingWorkflowName = false;
-
-            $.putJSON(this.workflow.location, {name : self.workflow_name.value}).then(
-                function () {
-                    self.workflow['name'] = self.workflow_name.value;
-                },
-                $.failNotify
-            );
-        }
-
-        /**
-         * Event handler for workflow_name changed event
-         */
-        this.onWorkflowNameChanged = function () {
-            if (_.isEmpty(self.workflow_name.value)) {
-                this.isEditingWorkflowName = true;
-            } else {
-                self.saveWorkflowName();
-            }
-        }
-
         this.publishWorkflow = function () {
             $.postJSON(
                 '<?php echo $this->url('prooph.link/process_config/api/workflow_release')  ?>',
@@ -879,6 +845,10 @@
             self.initWorkflow();
             self.initWhiteboard();
             self.update();
+
+            self.tags["workflow-name"].on("workflowNameWasChanged", function (event) {
+                self.workflow['name'] = event.new_name;
+            });
         });
 
         this.on("unmount", function () {
