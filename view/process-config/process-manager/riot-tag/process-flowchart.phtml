@@ -1,23 +1,5 @@
-<div class="row">
-    <div class="col-md-8 col-lg-offset-2">
-        <p class="text-center text-btn-align" if="{ ! isEditingWorkflowName }"><strong>{ workflow_name.value }</strong></p>
-        <input name="workflow_name" if="{ isEditingWorkflowName }" type="text" class="form-control" placeholder="<?php echo $this->translate('Enter Workflow Name')?>" onchange="{ onWorkflowNameChanged }" >
-        <p></p>
-    </div>
-    <div class="col-md-2">
-        <button class="btn btn-default" onclick="{ editWorkflowName }" if="{ ! isEditingWorkflowName }"><?php echo $this->translate('change')?></button>
-        <button class="btn btn-default" onclick="{ saveWorkflowName }" if="{ isEditingWorkflowName }"><?php echo $this->translate('save')?></button>
-    </div>
-</div>
-<div class="row">
-    <div id="whiteboard" class="col-md-12">
-        <div id="whiteboard-start-point" class="start-point">
-            <svg height="60" width="60">
-                <circle cx="15" cy="15" r="12"/>
-            </svg>
-        </div>
-    </div>
-</div>
+<workflow-name></workflow-name>
+<whiteboard></whiteboard>
 <div id="metadata-modal" class="modal fade">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -49,268 +31,88 @@
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
-<div id="detach-connection-modal" class="modal">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title"><?php echo $this->translate('Remove Connection')?></h4>
-            </div>
-            <div class="modal-body">
-                <?php echo $this->translate('Do you want to remove the connection?')?>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default btn-abort" data-dismiss="modal"><?php echo $this->translate('No') ?></button>
-                <button type="button" class="btn btn-primary btn-save" data-dismiss="modal"><?php echo $this->translate('Yes') ?></button>
-            </div>
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-<img src="<?php echo $this->basePath() ?>/img/paper_blue.jpg" class="hidden">
 <script type="text/javascript">
     function (context) {
         var self = this,
-            isEditingWorkflowName = false,
-            whiteboardReady = false,
-            whiteboardReadyCBs = [],
-            jsPlumbEndpoint = "Dot",
-            jsPlumbSourcePointStyle = { radius : 5, cssClass : "source-point", hoverClass : "source-point-hover"},
-            jsPlumbTargetPointStyle = { radius : 5, cssClass : "target-point", hoverClass : "target-point-hover"};
-
-        this.whiteboard = null;
-        this.flowchartConfig = null;
-        this.flowchartIsLoaded = false;
-        this.workflow = {};
-        this.elements = [];
-
-        //Private methods
-
-        /**
-         * Create html element representing an item on the whiteboard
-         *
-         * @internal
-         */
-        var _createElement = function (elementType, elementData) {
-            var eleId = "whiteboard_ele_" + self.elements.length;
-
-            $elem = $("<div></div>").addClass("element").data("handler-id", elementData.id).attr('id', eleId);
-
-            if (elementData.icon_type === "glyphicon") {
-                $elem.append($("<span></span>").addClass("element-icon, glyphicon").addClass(elementData.icon));
-            }
-
-            $elem.append($("<p></p>").addClass("element-label").html(elementData.name));
-
-            $elem.click(_.bind(self.onElementClick, $elem.get(0)));
-
-            elementData.element_id = eleId;
-
-            self.elements.push(elementData);
-
-            return $elem;
-        },
-        _whiteboardReady = function(cb) {
-            if (whiteboardReady) {
-                cb();
-            } else {
-                whiteboardReadyCBs.push(cb);
-            }
-        };
+            _workflow = {},
+            _flowchartConfig = {},
+            _flowchartIsLoaded = false,
 
         //Initializers
 
         /**
          * Initialize workflow entity on riot tag mount
+         *
+         * @triggers WorkflowWasInitialized {workflow}
          */
-        this.initWorkflow = function () {
+        _initWorkflow = function () {
             if (context.isNew) {
-                self.isEditingWorkflowName = true;
+                self.trigger("willCreateNewWorkflow");
 
                 $.postJSON('<?php echo $this->url('prooph.link/process_config/api/workflow')  ?>',
                     {"name" : "Undefined"}
                 ).then(
                     function(data, textStatus, request) {
-                        self.workflow['location'] = request.getResponseHeader('location');
-                        self.reloadWorkflow();
-                        self.one("workflowWasReloaded", self.createFlowchartConfig);
+                        _workflow['location'] = request.getResponseHeader('location');
+                        _reloadWorkflow();
+                        self.one("workflowWasReloaded", _createFlowchartConfig);
                         self.one("flowchartConfigWasCreated", function () {
                             if (window.location.hash == "#workflows/create") {
                                 context.app.router.stop();
-                                window.location.hash = "workflows/" + self.workflow.id + "/show";
+                                window.location.hash = "workflows/" + _workflow.id + "/show";
                                 window.setTimeout(function() {context.app.router.restart()}, 100);
                             }
+
+                            self.trigger("WorkflowWasInitialized", {workflow : _workflow});
                         });
                     },
                     $.failNotify
                 );
             } else {
-                self.workflow = _.findWhere(context.app.workflows, {id : context.workflowId});
-                self.workflow['location'] = '<?php echo $this->url('prooph.link/process_config/api/workflow')  ?>/' + context.workflowId;
-                self.workflow_name.value = this.workflow.name;
-
-                self.loadFlowchart();
+                _workflow = _.findWhere(context.app.workflows, {id : context.workflowId});
+                _workflow['location'] = '<?php echo $this->url('prooph.link/process_config/api/workflow')  ?>/' + context.workflowId;
+                self.trigger("WorkflowWasInitialized", {workflow : _workflow});
+                _loadFlowchartConfig();
             }
-        };
-
-        /**
-         * Initialize drawing area on riot tag mount
-         *
-         * @triggers whiteboardIsReady
-         */
-        this.initWhiteboard = function () {
-            jsPlumb.ready(function () {
-                self.whiteboard = jsPlumb.getInstance({
-                    Container : "whiteboard",
-                    Connector : ["Flowchart", {gap: 10}],
-                    ConnectionOverlays  : [
-                        [ "PlainArrow", { width:10, length:10, location:1} ]
-                    ]
-                });
-
-                self.whiteboard.makeSource("whiteboard-start-point", {
-                    maxConnections: 1,
-                    endpoint:[jsPlumbEndpoint, jsPlumbSourcePointStyle],
-                    anchor : "Right"
-                });
-
-                self.whiteboard.bind("connection", _.bind(self.applyConnection, self));
-                self.whiteboard.bind("connectionDetached", _.bind(self.removeConnection, self));
-
-                self.trigger("whiteboardIsReady");
-                whiteboardReady = true;
-            });
-
-            $("#whiteboard").droppable({
-                accept: ":not(.connector)",
-                hoverClass : "drop-whiteboard",
-                drop : function (event, ui) {
-                    var offset = $(this).offset(),
-                        x = event.pageX - offset.left -30,
-                        y = event.pageY - offset.top - 30,
-                        elem = ui.draggable;
-
-                    switch (elem.data("element-type")) {
-                        case "connector":
-                            self.whiteboardPause();
-
-                            /**
-                             * We use the promise lib Q to build a function chain which includes ajax calls.
-                             * The chain starts by trying to create a message handler for given processingId.
-                             * If we can't find a corresponding processing connector,
-                             * we ask the message handler module (via a dedicated riot tag)
-                             * to provide required configuration to create a new message handler on the server.
-                             * In the last step we hopefully have valid message handler information to create a connector
-                             * element on the whiteboard based on the handler data.
-                             * If we can't create a connector, the element drop is rejected and the user gets notified about it.
-                             */
-                            Q.fcall(function () {
-                                    //Maybe we already have a processing message handler
-                                    //that can be converted to a process manager message handler
-                                    var processingHandler = _.findWhere(context.app.connectors, {id : elem.data("processingid")});
-
-                                    if (processingHandler) {
-                                        return self.translateProcessingHandlerToProcessManagerHandler(processingHandler, elem.data("element-type"));
-                                    }
-
-                                    //Ok, we definitely need to ask the handler module to provide us with valid handler data
-                                    return self.requestHandlerDataFromModule(
-                                        elem.data("ui-metadata-riot-tag"),
-                                        elem.text(),
-                                        elem.data("processingid")
-                                    );
-                                })
-                                .then(function (handlerData) {
-                                    console.log(handlerData);
-                                    return self.createMessageHandler(handlerData);
-                                })
-                                .then(function (handlerData) {
-                                    self.addConnector(x, y, handlerData);
-                                    self.updateFlowchartConfig();
-                                })
-                                .catch(function (reason) {
-                                    $.appErrorNotify(reason);
-                                })
-                                .finally(function () {
-                                    self.whiteboardContinue();
-                                })
-                                .done();
-                            break;
-                        default:
-                            throw "Unknown element type dropped. Got " + elem.data("element-type");
-                    }
-                }
-            });
-        };
-
-        this.one("whiteboardIsReady", function () {
-            _.each(whiteboardReadyCBs, function (cb) {
-                cb();
-            });
-        });
+        },
 
         //Workflow operations
 
         /**
          * Load workflow from server and replace workflow entity with fetched data
          *
-         * @triggers workflowWasReloaded
+         * @triggers workflowWasReloaded {workflow}
          */
-        this.reloadWorkflow = function () {
-            $.getJSON(this.workflow.location).then(
+         _reloadWorkflow = function () {
+            $.getJSON(_workflow.location).then(
                 function(data) {
                     var workflowData = data.workflow;
-                    workflowData['location'] = self.workflow.location;
-                    self.workflow = workflowData;
-                    self.trigger("workflowWasReloaded");
+                    workflowData['location'] = _workflow.location;
+                    _workflow = workflowData;
+                    self.trigger("workflowWasReloaded", {workflow : _workflow});
                 },
                 $.failNotify
             );
-        }
+        },
+
 
         /**
-         * Enable workflow editing mode
+         * Command handler for the app.publishWorkflow command
+         *
+         * Creates a release for the workflow on the server
+         *
+         * @triggers workflowWasPublished {workflow}
          */
-        this.editWorkflowName = function () {
-            this.isEditingWorkflowName = true;
-        }
-
-        /**
-         * Save workflow name to server and apply it to workflow entity on success
-         */
-        this.saveWorkflowName = function () {
-            if (_.isEmpty(self.workflow_name.value)) return;
-
-            self.isEditingWorkflowName = false;
-
-            $.putJSON(this.workflow.location, {name : self.workflow_name.value}).then(
-                function () {
-                    self.workflow['name'] = self.workflow_name.value;
-                },
-                $.failNotify
-            );
-        }
-
-        /**
-         * Event handler for workflow_name changed event
-         */
-        this.onWorkflowNameChanged = function () {
-            if (_.isEmpty(self.workflow_name.value)) {
-                this.isEditingWorkflowName = true;
-            } else {
-                self.saveWorkflowName();
-            }
-        }
-
-        this.publishWorkflow = function () {
+        _publishWorkflow = function () {
             $.postJSON(
                 '<?php echo $this->url('prooph.link/process_config/api/workflow_release')  ?>',
                 {
-                    workflow_id : self.workflow.id
+                    workflow_id : _workflow.id
                 }
             ).then(function (data, textStatus, jqXhr) {
-                context.app.trigger("WorkflowWasPublished", {location: jqXhr.getResponseHeader("location")});
+                context.app.trigger("workflowWasPublished", {workflow: _workflow});
             }, $.failNotify);
-        }
+        },
 
         //Flowchart operations
 
@@ -319,121 +121,238 @@
          * It is triggered once after a new workflow was created on the server and the workflow
          * was successfully reloaded.
          *
-         * @triggers flowchartConfigWasCreated
+         * @triggers flowchartConfigWasCreated {connections, elements}
          */
-        this.createFlowchartConfig = function () {
+        _createFlowchartConfig = function () {
+            _flowchartConfig = { elements : []};
+            self.trigger("willCreateFlowchartConfig", {config : _flowchartConfig});
+
             $.postJSON(
                 '<?php echo $this->url('prooph.link/process_config/api/flowchart')  ?>',
                 {
-                    workflow_id : self.workflow.id,
-                    config : { connections : [], elements : []}
+                    workflow_id : _workflow.id,
+                    config : _flowchartConfig
                 }
             ).then(
                 function (data, textStatus, request) {
                     $.getJSON(request.getResponseHeader('location')).then(
                         function (data) {
-                            self.flowchart = data.flowchart;
-                            self.trigger("flowchartConfigWasCreated");
+                            self.trigger("flowchartConfigWasCreated", _flowchartConfig);
                         },
                         $.failNotify
                     );
 
-                    self.flowchartIsLoaded = true;
+                    _flowchartIsLoaded = true;
                 },
                 $.failNotify
             );
-        }
+        },
 
         /**
-         * Collect current elements and connections on the whiteboard
+         * Collect current elements and connections
          * and store it all together in a flowchart config on the server
+         *
+         * @triggers willUpdateFlowchartConfig {connections, elements}
          */
-        this.updateFlowchartConfig = function () {
+        _updateFlowchartConfig = function () {
 
-            var elements = [];
-            var connections = [];
+            self.trigger("willUpdateFlowchartConfig", { config : _flowchartConfig});
 
-            _.each(this.elements, function (element) {
-                var eleData = _.clone(element);
-                var $ele = $("#" + element.element_id);
-                eleData.x_pos = $ele.position().left;
-                eleData.y_pos = $ele.position().top;
-
-                elements.push(eleData);
+            $.putJSON('<?php echo $this->url('prooph.link/process_config/api/flowchart') ?>/' + _workflow.id, {
+                'workflow_id' : _workflow.id,
+                'config' : _flowchartConfig
             });
-
-            _.each(this.whiteboard.getConnections(), function (connection) {
-                connections.push({
-                    'source' : connection.sourceId,
-                    'target' : connection.targetId,
-                    'class' : $(connection.canvas).attr("class")
-                });
-            });
-
-
-            $.putJSON('<?php echo $this->url('prooph.link/process_config/api/flowchart') ?>/' + self.workflow.id, {
-                'workflow_id' : self.workflow.id,
-                'config' : {
-                    'elements' : elements,
-                    'connections' : connections
-                }
-            });
-        }
+        },
 
         /**
-         * Load flowchart config from server and add elements and connections to whiteboard
+         * Load flowchart config from server
          */
-        this.loadFlowchart = function () {
-            $.getJSON('<?php echo $this->url('prooph.link/process_config/api/flowchart') ?>/' + this.workflow.id).then(
+        _loadFlowchartConfig = function () {
+            $.getJSON('<?php echo $this->url('prooph.link/process_config/api/flowchart') ?>/' + _workflow.id).then(
                 function (data) {
-                    _whiteboardReady(function () {
-                        self.whiteboard.setSuspendDrawing(true);
 
-                        _.each(data.flowchart.config.elements, function (element) {
-                            switch (element.type) {
-                                case "connector":
-                                    self.addConnector(
-                                        element.x_pos,
-                                        element.y_pos,
-                                        element
-                                    );
-                                    break;
-                                default:
-                                    $.appErrorNotify("Can not draw element " + element.name + ". Unknown element type: " + element.element_type);
-                            }
-                        });
-
-                        _.each(data.flowchart.config.connections, function (conn) {
-                            var epS = self.whiteboard.selectEndpoints({source: conn.source}).get(0),
-                                epT = self.whiteboard.selectEndpoints({target: conn.target}).get(0);
-
-                            if (epS) {
-                                epS = epS.getUuid();
-                            } else {
-                                //Handle special case of start point which has no endpoint
-                                epS = "ep_s_"+conn.source;
-                                self.whiteboard.addEndpoint(conn.source, {
-                                    isSource:true,
-                                    endpoint:[jsPlumbEndpoint, jsPlumbSourcePointStyle],
-                                    anchor : "Right",
-                                    maxConnections: 150,
-                                    uuid: epS
-                                });
-                            }
-
-                            var connection = self.whiteboard.connect({uuids: [epS, epT.getUuid()]});
-
-                            $(connection.canvas).attr("class", conn.class);
-                            connection.bind("click", self.onConnectionClick);
-                        });
-
-                        self.whiteboard.setSuspendDrawing(false, true);
-                        self.flowchartIsLoaded = true;
-                    });
+                    _flowchartConfig = data.flowchart.config;
+                    self.tags.whiteboard.reconstituteWhiteboard(_flowchartConfig);
+                    self.trigger("flowchartConfigWasLoaded", {config : _flowchartConfig});
                 },
                 $.failNotify
             );
-        }
+        },
+
+        //Whiteboard interaction
+
+        /**
+         * Handles whiteboard elementWasClicked events and opens the task metadata modal
+         *
+         * @param event object
+         */
+        _onWhiteboardElementWasClicked = function (event) {
+            var handlerData = _.findWhere(_flowchartConfig.elements, {id : event.element_id});
+
+            if (!_.isEmpty(handlerData.tasks)) {
+                _.each(handlerData.tasks, function (taskData) {
+                    if (taskData.type !== '<?php echo \Prooph\Link\ProcessManager\Model\Task\TaskType::TYPE_RUN_SUB_PROCESS  ?>') {
+                        _requestTaskMetadataForMessageHandlerFromModule(handlerData, taskData)
+                            .then(function (taskMetadata) {
+                                var metadata = (!_.isEmpty(handlerData.processing_metadata))? handlerData.processing_metadata : {};
+                                _.merge(metadata, taskMetadata);
+
+                                taskData.metadata = metadata;
+
+                                return Q($.putJSON('<?php echo $this->url('prooph.link/process_config/api/task')  ?>/' + taskData.id, {
+                                    metadata : taskData.metadata
+                                })).catch(function (xhr) {
+                                    $.failNotify(xhr);
+                                    throw new Error("Failed to save task metadata");
+                                });
+                            }).done(function () {
+                                _updateFlowchartConfig();
+                            });
+                    }
+                });
+            }
+        },
+
+        /**
+         * Listens on whiteboard elementWasDropped events to create an appropriate data type of the element
+         * and trigger the drawing of the element on the whiteboard
+         *
+         * @param event elementWasDropped
+         */
+        _onWhiteboardElementWasDropped = function (event) {
+            switch (event.element_type) {
+                case "connector":
+                    self.tags.whiteboard.whiteboardPause();
+                    /**
+                     * We use the promise lib Q to build a function chain which includes ajax calls.
+                     * The chain starts by trying to create a message handler for given processingId.
+                     * If we can't find a corresponding processing message handler,
+                     * we ask the message handler module (via a dedicated riot tag)
+                     * to provide required configuration to create a new message handler on the server.
+                     * In the last step we hopefully have valid message handler information to create a connector
+                     * element on the whiteboard based on the handler data.
+                     * If we can't create a connector, the element drop is rejected and the user gets notified about it.
+                     */
+                    Q.fcall(function () {
+                        //Maybe we already have a processing message handler
+                        //that can be converted to a process manager message handler
+                        var processingHandler = _.findWhere(context.app.connectors, {id : event.processing_id});
+
+                        if (processingHandler) {
+                            return _translateProcessingHandlerToProcessManagerHandler(processingHandler, event.element_type);
+                        }
+
+                        //Ok, we definitely need to ask the handler module to provide us with valid handler data
+                        return _requestHandlerDataFromModule(
+                            event.ui_metadata_riot_tag,
+                            event.element_name,
+                            event.processing_id
+                        );
+                    })
+                    .then(function (handlerData) {
+                        return _createMessageHandler(handlerData);
+                    })
+                    .then(function (handlerData) {
+                        self.tags.whiteboard.addConnector(event.pos_x, event.pos_y, handlerData);
+                        _flowchartConfig.elements.push(handlerData);
+                        _updateFlowchartConfig();
+                    })
+                    .catch(function (reason) {
+                        $.appErrorNotify(reason);
+                    })
+                    .finally(function () {
+                        self.tags.whiteboard.whiteboardContinue();
+                    })
+                    .done();
+                    break;
+                default:
+                    throw new Error(s.sprintf('<?php echo $this->translate('Unknown element type dropped. Got %s')  ?>', event.element_type));
+            }
+        },
+
+        /**
+         * Listens on whiteboard connectionWasApplied event to create a new task for the connected target message handler
+         *
+         * @param event connectionWasApplied
+         */
+        _onWhiteboardConnectionWasApplied = function (event) {
+
+            var targetId = event.target_element_id,
+                handlerData = _.findWhere(_flowchartConfig.elements, {id : targetId});
+
+            Q.fcall(function () {
+                if (event.is_start_connection) {
+                    //Create start connection
+                    return Q.fcall(function () {
+                        if (! _.isEmpty(handlerData.preferred_type)) {
+                            return handlerData.preferred_type;
+                        } else if (!_.isEmpty(handlerData.processing_types)) {
+                            if (handlerData.processing_types.length == 1) {
+                                return handlerData.processing_types[0];
+                            } else {
+                                var deferred = Q.defer();
+
+                                _chooseProcessingTypeViaModal(handlerData, deferred);
+
+                                return deferred.promise;
+                            }
+                        } else {
+                            throw new Error("Failed to detect the processing type to collect.");
+                        }
+                    }).then(function (processingType) {
+                        return Q($.postJSON('<?php echo $this->url('prooph.link/process_config/api/connection')  ?>', {
+                            'type' : 'start_connection',
+                            'workflow_id' : _workflow.id,
+                            'start_message' : {
+                                'message_type' : '<?php echo \Prooph\Link\ProcessManager\Model\Workflow\MessageType::TYPE_COLLECT_DATA  ?>',
+                                'processing_type' : processingType
+                            },
+                            'message_handler' : targetId
+                        })).catch(function (jqXhr) {
+                            $.failNotify(jqXhr);
+                            throw new Error("Failed to create connection");
+                        })
+                    })
+                } else {
+
+                    var prevHandlerData = _.findWhere(_flowchartConfig.elements, {id : event.source_element_id});
+
+                    if (_.isUndefined(prevHandlerData.tasks) || _.isEmpty(prevHandlerData.tasks)) {
+                        throw new Error("<?php echo $this->translate('Can\'t establish a connection, because the source has no connection to the workflow!')  ?>");
+                    }
+
+                    var prevTask = _.last(prevHandlerData.tasks);
+
+                    return Q($.postJSON('<?php echo $this->url('prooph.link/process_config/api/connection')  ?>', {
+                        'type' : 'source_target_connection',
+                        'workflow_id' : _workflow.id,
+                        'previous_task' : prevTask.id,
+                        'message_handler' : targetId
+                    })).catch(function (jqXhr) {
+                        $.failNotify(jqXhr);
+                        throw new Error("<?php echo $this->translate('Failed to create connection on the server.')  ?>");
+                    })
+                }
+            }).then(function () {
+                //Load tasks for target message handler
+                return Q($.getJSON('<?php echo $this->url('prooph.link/process_config/api/task') ?>?message_handler_id='+encodeURIComponent(targetId))).then(function (response) {
+                    return response.task_collection;
+                }, function (jqXhr) {
+                    $.failNotify(jqXhr);
+                    throw new Error("<?php echo $this->translate('Failed to load tasks for message handler from server.')  ?>");
+                });
+            }).then(function(taskCollection) {
+                //Assign tasks to the target message handler
+                handlerData.tasks = taskCollection;
+            }).then(function () {
+                self.tags.whiteboard.setConnectionStatusSuccess(event.source_whiteboard_id, event.target_whiteboard_id);
+            }, function (reason) {
+                $.appErrorNotify(reason);
+                self.tags.whiteboard.setConnectionStatusError(event.source_whiteboard_id, event.target_whiteboard_id);
+            }).done(function () {
+                _updateFlowchartConfig();
+            });
+        },
 
         //Message handler operations
 
@@ -441,7 +360,7 @@
          * Send given handlerData to the server to create a new message handler and return promise which resolves to
          * the handler data stored on the server.
          */
-        this.createMessageHandler = function (handlerData) {
+        _createMessageHandler = function (handlerData) {
             return Q($.postJSON(
                 '<?php echo $this->url('prooph.link/process_config/api/message_handler') ?>',
                 handlerData
@@ -459,14 +378,14 @@
                     return new Error("Failed to create message handler on server");
                 }
             ));
-        }
+        },
 
         /**
          * @var processingId string
          *
          * @return Q.promise
          */
-        this.loadMessageHandlersByProcessingId = function (processingId) {
+        _loadMessageHandlersByProcessingId = function (processingId) {
             if (processingId) {
                 return Q($.getJSON('<?php echo $this->url('prooph.link/process_config/api/message_handler') ?>?processing_id='+encodeURIComponent(processingId)));
             } else {
@@ -476,14 +395,14 @@
                     }
                 });
             }
-        };
+        },
 
         /**
          * This method interacts with the given riot tag to request message handler data from it.
          * The riot tag is loaded into a modal and when the user has entered all data, the riot tag should
          * pass the data back via a promise so that the method can use the data to create new message handler on the server.
          */
-        this.requestHandlerDataFromModule = function(uiMetadataRiotTag, handlerName, processingId) {
+        _requestHandlerDataFromModule = function(uiMetadataRiotTag, handlerName, processingId) {
 
             var handlerDeferred = Q.defer();
             $("#metadata-modal-title").html(handlerName + " <?php echo $this->translate('Settings')  ?>");
@@ -496,14 +415,14 @@
             $("#metadata-modal").modal();
 
             return handlerDeferred.promise;
-        }
+        },
 
         /**
          * This method interacts with the given riot tag to request task metadata for the responsible message handler from it.
          * The riot tag is loaded into a modal and when the user has entered all data, the riot tag should
          * pass the data back via a promise so that the method can assign the new metadata to the related task and save it on the server.
          */
-        this.requestTaskMetadataForMessageHandlerFromModule = function(handlerData, taskData) {
+        _requestTaskMetadataForMessageHandlerFromModule = function(handlerData, taskData) {
             if (_.isEmpty(taskData.metadata)) {
                 taskData.metadata = {};
             }
@@ -531,12 +450,12 @@
                 //cleanup event handlers
                 $("#metadata-modal").unbind("hide.bs.modal").find(".btn-save").unbind();
             });
-        }
+        },
 
         /**
          * The method takes a processing handler and translates it to data that can be handled by the process manager backend.
          */
-        this.translateProcessingHandlerToProcessManagerHandler = function (processingHandler, type) {
+        _translateProcessingHandlerToProcessManagerHandler = function (processingHandler, type) {
             var handlerData = {type : type};
 
             processingHandler = _.cloneDeep(processingHandler);
@@ -580,222 +499,9 @@
             handlerData.additional_data = processingHandler;
 
             return handlerData;
-        }
+        },
 
-        /**
-         * Add connector to whiteboard
-         *
-         * @param xPos int
-         * @param yPos int
-         * @param handlerData object
-         */
-        this.addConnector = function (xPos, yPos, handlerData) {
-
-            $con = _createElement('connector', handlerData);
-
-            $con.addClass("connector").css('left', xPos).css('top', yPos);
-
-            $("#whiteboard").append($con);
-
-            self.whiteboard.draggable($con, {
-                containment:"parent",
-                start: function(event, ui) {
-                    $(this).addClass('noclick');
-                },
-                stop : function(event, ui) {
-                    var source = null,
-                        target = ui.helper.context;
-
-                    self.whiteboard.select({target : $(target).attr("id")}).each(function (conn) {
-                        console.log("conn found: ", conn);
-                        source = conn.source;
-                    });
-
-                    if (!_.isEmpty(source)) {
-                        var sourcePos = $(source).position(),
-                            targetPos = $(target).position();
-
-                        if ($(source).attr("id") == "whiteboard-start-point") {
-                            sourcePos.top = sourcePos.top - 33;
-                        }
-
-                        if (Math.abs(sourcePos.top - targetPos.top) < 20) {
-                            $(target).css("top", sourcePos.top - 0.1);
-                            self.whiteboard.repaint(target, {left: targetPos.left, top: sourcePos.top - 0.1});
-                        }
-                    }
-
-                    self.updateFlowchartConfig();
-                }
-            });
-
-            self.whiteboard.addEndpoint($con.attr("id"), {
-                isSource:true,
-                endpoint:[jsPlumbEndpoint, jsPlumbSourcePointStyle],
-                anchor : "Right",
-                maxConnections: 150,
-                uuid: "ep_s_"+$con.attr("id")
-            });
-
-            self.whiteboard.addEndpoint($con.attr("id"), {
-                isTarget:true,
-                endpoint:[jsPlumbEndpoint, jsPlumbTargetPointStyle],
-                anchor : "Left",
-                maxConnections : 1,
-                uuid: "ep_t_"+$con.attr("id")
-            });
-        }
-
-        /**
-         * Reads source and target information from jsPlumb connection and sends it to the server.
-         *
-         * If connection was successfully created on the server the connection canvas
-         * gets a _jsPlumb_connector_success class assigned.
-         * If not it gets a _jsPlumb_connector_error class assigned to indicate
-         * that the user needs to adapt the connection and/or message handler settings.
-         *
-         * @param jsPlumbInfo object
-         */
-        this.applyConnection = function(jsPlumbInfo) {
-            if (self.flowchartIsLoaded) {
-                var handlerId = $(jsPlumbInfo.target).data("handler-id"),
-                    handlerData = _.findWhere(self.elements, {id : handlerId}),
-                    processingType = null;
-
-                jsPlumbInfo.connection.bind("click", self.onConnectionClick);
-
-                Q.fcall(function () {
-                    if (jsPlumbInfo.sourceId == "whiteboard-start-point") {
-                        //Create start connection
-                        return Q.fcall(function () {
-                            if (! _.isEmpty(handlerData.preferred_type)) {
-                                return handlerData.preferred_type;
-                            } else if (!_.isEmpty(handlerData.processing_types)) {
-                                if (handlerData.processing_types.length == 1) {
-                                    return handlerData.processing_types[0];
-                                } else {
-                                    var deferred = Q.defer();
-
-                                    self.chooseProcessingTypeViaModal(handlerData, deferred);
-
-                                    return deferred.promise;
-                                }
-                            } else {
-                                throw new Error("Failed to detect the processing type to collect.");
-                            }
-                        }).then(function (processingType) {
-                            return Q($.postJSON('<?php echo $this->url('prooph.link/process_config/api/connection')  ?>', {
-                                'type' : 'start_connection',
-                                'workflow_id' : self.workflow.id,
-                                'start_message' : {
-                                    'message_type' : '<?php echo \Prooph\Link\ProcessManager\Model\Workflow\MessageType::TYPE_COLLECT_DATA  ?>',
-                                    'processing_type' : processingType
-                                },
-                                'message_handler' : handlerId
-                            })).catch(function (jqXhr) {
-                                $.failNotify(jqXhr);
-                                throw new Error("Failed to create connection");
-                            })
-                        })
-                    } else {
-                        //Create a source -> target connection
-                        var prevHandlerId = $(jsPlumbInfo.source).data("handler-id"),
-                            prevHandlerData = _.findWhere(self.elements, {id : prevHandlerId});
-
-                        if (_.isUndefined(prevHandlerData.tasks) || _.isEmpty(prevHandlerData.tasks)) {
-                            throw new Error("<?php echo $this->translate('Can\'t establish a connection, because the source has no connection to the workflow!')  ?>");
-                        }
-
-                        var prevTask = _.last(prevHandlerData.tasks);
-
-                        return Q($.postJSON('<?php echo $this->url('prooph.link/process_config/api/connection')  ?>', {
-                            'type' : 'source_target_connection',
-                            'workflow_id' : self.workflow.id,
-                            'previous_task' : prevTask.id,
-                            'message_handler' : handlerId
-                        })).catch(function (jqXhr) {
-                            $.failNotify(jqXhr);
-                            throw new Error("<?php echo $this->translate('Failed to create connection on the server.')  ?>");
-                        })
-                    }
-                }).then(function () {
-                    //Load tasks for target message handler
-                    return Q($.getJSON('<?php echo $this->url('prooph.link/process_config/api/task') ?>?message_handler_id='+encodeURIComponent(handlerId))).then(function (response) {
-                        return response.task_collection;
-                    }, function (jqXhr) {
-                        $.failNotify(jqXhr);
-                        throw new Error("<?php echo $this->translate('Failed to load tasks for message handler from server.')  ?>");
-                    });
-                }).then(function(taskCollection) {
-                    //Assign tasks to the target message handler
-                    handlerData.tasks = taskCollection;
-                }).then(function () {
-                    return "_jsPlumb_connector_success";
-                }, function (reason) {
-                    $.appErrorNotify(reason);
-                    return "_jsPlumb_connector_error";
-                }).done(function (conClass) {
-                    $(jsPlumbInfo.connection.canvas).attr("class", "_jsPlumb_connector " + conClass);
-                    self.updateFlowchartConfig();
-                });
-            }
-        }
-
-        this.removeConnection = function(jsPlumbInfo) {
-            console.log("remove connection: ", jsPlumbInfo);
-            self.updateFlowchartConfig();
-        }
-
-        //Elements actions
-
-        this.onElementClick = function (e) {
-            e.preventDefault();
-
-            if ($(this).hasClass("noclick")) {
-                $(this).removeClass("noclick");
-                return;
-            }
-
-            var handlerData = _.findWhere(self.elements, {id : $(this).data('handler-id')});
-
-            if (!_.isEmpty(handlerData.tasks)) {
-                _.each(handlerData.tasks, function (taskData) {
-                    if (taskData.type !== '<?php echo \Prooph\Link\ProcessManager\Model\Task\TaskType::TYPE_RUN_SUB_PROCESS  ?>') {
-                        self.requestTaskMetadataForMessageHandlerFromModule(handlerData, taskData)
-                            .then(function (taskMetadata) {
-                                var metadata = (!_.isUndefined(handlerData.processing_metadata))? handlerData.processing_metadata : {};
-                                _.merge(metadata, taskMetadata);
-                                taskData.metadata = metadata;
-                                return Q($.putJSON('<?php echo $this->url('prooph.link/process_config/api/task')  ?>/' + taskData.id, {
-                                    metadata : taskData.metadata
-                                })).catch(function (xhr) {
-                                    $.failNotify(xhr);
-                                    throw new Error("Failed to save task metadata");
-                                });
-                            }).done(function () {
-                                self.updateFlowchartConfig();
-                            });
-                    }
-                });
-            }
-        }
-
-        this.onConnectionClick = function (conn) {
-            var $modal = $('#detach-connection-modal'),
-                $btnSave = $modal.find(".btn-save");
-
-            $btnSave.off();
-
-            window.setTimeout(function () {
-                $btnSave.click(function () {
-                    self.whiteboard.detach(conn);
-                });
-            }, 100);
-
-            $modal.modal();
-        }
-
-        this.chooseProcessingTypeViaModal = function (handlerData, deferred) {
+        _chooseProcessingTypeViaModal = function (handlerData, deferred) {
             var $modal = $("#processing-type-modal"),
                 $modalBody = $("#processing-type-modal-body"),
                 processingTypes = handlerData.processing_types,
@@ -849,40 +555,30 @@
             });
 
             $modal.modal();
-        }
-
-
-        //UI Manipulation
-
-        this.whiteboardPause = function () {
-            var $whitboard = $("#whiteboard"),
-                offset = $whitboard.offset(),
-                $overlay = $("<div />").attr("id", "whiteboard_overlay").css({
-                    top: offset.top,
-                    left: offset.left,
-                    width: $whitboard.outerWidth(),
-                    height: $whitboard.outerHeight()
-                });
-
-            $("body").append($overlay);
         };
 
-        this.whiteboardContinue = function () {
-            $("#whiteboard_overlay").remove();
-        };
 
 
         //RiotJs events
 
         this.on("mount", function () {
-            context.app.on("publishWorkflow", self.publishWorkflow);
-            self.initWorkflow();
-            self.initWhiteboard();
+            context.app.on("publishWorkflow", _publishWorkflow);
+            _initWorkflow();
+
             self.update();
+
+            self.tags["workflow-name"].on("workflowNameWasChanged", function (event) {
+                _workflow['name'] = event.new_name;
+            });
+
+            self.tags.whiteboard.on("elementWasClicked", _onWhiteboardElementWasClicked);
+            self.tags.whiteboard.on("elementWasDropped", _onWhiteboardElementWasDropped);
+            self.tags.whiteboard.on("connectorWasMovedOnWhiteboard", _updateFlowchartConfig);
+            self.tags.whiteboard.on("connectionWasApplied", _onWhiteboardConnectionWasApplied);
         });
 
         this.on("unmount", function () {
-            context.app.off("publishWorkflow", self.publishWorkflow);
+            context.app.off("publishWorkflow", _publishWorkflow);
         })
     }
 </script>

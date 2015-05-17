@@ -79,6 +79,10 @@ final class ProcessManagerController extends AbstractQueryController implements 
             'connectors' => array_values(
                 Func::map($this->systemConfig->getConnectors(), function ($connector, $id) {
                     $connector['id'] = $id;
+                    if (!isset($connector['metadata']) || empty($connector['metadata'])) {
+                        //Force empty object
+                        $connector['metadata'] = new \stdClass();
+                    }
                     return $connector;
                 })
             ),
