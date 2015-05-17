@@ -77,7 +77,7 @@ final class FlowchartStore implements ApplicationDbAware
 
         return [
             'workflow_id' => $flowchartConfig['workflow_id'],
-            'config' => json_decode($flowchartConfig['config'], true),
+            'config' => json_decode($flowchartConfig['config']),
             'last_updated_at' => $flowchartConfig['last_updated_at'],
         ];
     }

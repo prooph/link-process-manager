@@ -73,7 +73,6 @@
         }
 
         this.on("mount", function () {
-            console.log("on mount");
             self.init();
             self.update();
             context.app.on("workflowWasPublished", self.onWorkflowWasPublished);

@@ -1,0 +1,453 @@
+<div class="row">
+    <div id="whiteboard" class="col-md-12">
+        <div id="whiteboard-start-point" class="start-point">
+            <svg height="60" width="60">
+                <circle cx="15" cy="15" r="12"/>
+            </svg>
+        </div>
+    </div>
+</div>
+<div id="detach-connection-modal" class="modal">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <h4 class="modal-title"><?php echo $this->translate('Remove Connection')?></h4>
+            </div>
+            <div class="modal-body">
+                <?php echo $this->translate('Do you want to remove the connection?')?>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default btn-abort" data-dismiss="modal"><?php echo $this->translate('No') ?></button>
+                <button type="button" class="btn btn-primary btn-save" data-dismiss="modal"><?php echo $this->translate('Yes') ?></button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+<img src="<?php echo $this->basePath() ?>/img/paper_blue.jpg" class="hidden">
+<script type="text/javascript">
+    function (context) {
+        var self = this,
+            JS_PLUMB_ENDPOINT = "Dot",
+            JS_PLUMB_SOURCE_POINT_STYLE = { radius : 5, cssClass : "source-point", hoverClass : "source-point-hover"},
+            JS_PLUMB_TARGET_POINT_STYLE = { radius : 5, cssClass : "target-point", hoverClass : "target-point-hover"},
+            CONN_STATUS_SUCCESS       = "success",
+            CONN_STATUS_SUCCESS_CLASS = "_jsPlumb_connector_success",
+            CONN_STATUS_ERROR         = "error",
+            CONN_STATUS_ERROR_CLASS   = "_jsPlumb_connector_error",
+            _whiteboardIsReady = false,
+            _whiteboardReadyCBs = [],
+            _whiteboard = null,
+            _elements = [],
+            _is_reconstitution_mode = false,
+
+        //Private methods
+
+        /**
+         * Initialize drawing area on riot tag mount
+         *
+         * Triggers all pending whiteboardReady callbacks after initialization.
+         */
+        _initWhiteboard = function () {
+            jsPlumb.ready(function () {
+                _whiteboard = jsPlumb.getInstance({
+                    Container : "whiteboard",
+                    Connector : ["Flowchart", {gap: 10}],
+                    ConnectionOverlays  : [
+                        [ "PlainArrow", { width:10, length:10, location:1} ]
+                    ]
+                });
+
+                _whiteboard.makeSource("whiteboard-start-point", {
+                    maxConnections: 1,
+                    endpoint:[JS_PLUMB_ENDPOINT, JS_PLUMB_SOURCE_POINT_STYLE],
+                    anchor : "Right"
+                });
+
+                _whiteboard.bind("connection", _applyConnection);
+                _whiteboard.bind("connectionDetached", _removeConnection);
+
+                _whiteboardIsReady = true;
+
+                _.each(_whiteboardReadyCBs, function (cb) {
+                    cb();
+                });
+
+                delete(_whiteboardReadyCBs);
+            });
+
+            $("#whiteboard").droppable({
+                accept: ":not(.connector)",
+                hoverClass : "drop-whiteboard",
+                drop : function (event, ui) {
+                    var offset = $(this).offset(),
+                        elem = ui.draggable,
+                        elementWasDropped = {
+                            pos_x : event.pageX - offset.left -30,
+                            pos_y : event.pageY - offset.top - 30,
+                            element_type : elem.data("element-type"),
+                            element_name : elem.text(),
+                            processing_id : elem.data("processingid"),
+                            ui_metadata_riot_tag : elem.data("ui-metadata-riot-tag"),
+                        };
+
+                    self.trigger("elementWasDropped", elementWasDropped);
+                }
+            });
+        },
+
+        /**
+         * Create html element representing an item on the whiteboard
+         *
+         * @internal
+         * @triggers elementWasCreated {element}
+         */
+        _createElement = function (elementType, elementData) {
+            var eleId = "whiteboard_ele_" + _elements.length;
+
+            $elem = $("<div></div>").addClass("element").data("element-id", elementData.id).attr('id', eleId);
+
+            if (elementData.icon_type === "glyphicon") {
+                $elem.append($("<span></span>").addClass("element-icon, glyphicon").addClass(elementData.icon));
+            }
+
+            $elem.append($("<p></p>").addClass("element-label").html(elementData.name));
+
+            $elem.click(_.bind(_onElementClick, $elem.get(0)));
+
+            elementData.whiteboard_id = eleId;
+
+            _elements.push(elementData);
+
+            self.trigger("elementWasCreated", {element : elementData});
+
+            return $elem;
+        },
+
+        /**
+         * Handle click event of a whiteboard element
+         *
+         * @param e jQuery.event
+         *
+         * @triggers elementWasClicked {whiteboard_id : string, element_id : string}
+         */
+        _onElementClick = function (e) {
+            e.preventDefault();
+
+            if ($(this).hasClass("noclick")) {
+                $(this).removeClass("noclick");
+                return;
+            }
+
+            self.trigger("elementWasClicked", {whiteboard_id : $(this).attr("id"), element_id : $(this).data('element-id')});
+        },
+
+        /**
+         * Opens a modal to ask user if connection should be removed
+         *
+         * @param conn jsPlumb.connection
+         * @triggers ConnectionWasRemoved {source, target}
+         */
+        _onConnectionClick = function (conn) {
+            var $modal = $('#detach-connection-modal'),
+                $btnSave = $modal.find(".btn-save");
+
+            $btnSave.off();
+
+            window.setTimeout(function () {
+                $btnSave.click(function (e) {
+                    e.preventDefault();
+
+                    _whiteboard.detach(conn);
+                });
+            }, 5);
+
+            $modal.modal();
+        },
+
+        /**
+         * Listens on parent willCreateFlowchartConfig event to add an empty connections array which will be filled later
+         * by _onUpdateFlowchartConfig.
+         *
+         * @param event willCreateFlowchartConfig
+         */
+        _onCreateFlowchartConfig = function (event) {
+            event.config.connections = [];
+        },
+
+        /**
+         * Listens on parent willUpdateFlowchart event to inject position information for each element
+         * and current connections on the whiteboard
+         */
+        _onUpdateFlowchartConfig = function (event) {
+            _.each(event.config.elements, function (element) {
+                var $ele = $("#" + element.whiteboard_id);
+                element.x_pos = $ele.position().left;
+                element.y_pos = $ele.position().top;
+            });
+
+            //Reset connections to populate current list
+            event.config.connections = [];
+
+            _.each(_whiteboard.getConnections(), function (connection) {
+                event.config.connections.push({
+                    'source' : connection.sourceId,
+                    'target' : connection.targetId,
+                    'class' : $(connection.canvas).attr("class")
+                });
+            });
+        },
+
+        /**
+         * Reads source and target information from jsPlumb connection and sends it to the server.
+         *
+         * If connection was successfully created on the server the connection canvas
+         * gets a _jsPlumb_connector_success class assigned.
+         * If not it gets a _jsPlumb_connector_error class assigned to indicate
+         * that the user needs to adapt the connection and/or message handler settings.
+         *
+         * @param jsPlumbInfo object
+         *
+         * @triggers connectionWasApplied {is_start_connection: bool, source_whiteboard_id : string, source_element_id : string|null, target_whiteboard_id : string, target_element_id : string}
+         */
+        _applyConnection = function(jsPlumbInfo) {
+
+            jsPlumbInfo.connection.bind("click", _onConnectionClick);
+
+            if (_is_reconstitution_mode) return;
+
+            var event = { is_start_connection : false };
+
+            if (jsPlumbInfo.sourceId == "whiteboard-start-point") {
+                event.is_start_connection = true;
+            } else {
+                event.source_element_id = $(jsPlumbInfo.source).data("element-id");
+            }
+
+            event.source_whiteboard_id = jsPlumbInfo.sourceId;
+            event.target_whiteboard_id = jsPlumbInfo.targetId;
+            event.target_element_id = $(jsPlumbInfo.target).data("element-id");
+
+            self.trigger("connectionWasApplied", event);
+        },
+
+        _removeConnection = function(jsPlumbInfo) {
+            console.log("remove connection: ", jsPlumbInfo);
+
+            var event = { is_start_connection : false };
+
+            if (jsPlumbInfo.sourceId == "whiteboard-start-point") {
+                event.is_start_connection = true;
+            } else {
+                event.source_element_id = $(jsPlumbInfo.source).data("element-id");
+            }
+
+            event.source_whiteboard_id = jsPlumbInfo.sourceId;
+            event.target_whiteboard_id = jsPlumbInfo.targetId;
+            event.target_element_id = $(jsPlumbInfo.target).data("element-id");
+
+            self.trigger("connectionWasRemoved", event);
+        },
+
+        _setConnectionStatus = function (source, target, status) {
+            var connection = null,
+                conClass = "";
+
+            _whiteboard.select({target : target}).each(function (conn) {
+                if (conn.sourceId === source ) connection = conn;
+            });
+
+            if (_.isEmpty(connection)) throw new Error(s.sprintf('<?php echo $this->translate('Cannot find a connection for source %s and target %s')  ?>', source, target));
+
+            if (status === CONN_STATUS_SUCCESS) {
+                conClass = CONN_STATUS_SUCCESS_CLASS;
+            }else if (status === CONN_STATUS_ERROR) {
+                conClass = CONN_STATUS_ERROR_CLASS;
+            }
+
+            $(connection.canvas).attr("class", "_jsPlumb_connector " + conClass);
+        };
+
+        /**
+         * Set connection status to success
+         *
+         * @param source string the whiteboard_id of the source
+         * @param target string the whiteboard_id of the target
+         */
+        this.setConnectionStatusSuccess = function(source, target) {
+            _setConnectionStatus(source, target, CONN_STATUS_SUCCESS);
+        };
+
+        this.setConnectionStatusError = function(source, target) {
+            _setConnectionStatus(source, target, CONN_STATUS_ERROR);
+        };
+
+        this.setConnectionStatusUnknown = function(source, target) {
+            _setConnectionStatus(source, target, null);
+        };
+
+        /**
+         * Add connector (aka message handler) as an element to the whiteboard
+         *
+         * @param xPos int
+         * @param yPos int
+         * @param handlerData object
+         *
+         * @triggers connectorWasMovedOnWhiteboard {connector: object}
+         * @triggers connectorWasAddedToWhiteboard {connector : object}
+         */
+        this.addConnector = function (xPos, yPos, handlerData) {
+
+            $con = _createElement('connector', handlerData);
+
+            $con.addClass("connector").css('left', xPos).css('top', yPos);
+
+            $("#whiteboard").append($con);
+
+            _whiteboard.draggable($con, {
+                containment:"parent",
+                start: function(event, ui) {
+                    $(this).addClass('noclick');
+                },
+                stop : function(event, ui) {
+                    var source = null,
+                        target = ui.helper.context;
+
+                    _whiteboard.select({target : $(target).attr("id")}).each(function (conn) {
+                        source = conn.source;
+                    });
+
+                    if (!_.isEmpty(source)) {
+                        var sourcePos = $(source).position(),
+                            targetPos = $(target).position();
+
+                        if ($(source).attr("id") == "whiteboard-start-point") {
+                            sourcePos.top = sourcePos.top - 33;
+                        }
+
+                        if (Math.abs(sourcePos.top - targetPos.top) < 20) {
+                            $(target).css("top", sourcePos.top - 0.1);
+                            _whiteboard.repaint(target, {left: targetPos.left, top: sourcePos.top - 0.1});
+                        }
+                    }
+
+                    self.trigger("connectorWasMovedOnWhiteboard", {connector : handlerData});
+                }
+            });
+
+            _whiteboard.addEndpoint($con.attr("id"), {
+                isSource:true,
+                endpoint:[JS_PLUMB_ENDPOINT, JS_PLUMB_SOURCE_POINT_STYLE],
+                anchor : "Right",
+                maxConnections: 150,
+                uuid: "ep_s_"+$con.attr("id")
+            });
+
+            _whiteboard.addEndpoint($con.attr("id"), {
+                isTarget:true,
+                endpoint:[JS_PLUMB_ENDPOINT, JS_PLUMB_TARGET_POINT_STYLE],
+                anchor : "Left",
+                maxConnections : 1,
+                uuid: "ep_t_"+$con.attr("id")
+            });
+
+            if (!_is_reconstitution_mode) self.trigger("connectorWasAddedToWhiteboard", {connector : handlerData});
+        };
+
+        /**
+         * Draw elements and connections on the whiteboard based on the flowchart config loaded by the parent tag
+         *
+         * @param config object
+         */
+        this.reconstituteWhiteboard = function (config) {
+            self.whiteboardReady(function () {
+                _whiteboard.setSuspendDrawing(true);
+                _is_reconstitution_mode = true;
+
+                _.each(config.elements, function (element) {
+                    switch (element.type) {
+                        case "connector":
+                            self.addConnector(
+                                element.x_pos,
+                                element.y_pos,
+                                element
+                            );
+                            break;
+                        default:
+                            $.appErrorNotify("Can not draw element " + element.name + ". Unknown element type: " + element.element_type);
+                    }
+                });
+
+                _.each(config.connections, function (conn) {
+                    var epS = _whiteboard.selectEndpoints({source: conn.source}).get(0),
+                        epT = _whiteboard.selectEndpoints({target: conn.target}).get(0);
+
+                    if (epS) {
+                        epS = epS.getUuid();
+                    } else {
+                        //Handle special case of start point which has no endpoint
+                        epS = "ep_s_"+conn.source;
+                        _whiteboard.addEndpoint(conn.source, {
+                            isSource:true,
+                            endpoint:[JS_PLUMB_ENDPOINT, JS_PLUMB_SOURCE_POINT_STYLE],
+                            anchor : "Right",
+                            maxConnections: 150,
+                            uuid: epS
+                        });
+                    }
+
+                    var connection = _whiteboard.connect({uuids: [epS, epT.getUuid()]});
+
+                    $(connection.canvas).attr("class", conn.class);
+                });
+
+                _whiteboard.setSuspendDrawing(false, true);
+                _is_reconstitution_mode = false;
+            });
+        };
+
+        /**
+         * Calls given callback when whiteboard is ready
+         *
+         * If whiteboard is already initialized the callback gets called immediately
+         *
+         * @param cb callback
+         */
+        this.whiteboardReady = function(cb) {
+            if (_whiteboardIsReady) {
+                cb();
+            } else {
+                _whiteboardReadyCBs.push(cb);
+            }
+        };
+
+        //UI Manipulation
+
+        this.whiteboardPause = function () {
+            var $whiteboard = $("#whiteboard"),
+                offset = $whiteboard.offset(),
+                $overlay = $("<div />").attr("id", "whiteboard_overlay").css({
+                    top: offset.top,
+                    left: offset.left,
+                    width: $whiteboard.outerWidth(),
+                    height: $whiteboard.outerHeight()
+                });
+
+            $("body").append($overlay);
+        };
+
+        this.whiteboardContinue = function () {
+            $("#whiteboard_overlay").remove();
+        };
+
+        this.parent.on("willCreateFlowchartConfig", _onCreateFlowchartConfig);
+        this.parent.on("willUpdateFlowchartConfig", _onUpdateFlowchartConfig);
+
+        this.on("mount", function () {
+            //@TODO: Remove workaround when riot.js 2.0.16 is available
+            self.parent.on("mount", function () {
+                _initWhiteboard();
+            });
+        });
+    }
+</script>
