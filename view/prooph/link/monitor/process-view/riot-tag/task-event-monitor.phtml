@@ -20,7 +20,11 @@
         var self = this;
         this.event = context.event;
 
+        console.log(this.event);
+
         this.toggleLogMessageDetails = function () {
+
+            console.log(self.root);
 
             $(self.root).find(".log-message-details-toggle")
                 .toggleClass("active")
@@ -76,7 +80,7 @@
                 case "TaskEntryMarkedAsFailed":
                     return '<?php echo $this->translate('Task failed')  ?>';
                 case "LogMessageReceived":
-                    return this.__logMessageDescription(self.__getLogMessageCode());
+                    return self.__logMessageDescription(self.__getLogMessageCode());
                 default:
                     return '<?php echo $this->translate('Unknown event logged: ')  ?>';
             }
@@ -121,7 +125,7 @@
         this.hasLogMessageDetails = function () {
             if (! self.isLogEvent() ) return false;
 
-            switch (this.__getLogMessageCode()) {
+            switch (self.__getLogMessageCode()) {
                 case <?php echo \Prooph\Processing\Message\LogMessage::ERROR_SYSTEM_ERROR  ?>:
                 case <?php echo \Prooph\Processing\Message\LogMessage::ERROR_ITEMS_PROCESSING_FAILED  ?>:
                     return true;
@@ -131,7 +135,7 @@
         }
 
         this.getLogMessageDetails = function () {
-            switch (this.__getLogMessageCode()) {
+            switch (self.__getLogMessageCode()) {
                 case <?php echo \Prooph\Processing\Message\LogMessage::ERROR_SYSTEM_ERROR  ?>:
                     return this.__getSystemErrorDetails();
                 case <?php echo \Prooph\Processing\Message\LogMessage::ERROR_ITEMS_PROCESSING_FAILED  ?>:
@@ -161,7 +165,6 @@
         this.__getItemsProcessingFailedMessages = function () {
             var messages = [];
             _.each(self.__getLogMessageParams().failed_messages, function (failedMessage) {
-                console.log('failed Message: ', failedMessage);
                 messages.push('<p>' + failedMessage + '</p>');
             })
 

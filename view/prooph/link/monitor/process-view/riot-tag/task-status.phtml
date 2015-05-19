@@ -7,7 +7,7 @@
         this.updateTaskStatus = function () {
             var status = null;
 
-            this.task.events.forEach(function (event) {
+            self.task.events.forEach(function (event) {
                 switch (event.name) {
                     case "TaskEntryMarkedAsRunning":
                         status = "running";
@@ -21,7 +21,7 @@
                 }
             });
 
-            $(this.root).html(status_icon(status));
+            $(self.root).html(status_icon(status));
         };
 
         this.on("mount", function () {
