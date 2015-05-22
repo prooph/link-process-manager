@@ -345,10 +345,10 @@
                 //Assign tasks to the target message handler
                 handlerData.tasks = taskCollection;
             }).then(function () {
-                self.tags.whiteboard.setConnectionStatusSuccess(event.source_whiteboard_id, event.target_whiteboard_id);
+                self.tags.whiteboard.setConnectionStatusSuccess(event.source_element_id, event.target_element_id);
             }, function (reason) {
                 $.appErrorNotify(reason);
-                self.tags.whiteboard.setConnectionStatusError(event.source_whiteboard_id, event.target_whiteboard_id);
+                self.tags.whiteboard.setConnectionStatusError(event.source_element_id, event.target_element_id);
             }).done(function () {
                 _updateFlowchartConfig();
             });
@@ -555,6 +555,69 @@
             });
 
             $modal.modal();
+        },
+
+        _showProcessLog = function (event) {
+            var log = event.log,
+                prevTask = null;
+
+            _.each(log.tasks, function (task) {
+                console.log("task", task);
+
+                var target = _.isUndefined(task.source)? task.target : task.source;
+                var source = null;
+
+                if (!_.isNull(prevTask)) {
+                    source = _.isUndefined(prevTask.source)? prevTask.target : prevTask.source;
+                }
+
+                console.log("source", source);
+                console.log("target", target);
+
+                if (!_.isNull(source))
+                    source = _.findWhere(_flowchartConfig.elements, {processing_id : source}).id;
+
+                if (!_.isNull(target))
+                    target = _.findWhere(_flowchartConfig.elements, {processing_id : target}).id;
+
+
+                console.log("sourceElementId", source);
+                console.log("targetElementId", target);
+
+                self.tags.whiteboard.setConnectionStatusUnknown(source, target);
+
+                var lastEvent = _.last(task.events);
+
+                console.log(lastEvent);
+
+                if (lastEvent.name === 'TaskEntryMarkedAsDone') {
+                    self.tags.whiteboard.setConnectionStatusSuccess(source, target);
+                } else if (lastEvent.name === 'TaskEntryMarkedAsFailed') {
+                    self.tags.whiteboard.setConnectionStatusError(source, target);
+                }
+
+                var title = null;
+                var text = "";
+
+                _.each(task.events, function (event) {
+                    console.log(event);
+                    if (event.name === 'LogMessageReceived') {
+                        console.log(event);
+                        title = event.payload.message.payload.technicalMsg;
+                        text = s.sprintf('<div><h4>Trace</h4><pre>%s</pre></div>', event.payload.message.payload.msgParams.trace);
+                        return false;
+                    }
+                });
+
+                if (_.isNull(title)) {
+                    title = lastEvent.occurred_on;
+                }
+
+
+                self.tags.whiteboard.showConnectionInfo(source, target, title, text, lastEvent.occurred_on);
+
+                prevTask = task;
+            });
         };
 
 
@@ -563,6 +626,7 @@
 
         this.on("mount", function () {
             context.app.on("publishWorkflow", _publishWorkflow);
+            context.app.on("showProcessLog", _showProcessLog);
             _initWorkflow();
 
             self.update();

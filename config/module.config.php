@@ -189,6 +189,7 @@ return array(
             //Partials for ProcessManager
             'prooph.link.process-manager/process-manager/partial/sidebar-left'     => __DIR__ . '/../view/process-config/process-manager/partial/sidebar-left.phtml',
             //riot tags
+            'prooph.link.process-manager/process-manager/riot-tag/raw'            => __DIR__ . '/../view/process-config/process-manager/riot-tag/raw.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-manager'            => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-manager.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-sidebar'            => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-sidebar.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-common-sidebar'     => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-common-sidebar.phtml',
@@ -196,6 +197,7 @@ return array(
             'prooph.link.process-manager/process-manager/riot-tag/process-flowchart'          => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-flowchart.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-flowchart/workflow-name'  => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-flowchart/workflow-name.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-flowchart/whiteboard'     => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-flowchart/whiteboard.phtml',
+            'prooph.link.process-manager/process-manager/riot-tag/process-flowchart/log-popover-details'     => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-flowchart/log-popover-details.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/workflow-list'      => __DIR__ . '/../view/process-config/process-manager/riot-tag/workflow-list.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/task-desc'          => __DIR__ . '/../view/process-config/process-manager/riot-tag/task-desc.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-name'       => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-name.phtml',
@@ -221,6 +223,7 @@ return array(
             ),
             'riot-tags' => [
                 'js/prooph/link/process-config/app.js' => [
+                    'prooph.link.process-manager/process-manager/riot-tag/raw',
                     'prooph.link.process-manager/process-manager/riot-tag/process-manager',
                     'prooph.link.process-manager/process-manager/riot-tag/process-sidebar',
                     'prooph.link.process-manager/process-manager/riot-tag/process-common-sidebar',
@@ -228,6 +231,7 @@ return array(
                     'prooph.link.process-manager/process-manager/riot-tag/process-flowchart',
                     'prooph.link.process-manager/process-manager/riot-tag/process-flowchart/workflow-name',
                     'prooph.link.process-manager/process-manager/riot-tag/process-flowchart/whiteboard',
+                    'prooph.link.process-manager/process-manager/riot-tag/process-flowchart/log-popover-details',
                     'prooph.link.process-manager/process-manager/riot-tag/workflow-list',
                     'prooph.link.process-manager/process-manager/riot-tag/task-desc',
                     'prooph.link.process-manager/process-manager/riot-tag/process-name',

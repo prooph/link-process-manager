@@ -1,12 +1,11 @@
 <div class="row">
     <div class="col-md-8 col-lg-offset-2">
-        <p class="text-center text-btn-align" if="{ ! isEditingWorkflowName }"><strong>{ workflow_name.value }</strong></p>
+        <h3 class="text-center text-btn-align" if="{ ! isEditingWorkflowName }"><strong>{ workflow_name.value }</strong>&nbsp;<a href="#" onclick="{ editWorkflowName }" title="<?php echo $this->translate('edit process name')?>"><span class="glyphicon glyphicon-pencil"></span></a></h3>
         <input name="workflow_name" if="{ isEditingWorkflowName }" type="text" class="form-control" placeholder="<?php echo $this->translate('Enter Workflow Name')?>" onchange="{ onWorkflowNameChanged }" >
         <p></p>
     </div>
     <div class="col-md-2">
-        <button class="btn btn-default" onclick="{ editWorkflowName }" if="{ ! isEditingWorkflowName }"><?php echo $this->translate('change')?></button>
-        <button class="btn btn-default" onclick="{ saveWorkflowName }" if="{ isEditingWorkflowName }"><?php echo $this->translate('save')?></button>
+        <button class="btn btn-default" onclick="{ saveWorkflowName }" if="{ isEditingWorkflowName }"><?php echo $this->translate('save name')?></button>
     </div>
 </div>
 <script type="text/javascript">

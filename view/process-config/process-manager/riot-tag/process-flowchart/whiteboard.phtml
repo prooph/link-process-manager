@@ -24,6 +24,7 @@
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+<log-popover-details></log-popover-details>
 <img src="<?php echo $this->basePath() ?>/img/paper_blue.jpg" class="hidden">
 <script type="text/javascript">
     function (context) {
@@ -249,13 +250,50 @@
             self.trigger("connectionWasRemoved", event);
         },
 
-        _setConnectionStatus = function (source, target, status) {
-            var connection = null,
-                conClass = "";
+        _getSourceWhiteboardId = function(sourceId) {
+            if (_.isEmpty(sourceId)) {
+                return "whiteboard-start-point";
+            } else {
+                return _.findWhere(_elements, {id: sourceId}).whiteboard_id;
+            }
+        },
+
+        _getTargetWhiteboardId = function(targetId) {
+            if (_.isEmpty(targetId)) {
+                return "whiteboard-end-point";
+            } else {
+                return _.findWhere(_elements, {id: targetId}).whiteboard_id;
+            }
+        },
+
+        /**
+         * Returns connection for given sourcId and targetId or null if non could be found
+         *
+         * @return jsPlumb.connection
+         */
+        _getConnection = function(source, target) {
+            var connection = null;
+
+            source = _getSourceWhiteboardId(source);
+            target = _getTargetWhiteboardId(target);
 
             _whiteboard.select({target : target}).each(function (conn) {
                 if (conn.sourceId === source ) connection = conn;
             });
+
+            return connection;
+        },
+
+        /**
+         * Adds one of the defined CONN_STATUS_*_CLASS classes to the connection depending on given CONN_STATUS_*
+         *
+         * @param source string sourceId
+         * @param target string targetId
+         * @param status string CONN_STATUS_*
+         */
+        _setConnectionStatus = function (source, target, status) {
+            var connection = _getConnection(source, target),
+                conClass = "";
 
             if (_.isEmpty(connection)) throw new Error(s.sprintf('<?php echo $this->translate('Cannot find a connection for source %s and target %s')  ?>', source, target));
 
@@ -266,6 +304,53 @@
             }
 
             $(connection.canvas).attr("class", "_jsPlumb_connector " + conClass);
+        },
+
+        /**
+         * Compares left position of source and target of connection and returns a popover placement accordingly
+         *
+         * @param con jsPlumb.connection
+         * @return string bootstrap popover placement definition
+         */
+        _determinePopoverPlacementForConnection = function (con) {
+            var sourcePos = $(con.endpoints[0].endpoint.canvas).position(),
+                targetPos = $(con.endpoints[1].endpoint.canvas).position();
+
+            return sourcePos.left > targetPos.left ? "right" : "top";
+        },
+
+        _createPopoverContentForConnection = function (title, text, occurredOn) {
+            var $content = $(
+                s.sprintf(
+                    '<div ><a href="#">%s</a></div>',
+                    '<?php echo $this->translate('show details')  ?>'
+                )
+            );
+
+            $content.find("a").click(function (e) {
+                e.preventDefault();
+                self.tags["log-popover-details"].setLogInfo(title, occurredOn, text).show();
+            });
+
+            return $content;
+        },
+
+        /**
+         * If given connection has a non empty data-log-title attr set a popover is painted for that connection
+         *
+         * @param con jsPlumb.connection
+         */
+        _paintPopoverForConnection = function (con) {
+            var $con = $(con.canvas);
+
+            if (_.isEmpty($con.data("log-title"))) {
+                $con.popover('destroy');
+                return;
+            }
+
+            var popoverPlacement = _determinePopoverPlacementForConnection(con);
+            var $content = _createPopoverContentForConnection($con.data("log-title"), $con.data("log-text"), $con.data("log-occurred-on"));
+            $(con.canvas).popover({title: $con.data("log-title"), trigger : "manual", container : "#whiteboard", placement: popoverPlacement, content: $content, html: true}).popover('show');
         };
 
         /**
@@ -284,6 +369,18 @@
 
         this.setConnectionStatusUnknown = function(source, target) {
             _setConnectionStatus(source, target, null);
+        };
+
+        this.showConnectionInfo = function(source, target, title, text, occurredOn) {
+            var con = _getConnection(source, target);
+
+            //Wrong reference should not break the system
+            if (_.isEmpty(con)) return;
+
+            $(con.canvas).data("log-title", title);
+            $(con.canvas).data("log-text", text);
+            $(con.canvas).data("log-occurred-on", occurredOn);
+            _paintPopoverForConnection(con);
         };
 
         /**
@@ -308,12 +405,25 @@
                 containment:"parent",
                 start: function(event, ui) {
                     $(this).addClass('noclick');
+
+                    _whiteboard.select({source: $(this).attr("id")}).each(function(con) {
+                        $(con.canvas).popover('destroy');
+                    });
+
+                    _whiteboard.select({target: $(this).attr("id")}).each(function(con) {
+                        $(con.canvas).popover('destroy');
+                    });
                 },
                 stop : function(event, ui) {
                     var source = null,
                         target = ui.helper.context;
 
+                    _whiteboard.select({source : $(target).attr("id")}).each(function (conn) {
+                        _paintPopoverForConnection(conn);
+                    });
+
                     _whiteboard.select({target : $(target).attr("id")}).each(function (conn) {
+                        _paintPopoverForConnection(conn);
                         source = conn.source;
                     });
 

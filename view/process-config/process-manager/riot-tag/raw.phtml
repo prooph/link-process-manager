@@ -1,0 +1,11 @@
+<span></span>
+<script type="text/javascript">
+    function(context) {
+        this.root.innerHTML = context.content;
+
+        this.setContent = function (content) {
+            this.root.innerHTML = content;
+            this.update();
+        }
+    }
+</script>

@@ -7,6 +7,8 @@
         <div if="{ isProcessTabActive() }">
             <p></p>
             <button id="pm-publish-workflow" type="button" class="btn btn-default"><?php echo $this->translate('Publish Workflow')?></button>
+            <p></p>
+            <button id="pm-load-log" type="button" class="btn btn-default"><?php echo $this->translate('Lod last log')?></button>
         </div>
         <div if="{ isElementsTabActive() }">
             <p></p>
@@ -39,6 +41,15 @@
         var self = this;
         this.context = context;
 
+
+        _loadLastLog = function() {
+            var lastProcess = context.app.lastLoggedProcess;
+
+           context.app.trigger("showProcessLog", {log: lastProcess});
+        };
+
+
+
         this.isProcessTabActive = function () {
             return $(self.root).find(".process-tab").parent().hasClass("active");
         }
@@ -65,6 +76,10 @@
 
             $("#pm-publish-workflow").click(function () {
                 context.app.trigger("publishWorkflow");
+            });
+
+            $("#pm-load-log").click(function () {
+                _loadLastLog();
             });
         }
 

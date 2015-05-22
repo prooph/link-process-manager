@@ -55,8 +55,9 @@ background-image: linear-gradient(45deg, transparent 34%, #E8ECEB 34%, #EFF4F0 6
 #whiteboard ._jsPlumb_connector_error path {fill: #bb0f15; stroke: #bb0f15;}
 #whiteboard ._jsPlumb_connector_success path {fill: #1a9fcf; stroke: #1a9fcf;}
 
-
 #whiteboard_overlay {background-color: #000000; opacity: 0.5; position: absolute}
+
+#whiteboard .popover {z-index: 1000}
 
 
 
