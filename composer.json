@@ -21,7 +21,6 @@
     "require": {
         "php": ">=5.5",
         "prooph/link-app-core" : "~0.3",
-        "prooph/link-monitor" : "~0.2",
         "prooph/link-processor-proxy" : "~0.2",
         "codeliner/array-reader" : "~1.1"
     },
