@@ -265,8 +265,8 @@ return array(
             'prooph.link.pm.task_collection' => \Prooph\Link\ProcessManager\Infrastructure\Factory\TaskCollectionFactory::class,
             'prooph.link.pm.local_processing_node' => \Prooph\Link\ProcessManager\Infrastructure\Factory\LocalProcessingNodeFactory::class,
             'prooph.link.pm.workflow_publisher' => \Prooph\Link\ProcessManager\Infrastructure\Factory\WorkflowPublisherFactory::class,
-            'prooph.link.monitor.process_logger' => \Prooph\Link\ProcessManager\Infrastructure\Factory\DbalProcessLoggerFactory::class,
-            'prooph.link.monitor.process_stream_reader' => \Prooph\Link\ProcessManager\Projection\Process\Factory\ProcessStreamReaderFactory::class,
+            'prooph.link.pm.process_logger' => \Prooph\Link\ProcessManager\Infrastructure\Factory\DbalProcessLoggerFactory::class,
+            'prooph.link.pm.process_stream_reader' => \Prooph\Link\ProcessManager\Projection\Process\Factory\ProcessStreamReaderFactory::class,
             \Prooph\Link\ProcessManager\ProcessingPlugin\ProcessLogListener::PLUGIN_NAME => \Prooph\Link\ProcessManager\ProcessingPlugin\Factory\ProcessLogListenerFactory::class,
         ],
         'invokables' => [

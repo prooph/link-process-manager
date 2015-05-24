@@ -14,7 +14,6 @@ namespace Prooph\Link\ProcessManager\Controller;
 use Prooph\Common\Messaging\DomainEvent;
 use Prooph\Link\Application\Service\AbstractQueryController;
 use Prooph\Link\Application\Service\TranslatorAwareController;
-use Prooph\Link\Application\SharedKernel\ProcessingTypeClass;
 use Prooph\Link\Application\SharedKernel\LocationTranslator;
 use Prooph\Link\Application\SharedKernel\ProcessToClientTranslator;
 use Prooph\Link\Application\SharedKernel\ScriptLocation;
@@ -22,17 +21,8 @@ use Prooph\Link\ProcessManager\Model\ProcessLogger;
 use Prooph\Link\ProcessManager\Projection\Process\ProcessStreamReader;
 use Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder;
 use Prooph\Processing\Functional\Func;
-use Prooph\Processing\Message\MessageNameUtils;
-use Prooph\Processing\Processor\Definition;
-use Prooph\Processing\Processor\LinearProcess;
 use Prooph\Processing\Processor\ProcessId;
 use Prooph\Processing\Processor\Task\TaskListPosition;
-use Prooph\Processing\Type\Description\Description;
-use Prooph\Processing\Type\Prototype;
-use Prooph\Processing\Type\PrototypeProperty;
-use Prooph\Link\Application\Projection\ProcessingConfig;
-use Prooph\Link\Application\Service\ConfigWriter\ZendPhpArrayWriter;
-use Prooph\Link\Application\Service\NeedsSystemConfig;
 use Verraes\ClassFunctions\ClassFunctions;
 use Zend\Mvc\I18n\Translator;
 use ZF\ContentNegotiation\ViewModel;
@@ -54,11 +44,6 @@ final class ProcessManagerController extends AbstractQueryController implements 
      * @var ScriptLocation
      */
     private $scriptLocation;
-
-    /**
-     * @var array
-     */
-    private $viewAddons;
 
     /**
      * @var LocationTranslator

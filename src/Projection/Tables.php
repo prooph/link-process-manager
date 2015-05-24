@@ -23,5 +23,6 @@ final class Tables
     const WORKFLOW = "link_pm_read_workflow";
     const MESSAGE_HANDLER = "link_pm_read_message_handler";
     const PROCESS = "link_pm_read_process";
+    const PROCESS_LOG = "link_pm_process_log";
     const TASK = "link_pm_read_task";
 } 

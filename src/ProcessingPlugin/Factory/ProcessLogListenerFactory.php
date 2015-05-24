@@ -31,7 +31,7 @@ final class ProcessLogListenerFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        return new ProcessLogListener($serviceLocator->get('prooph.link.monitor.process_logger'));
+        return new ProcessLogListener($serviceLocator->get('prooph.link.pm.process_logger'));
     }
 }
  

@@ -30,7 +30,7 @@ use Prooph\EventStore\PersistenceEvent\PostCommitEvent;
  */
 final class ProcessLogListener implements Plugin
 {
-    const PLUGIN_NAME = 'prooph.link.monitor.process_log_listener';
+    const PLUGIN_NAME = 'prooph.link.pm.process_log_listener';
 
     /**
      * @var ProcessLogger

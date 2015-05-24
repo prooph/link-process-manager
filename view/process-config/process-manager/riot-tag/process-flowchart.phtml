@@ -17,7 +17,7 @@
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 <div id="processing-type-modal" class="modal fade">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-sm">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -60,7 +60,7 @@
                             if (window.location.hash == "#workflows/create") {
                                 context.app.router.stop();
                                 window.location.hash = "workflows/" + _workflow.id + "/show";
-                                window.setTimeout(function() {context.app.router.restart()}, 100);
+                                window.setTimeout(function() {context.app.router.restart()}, 5);
                             }
 
                             self.trigger("WorkflowWasInitialized", {workflow : _workflow});
