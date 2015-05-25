@@ -15,7 +15,6 @@ use Prooph\Common\Event\ActionEvent;
 use Prooph\Processing\Environment\Environment;
 use Prooph\Processing\Environment\Plugin;
 use Prooph\Processing\Processor\ProcessId;
-use Prooph\Link\ProcessManager\Model\ProcessLogger;
 use Prooph\EventStore\PersistenceEvent\PostCommitEvent;
 
 /**

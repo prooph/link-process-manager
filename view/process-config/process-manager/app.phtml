@@ -23,40 +23,6 @@ $connectors   = json_encode($this->connectors);
 $locations    = json_encode($this->locations);
 $manipulationScripts = json_encode($this->available_manipulation_scripts);
 
-$lastLoggedProcess = $this->last_logged_process;
-
-
-if (! empty($lastLoggedProcess['started_at'])) {
-    $lastLoggedProcess['started_at'] = $this->dateFormat(
-        \DateTime::createFromFormat(\DateTime::ISO8601, $lastLoggedProcess['started_at']),
-        IntlDateFormatter::MEDIUM, // date
-        IntlDateFormatter::MEDIUM, // time
-        $this->plugin('translate')->getTranslator()->getLocale()
-    );
-}
-
-if (! empty($lastLoggedProcess['finished_at'])) {
-    $lastLoggedProcess['finished_at'] = $this->dateFormat(
-        \DateTime::createFromFormat(\DateTime::ISO8601, $lastLoggedProcess['finished_at']),
-        IntlDateFormatter::MEDIUM, // date
-        IntlDateFormatter::MEDIUM, // time
-        $this->plugin('translate')->getTranslator()->getLocale()
-    );
-}
-
-foreach ($lastLoggedProcess['tasks'] as &$task) foreach ($task['events'] as &$event) {
-    if (! empty($event['occurred_on'])) {
-        $event['occurred_on'] = $this->dateFormat(
-            \DateTime::createFromFormat(\DateTime::ISO8601, $event['occurred_on']),
-            IntlDateFormatter::MEDIUM, // date
-            IntlDateFormatter::MEDIUM, // time
-            $this->plugin('translate')->getTranslator()->getLocale()
-        );
-    }
-}
-
-$lastLoggedProcess = json_encode($lastLoggedProcess);
-
 echo <<<JS
 window.PM = Prooph.Link.App.create(
     {
@@ -69,7 +35,6 @@ window.PM = Prooph.Link.App.create(
         connectors   : {$connectors},
         locations    : {$locations},
         manipulationScripts : {$manipulationScripts},
-        lastLoggedProcess : {$lastLoggedProcess},
         getConnector : function (id) {
             return _.findWhere(this.connectors, {id : id})
         },

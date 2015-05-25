@@ -30,16 +30,6 @@ return array(
                                     ]
                                 ]
                             ],
-                            'configurator-test' => [
-                                'type' => 'Literal',
-                                'options' => [
-                                    'route' => '/process-manager-test',
-                                    'defaults' => [
-                                        'controller' => 'Prooph\Link\ProcessManager\Controller\ProcessManager',
-                                        'action' => 'start-test-app'
-                                    ]
-                                ]
-                            ],
                             'api' => [
                                 'type' => 'Literal',
                                 'options' => [
@@ -116,6 +106,18 @@ return array(
                                             ]
                                         ]
                                     ],
+                                    'process_log' => [
+                                        'type' => 'Segment',
+                                        'options' => [
+                                            'route' => '/logs[/:id]',
+                                            'constraints' => array(
+                                                'id' => '.+',
+                                            ),
+                                            'defaults' => [
+                                                'controller' => \Prooph\Link\ProcessManager\Api\Log::class,
+                                            ]
+                                        ]
+                                    ],
                                 ]
                             ]
                         ],
@@ -136,29 +138,6 @@ return array(
                                         'action' => 'overview'
                                     ]
                                 ]
-                            ],
-                            'process_details' => [
-                                'type' => 'Segment',
-                                'options' => [
-                                    'route' => '/process-details/[:process_id]',
-                                    'constraints' => array(
-                                        'process_id' => '[A-Za-z0-9-]{36,36}',
-                                    ),
-                                    'defaults' => [
-                                        'controller' => \Prooph\Link\ProcessManager\Controller\ProcessViewController::class,
-                                        'action' => 'details'
-                                    ]
-                                ]
-                            ],
-                            'api' => [
-                                'type' => 'Literal',
-                                'options' => [
-                                    'route' => '/api',
-                                ],
-                                'may_terminate' => true,
-                                'child_routes' => [
-
-                                ],
                             ],
                         ],
                     ],
@@ -279,6 +258,7 @@ return array(
             \Prooph\Link\ProcessManager\Projection\Task\TaskProjector::class => \Prooph\Link\ProcessManager\Projection\Task\TaskProjector::class,
             \Prooph\Link\ProcessManager\Projection\Task\TaskFinder::class => \Prooph\Link\ProcessManager\Projection\Task\TaskFinder::class,
             \Prooph\Link\ProcessManager\Projection\Process\ProcessProjector::class => \Prooph\Link\ProcessManager\Projection\Process\ProcessProjector::class,
+            \Prooph\Link\ProcessManager\Projection\Log\ProcessLogFinder::class => \Prooph\Link\ProcessManager\Projection\Log\ProcessLogFinder::class,
         ]
     ],
     'controllers' => array(
@@ -295,6 +275,7 @@ return array(
             \Prooph\Link\ProcessManager\Api\MessageHandler::class => \Prooph\Link\ProcessManager\Api\Factory\MessageHandlerFactory::class,
             \Prooph\Link\ProcessManager\Api\Task::class => \Prooph\Link\ProcessManager\Api\Factory\TaskFactory::class,
             \Prooph\Link\ProcessManager\Api\WorkflowRelease::class => \Prooph\Link\ProcessManager\Api\Factory\WorkflowReleaseFactory::class,
+            \Prooph\Link\ProcessManager\Api\Log::class => \Prooph\Link\ProcessManager\Api\Factory\LogResourceFactory::class,
         ),
     ),
     'proophessor' => [
@@ -344,6 +325,7 @@ return array(
             \Prooph\Link\ProcessManager\Api\Task::class => 'Json',
             \Prooph\Link\ProcessManager\Api\Flowchart::class => 'Json',
             \Prooph\Link\ProcessManager\Api\WorkflowRelease::class => 'Json',
+            \Prooph\Link\ProcessManager\Api\Log::class => 'Json',
         ],
         'accept_whitelist' => [
             \Prooph\Link\ProcessManager\Api\Workflow::class => ['application/json'],
@@ -351,6 +333,7 @@ return array(
             \Prooph\Link\ProcessManager\Api\Task::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\Flowchart::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\WorkflowRelease::class => ['application/json'],
+            \Prooph\Link\ProcessManager\Api\Log::class => ['application/json'],
         ],
         'content_type_whitelist' => [
             \Prooph\Link\ProcessManager\Api\Workflow::class => ['application/json'],
@@ -358,6 +341,7 @@ return array(
             \Prooph\Link\ProcessManager\Api\Task::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\Flowchart::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\WorkflowRelease::class => ['application/json'],
+            \Prooph\Link\ProcessManager\Api\Log::class => ['application/json'],
         ],
     ],
 );

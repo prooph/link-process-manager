@@ -15,6 +15,8 @@ use Prooph\Link\Application\Service\TranslatorAwareController;
 use Prooph\Link\Dashboard\Controller\AbstractWidgetController;
 use Prooph\Link\Dashboard\View\DashboardWidget;
 use Prooph\Link\ProcessManager\Model\ProcessLogger;
+use Prooph\Link\ProcessManager\Projection\Log\ProcessLogFinder;
+use Prooph\Link\ProcessManager\Projection\Log\ProcessLogFormatter;
 use Zend\Mvc\I18n\Translator;
 use Zend\View\Model\ViewModel;
 
@@ -27,9 +29,9 @@ use Zend\View\Model\ViewModel;
 final class ProcessesOverviewController extends AbstractWidgetController implements TranslatorAwareController
 {
     /**
-     * @var ProcessLogger
+     * @var ProcessLogFinder
      */
-    private $processLogger;
+    private $processLogFinder;
 
     /**
      * @var Translator
@@ -37,11 +39,11 @@ final class ProcessesOverviewController extends AbstractWidgetController impleme
     private $translator;
 
     /**
-     * @param ProcessLogger $processLogger
+     * @param ProcessLogFinder $processLogFinder
      */
-    public function __construct(ProcessLogger $processLogger)
+    public function __construct(ProcessLogFinder $processLogFinder)
     {
-        $this->processLogger = $processLogger;
+        $this->processLogFinder = $processLogFinder;
     }
 
     /**
@@ -49,11 +51,11 @@ final class ProcessesOverviewController extends AbstractWidgetController impleme
      */
     public function widgetAction()
     {
-        $lastLoggedProcesses = $this->processLogger->getLastLoggedProcesses(0, 3);
+        $lastLoggedProcesses = $this->processLogFinder->getLastLoggedProcesses(0, 3);
 
         if (empty($lastLoggedProcesses)) return false;
 
-        $this->addProcessNames($lastLoggedProcesses);
+        ProcessLogFormatter::formatProcessLogs($lastLoggedProcesses, $this->systemConfig, $this->translator);
 
         return DashboardWidget::initialize(
             $this->widgetConfig->get('template', 'prooph/link/monitor/process-view/partial/process-list'),
@@ -69,32 +71,15 @@ final class ProcessesOverviewController extends AbstractWidgetController impleme
      */
     public function overviewAction()
     {
-        $lastLoggedProcesses = $this->processLogger->getLastLoggedProcesses(0, 10);
+        $lastLoggedProcesses = $this->processLogFinder->getLastLoggedProcesses(0, 10);
 
-        $this->addProcessNames($lastLoggedProcesses);
+        ProcessLogFormatter::formatProcessLogs($lastLoggedProcesses, $this->systemConfig, $this->translator);
 
         $view = new ViewModel(['processes' => $lastLoggedProcesses]);
 
         $view->setTemplate('prooph/link/monitor/process-view/overview');
 
         return $view;
-    }
-
-    /**
-     * @param array $processLogEntries
-     */
-    private function addProcessNames(array &$processLogEntries)
-    {
-        $processDefinitions = $this->systemConfig->getProcessDefinitions();
-
-        foreach ($processLogEntries as &$processLogEntry) {
-            if (isset($processDefinitions[$processLogEntry['start_message']])) {
-
-                $processLogEntry['process_name'] = $processDefinitions[$processLogEntry['start_message']]['name'];
-            } else {
-                $processLogEntry['process_name'] = $this->translator->translate('Unknown');
-            }
-        }
     }
 
     /**

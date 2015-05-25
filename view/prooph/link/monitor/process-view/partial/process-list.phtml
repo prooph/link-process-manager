@@ -1,11 +1,11 @@
 <?php
 $statusToClass = function($status, $textClass = true) {
     switch ($status) {
-        case \Prooph\Link\ProcessManager\Model\ProcessLogger::STATUS_RUNNING:
+        case \Prooph\Link\ProcessManager\ProcessingPlugin\ProcessLogger::STATUS_RUNNING:
             return ($textClass)? 'warning' : 'glyphicon-flash';
-        case \Prooph\Link\ProcessManager\Model\ProcessLogger::STATUS_SUCCEED:
+        case \Prooph\Link\ProcessManager\ProcessingPlugin\ProcessLogger::STATUS_SUCCEED:
             return ($textClass)? 'success'  : 'glyphicon-ok';
-        case \Prooph\Link\ProcessManager\Model\ProcessLogger::STATUS_FAILED:
+        case \Prooph\Link\ProcessManager\ProcessingPlugin\ProcessLogger::STATUS_FAILED:
             return ($textClass)? 'danger' :  'glyphicon-remove';
     }
 };
@@ -25,7 +25,7 @@ $dateFormat = function($dateTimeStr) {
 ?>
 <div class="list-group">
     <?php foreach ($this->processes as $process) : ?>
-        <a href="<?php echo $this->url('prooph.link/monitor/process_details', ['process_id' => $process['process_id']]) ?>"
+        <a href="<?php echo $this->url('prooph.link/process_config/process_manager', ['process_id' => $process['process_id']]) ?>"
            class="list-group-item list-group-item-text">
             <div class="row">
                 <div class="col-xs-6"><?php echo $process['process_name'] ?></div>

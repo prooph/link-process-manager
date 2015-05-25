@@ -41,9 +41,6 @@ final class ProcessManagerControllerFactory implements FactoryInterface
 
         $con->setWorkflowFinder($serviceLocator->getServiceLocator()->get(\Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder::class));
 
-        $con->setProcessLogger($serviceLocator->getServiceLocator()->get('prooph.link.monitor.process_logger'));
-
-        $con->setProcessStreamReader($serviceLocator->getServiceLocator()->get('prooph.link.monitor.process_stream_reader'));
         return $con;
     }
 }

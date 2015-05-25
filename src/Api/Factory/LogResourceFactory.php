@@ -1,27 +1,26 @@
 <?php
 /*
-* This file is part of prooph/link.
- * (c) prooph software GmbH <contact@prooph.de>
+ * This file is part of prooph/link.
+ * (c) 2014-2015 prooph software GmbH <contact@prooph.de>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  * 
- * Date: 1/23/15 - 4:17 PM
+ * Date: 5/25/15 - 9:27 PM
  */
-namespace Prooph\Link\ProcessManager\Controller\Factory;
-
-use Prooph\Link\ProcessManager\Controller\ProcessesOverviewController;
+namespace Prooph\Link\ProcessManager\Api\Factory;
+use Prooph\Link\ProcessManager\Api\Log;
 use Prooph\Link\ProcessManager\Projection\Log\ProcessLogFinder;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class ProcessesOverviewControllerFactory
+ * Class LogResourceFactory
  *
- * @package Prooph\Link\ProcessManager\Controller\Factory
+ * @package Prooph\Link\ProcessManager\Api\Factory
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class ProcessesOverviewControllerFactory implements FactoryInterface
+final class LogResourceFactory implements FactoryInterface
 {
     /**
      * Create service
@@ -31,8 +30,10 @@ final class ProcessesOverviewControllerFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        return new ProcessesOverviewController(
-            $serviceLocator->getServiceLocator()->get(ProcessLogFinder::class)
+        return new Log(
+            $serviceLocator->getServiceLocator()->get(ProcessLogFinder::class),
+            $serviceLocator->getServiceLocator()->get('prooph.link.pm.process_stream_reader')
         );
+
     }
 }

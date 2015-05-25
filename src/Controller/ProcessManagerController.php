@@ -18,6 +18,8 @@ use Prooph\Link\Application\SharedKernel\LocationTranslator;
 use Prooph\Link\Application\SharedKernel\ProcessToClientTranslator;
 use Prooph\Link\Application\SharedKernel\ScriptLocation;
 use Prooph\Link\ProcessManager\Model\ProcessLogger;
+use Prooph\Link\ProcessManager\Projection\Log\ProcessLogFinder;
+use Prooph\Link\ProcessManager\Projection\Log\ProcessLogFormatter;
 use Prooph\Link\ProcessManager\Projection\Process\ProcessStreamReader;
 use Prooph\Link\ProcessManager\Projection\Workflow\WorkflowFinder;
 use Prooph\Processing\Functional\Func;
@@ -55,38 +57,9 @@ final class ProcessManagerController extends AbstractQueryController implements 
      */
     private $i18nTranslator;
 
-    /**
-     * @var ProcessLogger
-     */
-    private $processLogger;
-
-    /**
-     * @var ProcessStreamReader
-     */
-    private $processStreamReader;
-
     public function startAppAction()
     {
         $workflows = $this->workflowFinder->findAll();
-
-        $lastLoggedProcesses = $this->processLogger->getLastLoggedProcesses(0, 3);
-
-        $this->addProcessNames($lastLoggedProcesses);
-
-        $lastProcess = array_pop($lastLoggedProcesses);
-
-        $processId = ProcessId::fromString($lastProcess['process_id']);
-
-        $lastProcess['events'] = $this->convertToClientProcessEvents($this->processStreamReader->getStreamOfProcess($processId));
-
-        $definition = $this->convertToClientProcess(
-            $lastProcess['start_message'],
-            $this->systemConfig->getProcessDefinitions()[$lastProcess['start_message']],
-            $this->systemConfig->getAllAvailableProcessingTypes());
-
-        $lastProcess = array_merge($lastProcess, $definition);
-
-        $this->populateTaskEvents($lastProcess);
 
         $viewModel = new ViewModel([
             'workflows' => $workflows,
@@ -147,7 +120,6 @@ final class ProcessManagerController extends AbstractQueryController implements 
                     'label' => $this->i18nTranslator->translate('Process Data Message'),
                 ],
             ],
-            'last_logged_process' => $lastProcess,
         ]);
 
         $viewModel->setTemplate('prooph.link.process-manager/process-manager/app');
@@ -156,8 +128,6 @@ final class ProcessManagerController extends AbstractQueryController implements 
 
         return $viewModel;
     }
-
-
 
     /**
      * @param string $startMessage
@@ -201,84 +171,6 @@ final class ProcessManagerController extends AbstractQueryController implements 
     public function setWorkflowFinder(WorkflowFinder $workflowFinder)
     {
         $this->workflowFinder = $workflowFinder;
-    }
-
-    /**
-     * @param ProcessLogger $processLogger
-     */
-    public function setProcessLogger(ProcessLogger $processLogger)
-    {
-        $this->processLogger = $processLogger;
-    }
-
-    public function setProcessStreamReader(ProcessStreamReader $processStreamReader)
-    {
-        $this->processStreamReader = $processStreamReader;
-    }
-
-    /**
-     * @param array $processLogEntries
-     */
-    private function addProcessNames(array &$processLogEntries)
-    {
-        $processDefinitions = $this->systemConfig->getProcessDefinitions();
-
-        foreach ($processLogEntries as &$processLogEntry) {
-            if (isset($processDefinitions[$processLogEntry['start_message']])) {
-
-                $processLogEntry['process_name'] = $processDefinitions[$processLogEntry['start_message']]['name'];
-            } else {
-                $processLogEntry['process_name'] = $this->i18nTranslator->translate('Unknown');
-            }
-        }
-    }
-
-    /**
-     * @param DomainEvent[] $streamEvents
-     * @return array
-     */
-    private function convertToClientProcessEvents(array $streamEvents)
-    {
-        $clientEvents = [];
-
-        foreach ($streamEvents as $streamEvent) {
-            $clientEvent = [
-                'name' => ClassFunctions::short($streamEvent->messageName()),
-                'process_id' => $streamEvent->metadata()['aggregate_id'],
-                'payload' => $streamEvent->payload(),
-                'occurred_on' => $streamEvent->createdAt()->format(\DateTime::ISO8601),
-            ];
-
-            $taskListPosition = null;
-
-            if (isset($clientEvent['payload']['taskListPosition'])) {
-                $taskListPosition = TaskListPosition::fromString($clientEvent['payload']['taskListPosition']);
-            }
-
-            $clientEvent['task_list_id'] = ($taskListPosition)? $taskListPosition->taskListId()->toString() : null;
-            $clientEvent['task_id'] = ($taskListPosition)? $taskListPosition->position() - 1 : null;
-
-            $clientEvents[] = $clientEvent;
-        }
-
-        return $clientEvents;
-    }
-
-    /**
-     * Copy each task event to its task
-     *
-     * @param array $process
-     */
-    private function populateTaskEvents(array &$process)
-    {
-        foreach ($process['tasks'] as &$task) {
-            $task['events'] = [];
-            foreach ($process['events'] as $event) {
-                if ($event['task_id'] == $task['id']) {
-                    $task['events'][] = $event;
-                }
-            }
-        }
     }
 }
  

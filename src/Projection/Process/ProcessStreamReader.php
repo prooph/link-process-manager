@@ -10,8 +10,8 @@
  */
 namespace Prooph\Link\ProcessManager\Projection\Process;
 
+use Assert\Assertion;
 use Prooph\Common\Messaging\DomainEvent;
-use Prooph\Processing\Processor\ProcessId;
 use Prooph\EventStore\EventStore;
 use Prooph\EventStore\Stream\StreamName;
 
@@ -37,15 +37,17 @@ final class ProcessStreamReader
     }
 
     /**
-     * @param ProcessId $processId
+     * @param string $processId
      * @param int $minVersion
      * @return DomainEvent[]
      */
-    public function getStreamOfProcess(ProcessId $processId, $minVersion = 0)
+    public function getStreamOfProcess($processId, $minVersion = 0)
     {
+        Assertion::uuid($processId);
+
         return $this->eventStore->loadEventsByMetadataFrom(
             new StreamName('prooph_processing_stream'),
-            ['aggregate_id' => $processId->toString()],
+            ['aggregate_id' => $processId],
             $minVersion
         );
     }

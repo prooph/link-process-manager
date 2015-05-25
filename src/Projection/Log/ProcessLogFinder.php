@@ -10,7 +10,9 @@
  */
 namespace Prooph\Link\ProcessManager\Projection\Log;
 
+use Assert\Assertion;
 use Doctrine\DBAL\Connection;
+use Prooph\Link\Application\Service\ApplicationDbAware;
 use Prooph\Link\ProcessManager\Projection\Tables;
 
 /**
@@ -19,7 +21,7 @@ use Prooph\Link\ProcessManager\Projection\Tables;
  * @package Prooph\Link\ProcessManager\Projection\Log
  * @author Alexander Miertsch <kontakt@codeliner.ws>
  */
-final class ProcessLogFinder 
+final class ProcessLogFinder implements ApplicationDbAware
 {
     /**
      * @var Connection
@@ -43,6 +45,9 @@ final class ProcessLogFinder
      */
     public function getLastLoggedProcesses($offset = 0, $limit = 10)
     {
+        Assertion::integer($offset);
+        Assertion::integer($limit);
+
         $query = $this->connection->createQueryBuilder();
 
         $query->select('*')->from(Tables::PROCESS_LOG)->orderBy('started_at', 'DESC')->setFirstResult($offset)->setMaxResults($limit);
@@ -56,6 +61,38 @@ final class ProcessLogFinder
      */
     public function getLoggedProcess($processId)
     {
-        throw new \BadMethodCallException(__METHOD__ . ' not implemented yet');
+        Assertion::uuid($processId);
+
+        $query = $this->connection->createQueryBuilder();
+
+        $query->select('*')->from(Tables::PROCESS_LOG)
+            ->where('process_id = :process_id')
+            ->setParameter('process_id', $processId);
+
+        return $query->execute()->fetch();
     }
-} 
+
+    /**
+     * @param string $startMessage
+     * @return array
+     */
+    public function getLogsTriggeredBy($startMessage)
+    {
+        $query = $this->connection->createQueryBuilder();
+
+        $query->select('*')->from(Tables::PROCESS_LOG)
+            ->where('start_message = :start_message')
+            ->setParameter('start_message', $startMessage);
+
+        return $query->execute()->fetchAll();
+    }
+
+    /**
+     * @param Connection $connection
+     * @return mixed
+     */
+    public function setApplicationDb(Connection $connection)
+    {
+        $this->connection = $connection;
+    }
+}
