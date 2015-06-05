@@ -9,6 +9,8 @@
  * Date: 5/25/15 - 9:27 PM
  */
 namespace Prooph\Link\ProcessManager\Api\Factory;
+use Prooph\Link\Application\Definition;
+use Prooph\Link\Application\SharedKernel\ScriptLocation;
 use Prooph\Link\ProcessManager\Api\Log;
 use Prooph\Link\ProcessManager\Projection\Log\ProcessLogFinder;
 use Zend\ServiceManager\FactoryInterface;
@@ -32,7 +34,9 @@ final class LogResourceFactory implements FactoryInterface
     {
         return new Log(
             $serviceLocator->getServiceLocator()->get(ProcessLogFinder::class),
-            $serviceLocator->getServiceLocator()->get('prooph.link.pm.process_stream_reader')
+            $serviceLocator->getServiceLocator()->get('prooph.link.pm.process_stream_reader'),
+            $serviceLocator->getServiceLocator()->get('processing_config'),
+            ScriptLocation::fromPath(Definition::getScriptsDir())
         );
 
     }

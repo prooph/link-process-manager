@@ -8,7 +8,18 @@
             <p></p>
             <button id="pm-publish-workflow" type="button" class="btn btn-default"><?php echo $this->translate('Publish Workflow')?></button>
             <p></p>
-            <button id="pm-load-log" type="button" class="btn btn-default"><?php echo $this->translate('Lod last log')?></button>
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#process-log-accordion" href="#process-log-collapse-log">
+                        <h4><?php echo $this->translate('Log')?></h4>
+                    </a>
+                </div>
+                <div id="process-log-collapse-log" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        <process-log-list start_message="{ start_message }" app="{ context.app }"></process-log-list>
+                    </div>
+                </div>
+            </div>
         </div>
         <div if="{ isElementsTabActive() }">
             <p></p>
@@ -42,16 +53,16 @@
         this.context = context;
 
 
-        _loadLastLog = function() {
-            var lastProcess = context.app.lastLoggedProcess;
+        if (! context.isNew) {
+            _workflow = _.findWhere(context.app.workflows, {id : context.workflowId});
 
-           context.app.trigger("showProcessLog", {log: lastProcess});
-        };
-
-
+            if (!_.isEmpty(_workflow)) {
+                this.start_message = _workflow.start_message;
+            }
+        }
 
         this.isProcessTabActive = function () {
-            return $(self.root).find(".process-tab").parent().hasClass("active");
+            return ! self.isElementsTabActive();
         }
 
         this.isElementsTabActive = function () {
@@ -79,7 +90,6 @@
             });
 
             $("#pm-load-log").click(function () {
-                _loadLastLog();
             });
         }
 

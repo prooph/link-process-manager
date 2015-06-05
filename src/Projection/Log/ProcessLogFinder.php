@@ -73,6 +73,9 @@ final class ProcessLogFinder implements ApplicationDbAware
     }
 
     /**
+     * Get logs triggered by given start message
+     * Orders the logs by started_at DESC
+     *
      * @param string $startMessage
      * @return array
      */
@@ -82,6 +85,7 @@ final class ProcessLogFinder implements ApplicationDbAware
 
         $query->select('*')->from(Tables::PROCESS_LOG)
             ->where('start_message = :start_message')
+            ->orderBy('started_at', 'DESC')
             ->setParameter('start_message', $startMessage);
 
         return $query->execute()->fetchAll();

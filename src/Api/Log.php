@@ -12,7 +12,10 @@ namespace Prooph\Link\ProcessManager\Api;
 
 use Assert\Assertion;
 use Prooph\Common\Messaging\DomainEvent;
+use Prooph\Link\Application\Projection\ProcessingConfig;
 use Prooph\Link\Application\Service\AbstractRestController;
+use Prooph\Link\Application\SharedKernel\ProcessToClientTranslator;
+use Prooph\Link\Application\SharedKernel\ScriptLocation;
 use Prooph\Link\ProcessManager\Projection\Log\ProcessLogFinder;
 use Prooph\Link\ProcessManager\Projection\Process\ProcessStreamReader;
 use Prooph\Processing\Processor\Task\TaskListPosition;
@@ -39,13 +42,30 @@ final class Log extends AbstractRestController
     private $processStreamReader;
 
     /**
+     * @var ProcessingConfig
+     */
+    private $systemConfig;
+
+    /**
+     * @var ScriptLocation
+     */
+    private $scriptLocation;
+
+    /**
      * @param ProcessLogFinder $processLogFinder
      * @param ProcessStreamReader $processStreamReader
+     * @param ProcessingConfig $processingConfig
+     * @param ScriptLocation $scriptLocation
      */
-    public function __construct(ProcessLogFinder $processLogFinder, ProcessStreamReader $processStreamReader)
+    public function __construct(ProcessLogFinder $processLogFinder,
+                                ProcessStreamReader $processStreamReader,
+                                ProcessingConfig $processingConfig,
+                                ScriptLocation $scriptLocation)
     {
         $this->processLogFinder = $processLogFinder;
         $this->processStreamReader = $processStreamReader;
+        $this->systemConfig = $processingConfig;
+        $this->scriptLocation = $scriptLocation;
     }
 
     /**
@@ -63,6 +83,27 @@ final class Log extends AbstractRestController
         $processLog['events'] = $this->convertToClientProcessEvents(
             $this->processStreamReader->getStreamOfProcess($id)
         );
+
+        $processDefinitions = $this->systemConfig->getProcessDefinitions();
+
+        if (! isset($processDefinitions[$processLog['start_message']])) {
+            //@TODO: Provide better error, so that the client can show the user a message that config is missing
+            return $this->notFoundAction();
+        }
+
+        $processDefinition = $processDefinitions[$processLog['start_message']];
+
+
+        $processDefinition = ProcessToClientTranslator::translate(
+            $processLog['start_message'],
+            $processDefinition,
+            $this->systemConfig->getAllAvailableProcessingTypes(),
+            $this->scriptLocation
+        );
+
+        $processLog['tasks'] = $processDefinition['tasks'];
+
+        $this->populateTaskEvents($processLog);
 
         return ['log' => $processLog];
     }
@@ -110,10 +151,27 @@ final class Log extends AbstractRestController
 
             $clientEvent['task_list_id'] = ($taskListPosition)? $taskListPosition->taskListId()->toString() : null;
             $clientEvent['task_list_position'] = ($taskListPosition)? $taskListPosition->position() : null;
-
+            $clientEvent['client_task_id'] = ($taskListPosition)? $taskListPosition->position() - 1 : null;
             $clientEvents[] = $clientEvent;
         }
 
         return $clientEvents;
+    }
+
+    /**
+     * Copy each task event to its task
+     *
+     * @param array $processLog
+     */
+    private function populateTaskEvents(array &$processLog)
+    {
+        foreach ($processLog['tasks'] as &$task) {
+            $task['events'] = [];
+            foreach ($processLog['events'] as $event) {
+                if ($event['client_task_id'] == $task['id']) {
+                    $task['events'][] = $event;
+                }
+            }
+        }
     }
 }

@@ -130,6 +130,17 @@ final class ProcessManagerController extends AbstractQueryController implements 
     }
 
     /**
+     * @param array $process
+     * @return ViewModel
+     */
+    private function incompleteAction(array $process)
+    {
+        $view = new ViewModel(['process' => $process]);
+        $view->setTemplate('prooph/link/monitor/process-view/process-details-incomplete');
+        return $view;
+    }
+
+    /**
      * @param string $startMessage
      * @param array $processDefinition
      * @param array $knownProcessingTypes
