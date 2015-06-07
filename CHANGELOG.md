@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - Load process log into flowchart
 - New API endpoint process-config/api/logs
+- ProcessLogFinder
 
 ### Changed
 - Moved ProcessLogger to ProcessingPlugin namespace

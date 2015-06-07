@@ -24,10 +24,13 @@
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
-<log-popover-details></log-popover-details>
+<log-popover-details app="{ context.app }"></log-popover-details>
 <img src="<?php echo $this->basePath() ?>/img/paper_blue.jpg" class="hidden">
 <script type="text/javascript">
     function (context) {
+
+        this.context = context;
+
         var self = this,
             JS_PLUMB_ENDPOINT = "Dot",
             JS_PLUMB_SOURCE_POINT_STYLE = { radius : 5, cssClass : "source-point", hoverClass : "source-point-hover"},
@@ -319,7 +322,7 @@
             return sourcePos.left > targetPos.left ? "right" : "top";
         },
 
-        _createPopoverContentForConnection = function (title, text, occurredOn) {
+        _createPopoverContentForConnection = function (title, task) {
             var $content = $(
                 s.sprintf(
                     '<div ><a href="#">%s</a></div>',
@@ -329,7 +332,7 @@
 
             $content.find("a").click(function (e) {
                 e.preventDefault();
-                self.tags["log-popover-details"].setLogInfo(title, occurredOn, text).show();
+                self.tags["log-popover-details"].setLogInfo(title, task).show();
             });
 
             return $content;
@@ -343,14 +346,24 @@
         _paintPopoverForConnection = function (con) {
             var $con = $(con.canvas);
 
+            $con.popover('destroy');
+
             if (_.isEmpty($con.data("log-title"))) {
-                $con.popover('destroy');
                 return;
             }
 
             var popoverPlacement = _determinePopoverPlacementForConnection(con);
-            var $content = _createPopoverContentForConnection($con.data("log-title"), $con.data("log-text"), $con.data("log-occurred-on"));
-            $(con.canvas).popover({title: $con.data("log-title"), trigger : "manual", container : "#whiteboard", placement: popoverPlacement, content: $content, html: true}).popover('show');
+
+            var $content = _createPopoverContentForConnection($con.data("log-title"), $con.data("log-task"));
+            $(con.canvas).popover({
+                animation : false,
+                title: $con.data("log-title"),
+                trigger : "manual",
+                container : "#whiteboard",
+                placement: popoverPlacement,
+                content: $content,
+                html: true}).popover('show');
+
         };
 
         /**
@@ -371,15 +384,14 @@
             _setConnectionStatus(source, target, null);
         };
 
-        this.showConnectionInfo = function(source, target, title, text, occurredOn) {
+        this.showConnectionInfo = function(source, target, title, task) {
             var con = _getConnection(source, target);
 
             //Wrong reference should not break the system
             if (_.isEmpty(con)) return;
 
             $(con.canvas).data("log-title", title);
-            $(con.canvas).data("log-text", text);
-            $(con.canvas).data("log-occurred-on", occurredOn);
+            $(con.canvas).data("log-task", task);
             _paintPopoverForConnection(con);
         };
 

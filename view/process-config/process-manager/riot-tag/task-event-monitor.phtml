@@ -4,7 +4,7 @@
             { getDescription() }
         </div>
         <div class="col-xs-10 col-md-4">
-            { event.occurred_on }
+            { printDate(event.occurred_on) }
         </div>
         <div class="col-xs-2 col-md-1">
             <a if="{ isLogEvent() }" href="#" class="btn btn-sm btn-default log-message-details-toggle" onclick="{ toggleLogMessageDetails }"><span class="glyphicon glyphicon-arrow-down"></span></a>
@@ -19,8 +19,8 @@
     function (context) {
         var self = this;
         this.event = context.event;
+        this.printDate = format_iso_datetime;
 
-        console.log(this.event);
 
         this.toggleLogMessageDetails = function () {
 

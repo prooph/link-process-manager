@@ -1,5 +1,5 @@
 <workflow-name></workflow-name>
-<whiteboard></whiteboard>
+<whiteboard app="{ context.app }"></whiteboard>
 <div id="metadata-modal" class="modal fade">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -33,6 +33,9 @@
 </div><!-- /.modal -->
 <script type="text/javascript">
     function (context) {
+
+        this.context = context;
+
         var self = this,
             _workflow = {},
             _flowchartConfig = {},
@@ -572,24 +575,15 @@
                     source = _.isUndefined(prevTask.source)? prevTask.target : prevTask.source;
                 }
 
-                console.log("source", source);
-                console.log("target", target);
-
                 if (!_.isNull(source))
                     source = _.findWhere(_flowchartConfig.elements, {processing_id : source}).id;
 
                 if (!_.isNull(target))
                     target = _.findWhere(_flowchartConfig.elements, {processing_id : target}).id;
 
-
-                console.log("sourceElementId", source);
-                console.log("targetElementId", target);
-
                 self.tags.whiteboard.setConnectionStatusUnknown(source, target);
 
                 var lastEvent = _.last(task.events);
-
-                console.log(lastEvent);
 
                 if (lastEvent.name === 'TaskEntryMarkedAsDone') {
                     self.tags.whiteboard.setConnectionStatusSuccess(source, target);
@@ -601,21 +595,16 @@
                 var text = "";
 
                 _.each(task.events, function (event) {
-                    console.log(event);
                     if (event.name === 'LogMessageReceived') {
-                        console.log(event);
                         title = event.payload.message.payload.technicalMsg;
-                        text = s.sprintf('<div><h4>Trace</h4><pre>%s</pre></div>', event.payload.message.payload.msgParams.trace);
-                        return false;
                     }
                 });
 
                 if (_.isNull(title)) {
-                    title = lastEvent.occurred_on;
+                    title = '<?php echo $this->translate('Recorded at: ')  ?>' + format_iso_datetime(lastEvent.occurred_on);
                 }
 
-
-                self.tags.whiteboard.showConnectionInfo(source, target, title, text, lastEvent.occurred_on);
+                self.tags.whiteboard.showConnectionInfo(source, target, title, task);
 
                 prevTask = task;
             });

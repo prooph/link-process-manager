@@ -5,10 +5,7 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title">{ title }</h4>
             </div>
-            <div class="modal-body">
-                <h5><?php echo $this->translate('Recorded On')?>: { recordedOn }</h5>
-                <raw content="{ text }"></raw>
-            </div>
+            <div class="modal-body">{ text }</div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary btn-save" data-dismiss="modal"><?php echo $this->translate('close') ?></button>
             </div>
@@ -19,22 +16,21 @@
     function (context) {
         var self = this;
         this.title = '<?php echo $this->translate('Log Information')  ?>';
-        this.recordedOn = '-';
         this.text = '<?php echo $this->translate('No details available')  ?>';
 
-        this.setLogInfo = function(title, recordedOn, text) {
+        this.setLogInfo = function(title, task) {
+
             self.title = title;
-            self.recordedOn = recordedOn;
-            self.text = text;
-            self.tags.raw.setContent(text);
+
             self.update();
+
+            context.app.renderInto(self, '.modal-body', 'task-monitor', {task : task});
 
             return self;
         }
 
         this.show = function () {
-            console.log($(self.root).find("#log-popover-modal"));
-            $(self.root).find("#log-popover-modal").modal("show");
+            $(self.root).find("#log-popover-modal").modal({backdrop : false}).modal("show");
         }
     }
 </script>

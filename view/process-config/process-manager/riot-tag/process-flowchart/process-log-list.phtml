@@ -11,6 +11,8 @@
 
         this.logs = [];
 
+        this.printDate = format_iso_datetime;
+
         if (!_.isEmpty(this.start_message)) {
             $.getJSON('<?php echo $this->url('prooph.link/process_config/api/process_log') ?>?start_message=' + this.start_message)
             .then(
@@ -20,13 +22,6 @@
                 },
                 $.failNotify
             );
-        }
-
-        this.printDate = function (iso8601Date) {
-
-            var dateobj = new Date(iso8601Date);
-
-            return dateobj.toLocaleString();
         }
 
         this.onProcessLogClick = function (e) {
