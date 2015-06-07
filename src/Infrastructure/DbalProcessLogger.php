@@ -12,8 +12,9 @@
 namespace Prooph\Link\ProcessManager\Infrastructure;
 
 use Doctrine\DBAL\Connection;
+use Prooph\Link\ProcessManager\Projection\Tables;
 use Prooph\Processing\Processor\ProcessId;
-use Prooph\Link\ProcessManager\Model\ProcessLogger;
+use Prooph\Link\ProcessManager\ProcessingPlugin\ProcessLogger;
 
 /**
  * Class DbalProcessLogger
@@ -23,7 +24,7 @@ use Prooph\Link\ProcessManager\Model\ProcessLogger;
  */
 final class DbalProcessLogger implements ProcessLogger
 {
-    const TABLE = "processes";
+    const TABLE = Tables::PROCESS_LOG;
 
     /**
      * @var Connection
@@ -141,39 +142,6 @@ final class DbalProcessLogger implements ProcessLogger
         } else {
             $this->updateEntry($processId, $data);
         }
-    }
-
-    /**
-     * Orders process logs by started_at DESC
-     * Returns array of process log entry arrays.
-     * Each process log contains the information:
-     *
-     * - process_id => UUID string
-     * - status => running|succeed|failed
-     * - start_message => string|null
-     * - started_at => \DateTime::ISO8601 formatted
-     * - finished_at =>  \DateTime::ISO8601 formatted
-     *
-     * @param int $offset
-     * @param int $limit
-     * @return array
-     */
-    public function getLastLoggedProcesses($offset = 0, $limit = 10)
-    {
-        $query = $this->connection->createQueryBuilder();
-
-        $query->select('*')->from(self::TABLE)->orderBy('started_at', 'DESC')->setFirstResult($offset)->setMaxResults($limit);
-
-        return $query->execute()->fetchAll();
-    }
-
-    /**
-     * @param ProcessId $processId
-     * @return null|array process log, see {@method getLastLoggedProcesses} for structure
-     */
-    public function getLoggedProcess(ProcessId $processId)
-    {
-        return $this->loadProcessEntryIfExists($processId);
     }
 
     /**

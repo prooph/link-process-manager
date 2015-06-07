@@ -30,16 +30,6 @@ return array(
                                     ]
                                 ]
                             ],
-                            'configurator-test' => [
-                                'type' => 'Literal',
-                                'options' => [
-                                    'route' => '/process-manager-test',
-                                    'defaults' => [
-                                        'controller' => 'Prooph\Link\ProcessManager\Controller\ProcessManager',
-                                        'action' => 'start-test-app'
-                                    ]
-                                ]
-                            ],
                             'api' => [
                                 'type' => 'Literal',
                                 'options' => [
@@ -116,6 +106,18 @@ return array(
                                             ]
                                         ]
                                     ],
+                                    'process_log' => [
+                                        'type' => 'Segment',
+                                        'options' => [
+                                            'route' => '/logs[/:id]',
+                                            'constraints' => array(
+                                                'id' => '.+',
+                                            ),
+                                            'defaults' => [
+                                                'controller' => \Prooph\Link\ProcessManager\Api\Log::class,
+                                            ]
+                                        ]
+                                    ],
                                 ]
                             ]
                         ],
@@ -136,29 +138,6 @@ return array(
                                         'action' => 'overview'
                                     ]
                                 ]
-                            ],
-                            'process_details' => [
-                                'type' => 'Segment',
-                                'options' => [
-                                    'route' => '/process-details/[:process_id]',
-                                    'constraints' => array(
-                                        'process_id' => '[A-Za-z0-9-]{36,36}',
-                                    ),
-                                    'defaults' => [
-                                        'controller' => \Prooph\Link\ProcessManager\Controller\ProcessViewController::class,
-                                        'action' => 'details'
-                                    ]
-                                ]
-                            ],
-                            'api' => [
-                                'type' => 'Literal',
-                                'options' => [
-                                    'route' => '/api',
-                                ],
-                                'may_terminate' => true,
-                                'child_routes' => [
-
-                                ],
                             ],
                         ],
                     ],
@@ -187,8 +166,9 @@ return array(
             'prooph.link.process-manager/process-manager/app' => __DIR__ . '/../view/process-config/process-manager/app.phtml',
             'prooph.link.process-manager/process-manager/app-test' => __DIR__ . '/../view/process-config/process-manager/app-test.phtml',
             //Partials for ProcessManager
-            'prooph.link.process-manager/process-manager/partial/sidebar-left'     => __DIR__ . '/../view/process-config/process-manager/partial/sidebar-left.phtml',
+            'prooph.link.process-manager/process-manager/partial/sidebar-left' => __DIR__ . '/../view/process-config/process-manager/partial/sidebar-left.phtml',
             //riot tags
+            'prooph.link.process-manager/process-manager/riot-tag/raw'         => __DIR__ . '/../view/process-config/process-manager/riot-tag/raw.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-manager'            => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-manager.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-sidebar'            => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-sidebar.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-common-sidebar'     => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-common-sidebar.phtml',
@@ -196,8 +176,14 @@ return array(
             'prooph.link.process-manager/process-manager/riot-tag/process-flowchart'          => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-flowchart.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-flowchart/workflow-name'  => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-flowchart/workflow-name.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-flowchart/whiteboard'     => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-flowchart/whiteboard.phtml',
+            'prooph.link.process-manager/process-manager/riot-tag/process-flowchart/log-popover-details' => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-flowchart/log-popover-details.phtml',
+            'prooph.link.process-manager/process-manager/riot-tag/process-flowchart/process-log-list'    => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-flowchart/process-log-list.phtml',
+            'prooph.link.process-manager/process-manager/riot-tag/process-flowchart/process-log-status'  => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-flowchart/process-log-status.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/workflow-list'      => __DIR__ . '/../view/process-config/process-manager/riot-tag/workflow-list.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/task-desc'          => __DIR__ . '/../view/process-config/process-manager/riot-tag/task-desc.phtml',
+            'prooph.link.process-manager/process-manager/riot-tag/task-status'        => __DIR__ . '/../view/process-config/process-manager/riot-tag/task-status.phtml',
+            'prooph.link.process-manager/process-manager/riot-tag/task-monitor'       => __DIR__ . '/../view/process-config/process-manager/riot-tag/task-monitor.phtml',
+            'prooph.link.process-manager/process-manager/riot-tag/task-event-monitor' => __DIR__ . '/../view/process-config/process-manager/riot-tag/task-event-monitor.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-name'       => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-name.phtml',
             'prooph.link.process-manager/process-manager/riot-tag/process-play'       => __DIR__ . '/../view/process-config/process-manager/riot-tag/process-play.phtml',
             'prooph/link/monitor/process-view/overview'                     => __DIR__ . '/../view/prooph/link/monitor/process-view/overview.phtml',
@@ -221,6 +207,7 @@ return array(
             ),
             'riot-tags' => [
                 'js/prooph/link/process-config/app.js' => [
+                    'prooph.link.process-manager/process-manager/riot-tag/raw',
                     'prooph.link.process-manager/process-manager/riot-tag/process-manager',
                     'prooph.link.process-manager/process-manager/riot-tag/process-sidebar',
                     'prooph.link.process-manager/process-manager/riot-tag/process-common-sidebar',
@@ -228,16 +215,19 @@ return array(
                     'prooph.link.process-manager/process-manager/riot-tag/process-flowchart',
                     'prooph.link.process-manager/process-manager/riot-tag/process-flowchart/workflow-name',
                     'prooph.link.process-manager/process-manager/riot-tag/process-flowchart/whiteboard',
+                    'prooph.link.process-manager/process-manager/riot-tag/process-flowchart/log-popover-details',
+                    'prooph.link.process-manager/process-manager/riot-tag/process-flowchart/process-log-list',
+                    'prooph.link.process-manager/process-manager/riot-tag/process-flowchart/process-log-status',
                     'prooph.link.process-manager/process-manager/riot-tag/workflow-list',
                     'prooph.link.process-manager/process-manager/riot-tag/task-desc',
+                    'prooph.link.process-manager/process-manager/riot-tag/task-status',
+                    'prooph.link.process-manager/process-manager/riot-tag/task-monitor',
+                    'prooph.link.process-manager/process-manager/riot-tag/task-event-monitor',
                     'prooph.link.process-manager/process-manager/riot-tag/process-name',
                     'prooph.link.process-manager/process-manager/riot-tag/process-play',
                 ],
                 'js/prooph/link/process-monitor/app.js' => [
                     'prooph/link/monitor/process-view/riot-tag/process-monitor',
-                    'prooph/link/monitor/process-view/riot-tag/task-monitor',
-                    'prooph/link/monitor/process-view/riot-tag/task-status',
-                    'prooph/link/monitor/process-view/riot-tag/task-event-monitor',
                     'prooph.link.process-manager/process-manager/riot-tag/task-desc',
                     'prooph.link.process-manager/process-manager/riot-tag/process-play',
                 ],
@@ -261,8 +251,8 @@ return array(
             'prooph.link.pm.task_collection' => \Prooph\Link\ProcessManager\Infrastructure\Factory\TaskCollectionFactory::class,
             'prooph.link.pm.local_processing_node' => \Prooph\Link\ProcessManager\Infrastructure\Factory\LocalProcessingNodeFactory::class,
             'prooph.link.pm.workflow_publisher' => \Prooph\Link\ProcessManager\Infrastructure\Factory\WorkflowPublisherFactory::class,
-            'prooph.link.monitor.process_logger' => \Prooph\Link\ProcessManager\Infrastructure\Factory\DbalProcessLoggerFactory::class,
-            'prooph.link.monitor.process_stream_reader' => \Prooph\Link\ProcessManager\Projection\Process\Factory\ProcessStreamReaderFactory::class,
+            'prooph.link.pm.process_logger' => \Prooph\Link\ProcessManager\Infrastructure\Factory\DbalProcessLoggerFactory::class,
+            'prooph.link.pm.process_stream_reader' => \Prooph\Link\ProcessManager\Projection\Process\Factory\ProcessStreamReaderFactory::class,
             \Prooph\Link\ProcessManager\ProcessingPlugin\ProcessLogListener::PLUGIN_NAME => \Prooph\Link\ProcessManager\ProcessingPlugin\Factory\ProcessLogListenerFactory::class,
         ],
         'invokables' => [
@@ -275,6 +265,7 @@ return array(
             \Prooph\Link\ProcessManager\Projection\Task\TaskProjector::class => \Prooph\Link\ProcessManager\Projection\Task\TaskProjector::class,
             \Prooph\Link\ProcessManager\Projection\Task\TaskFinder::class => \Prooph\Link\ProcessManager\Projection\Task\TaskFinder::class,
             \Prooph\Link\ProcessManager\Projection\Process\ProcessProjector::class => \Prooph\Link\ProcessManager\Projection\Process\ProcessProjector::class,
+            \Prooph\Link\ProcessManager\Projection\Log\ProcessLogFinder::class => \Prooph\Link\ProcessManager\Projection\Log\ProcessLogFinder::class,
         ]
     ],
     'controllers' => array(
@@ -291,6 +282,7 @@ return array(
             \Prooph\Link\ProcessManager\Api\MessageHandler::class => \Prooph\Link\ProcessManager\Api\Factory\MessageHandlerFactory::class,
             \Prooph\Link\ProcessManager\Api\Task::class => \Prooph\Link\ProcessManager\Api\Factory\TaskFactory::class,
             \Prooph\Link\ProcessManager\Api\WorkflowRelease::class => \Prooph\Link\ProcessManager\Api\Factory\WorkflowReleaseFactory::class,
+            \Prooph\Link\ProcessManager\Api\Log::class => \Prooph\Link\ProcessManager\Api\Factory\LogResourceFactory::class,
         ),
     ),
     'proophessor' => [
@@ -340,6 +332,7 @@ return array(
             \Prooph\Link\ProcessManager\Api\Task::class => 'Json',
             \Prooph\Link\ProcessManager\Api\Flowchart::class => 'Json',
             \Prooph\Link\ProcessManager\Api\WorkflowRelease::class => 'Json',
+            \Prooph\Link\ProcessManager\Api\Log::class => 'Json',
         ],
         'accept_whitelist' => [
             \Prooph\Link\ProcessManager\Api\Workflow::class => ['application/json'],
@@ -347,6 +340,7 @@ return array(
             \Prooph\Link\ProcessManager\Api\Task::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\Flowchart::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\WorkflowRelease::class => ['application/json'],
+            \Prooph\Link\ProcessManager\Api\Log::class => ['application/json'],
         ],
         'content_type_whitelist' => [
             \Prooph\Link\ProcessManager\Api\Workflow::class => ['application/json'],
@@ -354,6 +348,7 @@ return array(
             \Prooph\Link\ProcessManager\Api\Task::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\Flowchart::class => ['application/json'],
             \Prooph\Link\ProcessManager\Api\WorkflowRelease::class => ['application/json'],
+            \Prooph\Link\ProcessManager\Api\Log::class => ['application/json'],
         ],
     ],
 );

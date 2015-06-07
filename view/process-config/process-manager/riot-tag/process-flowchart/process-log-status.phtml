@@ -1,0 +1,19 @@
+<span class="glyphicon { statusToClass(log.status, false) }  { statusToClass(log.status, true) }"></span>
+<script type="text/javascript">
+    function (context) {
+        this.log = context.log;
+
+        this.statusToClass = function (logStatus, textClass) {
+            switch (logStatus) {
+                case '<?php echo \Prooph\Link\ProcessManager\ProcessingPlugin\ProcessLogger::STATUS_RUNNING ?>':
+                    return (textClass)? 'text-warning' : 'glyphicon-flash';
+                case '<?php echo \Prooph\Link\ProcessManager\ProcessingPlugin\ProcessLogger::STATUS_SUCCEED ?>':
+                    return (textClass)? 'text-success'  : 'glyphicon-ok';
+                case '<?php echo \Prooph\Link\ProcessManager\ProcessingPlugin\ProcessLogger::STATUS_FAILED ?>':
+                    return (textClass)? 'text-danger' :  'glyphicon-remove';
+                default:
+                    throw new Error("Unknown process log status: " + logStatus);
+            }
+        }
+    }
+</script>

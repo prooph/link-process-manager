@@ -1,12 +1,25 @@
 <div class="row">
     <div class="col-md-11 col-lg-offset-1">
         <ul class="nav nav-tabs">
-            <li class="active"><a href="#" class="process-tab" onclick="{ toggleActive }"><?php echo $this->translate('Process') ?></a></li>
+            <li class="active"><a href="#" class="process-tab" onclick="{ toggleActive }"><?php echo $this->translate('Workflow') ?></a></li>
             <li ><a href="#" class="elements-tab" onclick="{ toggleActive }"><?php echo $this->translate('Elements') ?></a></li>
         </ul>
         <div if="{ isProcessTabActive() }">
             <p></p>
             <button id="pm-publish-workflow" type="button" class="btn btn-default"><?php echo $this->translate('Publish Workflow')?></button>
+            <p></p>
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#process-log-accordion" href="#process-log-collapse-log">
+                        <h4><?php echo $this->translate('Log')?></h4>
+                    </a>
+                </div>
+                <div id="process-log-collapse-log" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        <process-log-list start_message="{ start_message }" app="{ context.app }"></process-log-list>
+                    </div>
+                </div>
+            </div>
         </div>
         <div if="{ isElementsTabActive() }">
             <p></p>
@@ -39,8 +52,17 @@
         var self = this;
         this.context = context;
 
+
+        if (! context.isNew) {
+            _workflow = _.findWhere(context.app.workflows, {id : context.workflowId});
+
+            if (!_.isEmpty(_workflow)) {
+                this.start_message = _workflow.start_message;
+            }
+        }
+
         this.isProcessTabActive = function () {
-            return $(self.root).find(".process-tab").parent().hasClass("active");
+            return ! self.isElementsTabActive();
         }
 
         this.isElementsTabActive = function () {
@@ -65,6 +87,9 @@
 
             $("#pm-publish-workflow").click(function () {
                 context.app.trigger("publishWorkflow");
+            });
+
+            $("#pm-load-log").click(function () {
             });
         }
 

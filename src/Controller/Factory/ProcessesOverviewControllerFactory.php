@@ -11,6 +11,7 @@
 namespace Prooph\Link\ProcessManager\Controller\Factory;
 
 use Prooph\Link\ProcessManager\Controller\ProcessesOverviewController;
+use Prooph\Link\ProcessManager\Projection\Log\ProcessLogFinder;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -31,7 +32,7 @@ final class ProcessesOverviewControllerFactory implements FactoryInterface
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
         return new ProcessesOverviewController(
-            $serviceLocator->getServiceLocator()->get('prooph.link.monitor.process_logger')
+            $serviceLocator->getServiceLocator()->get(ProcessLogFinder::class)
         );
     }
 }

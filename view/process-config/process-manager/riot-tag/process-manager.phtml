@@ -16,11 +16,11 @@
                     case rm.index == "create":
                         rm.action = rm.index;
                         rm.index = undefined;
-                        con.app.renderInto(con.app.tags["process-sidebar"], "#process-sidebar-container", "process-flowchart-sidebar");
+                        con.app.renderInto(con.app.tags["process-sidebar"], "#process-sidebar-container", "process-flowchart-sidebar", {isNew : true});
                         con.app.renderInto(self, ".content", "process-flowchart", {isNew : true});
                         return;
                     case rm.action == "show":
-                        con.app.renderInto(con.app.tags["process-sidebar"], "#process-sidebar-container", "process-flowchart-sidebar");
+                        con.app.renderInto(con.app.tags["process-sidebar"], "#process-sidebar-container", "process-flowchart-sidebar", {isNew : false, workflowId : rm.index});
                         con.app.renderInto(self, ".content", "process-flowchart", {isNew : false, workflowId : rm.index});
                         return;
                 }
